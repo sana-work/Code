@@ -366,8 +366,13 @@ class ClaudeGenerator(Generator):
 
         Forwards only the model parameters listed in _ALLOWED_MODEL_PARAMS.
         Numeric float parameters (temperature, top_p) are coerced to float.
-        When response_schema is provided it is injected into the system prompt
-        as a JSON schema instruction (Claude has no native schema parameter).
+
+        response_schema handling (two modes):
+          - model_parameters["native_json_schema"] is truthy -> platform-enforced
+            structured outputs via output_config.format (same guarantee as
+            Vertex's response_schema).
+          - otherwise -> schema injected into the system prompt as an
+            instruction (reliable, but not enforced).
         """
 
         # No client-side ceiling: model_parameters is per-model config, so the
@@ -388,11 +393,29 @@ class ClaudeGenerator(Generator):
         }
 
         if response_schema:
-            schema_instruction = (
-                f"You must respond with valid JSON only, strictly conforming to this JSON schema:\n"
-                f"{json.dumps(response_schema)}"
-            )
-            system_prompt = f"{system_prompt}\n\n{schema_instruction}" if system_prompt else schema_instruction
+            if self.llm_config.model_parameters.get("native_json_schema"):
+                # Platform-enforced JSON conformance — the exact analog of
+                # Vertex's response_schema + response_mime_type. Guaranteed
+                # valid, schema-conformant JSON (barring max_tokens truncation).
+                # Opt-in per model via config: requires a model generation that
+                # supports output_config.format AND schemas with
+                # additionalProperties: false on every object. Smoke-test a
+                # model on R2D2 before enabling its flag.
+                args["output_config"] = {
+                    "format": {"type": "json_schema", "schema": response_schema}
+                }
+            else:
+                # Fallback: prompt-level steering. Highly reliable but not
+                # enforced — downstream consumers should still parse defensively.
+                schema_instruction = (
+                    "You must respond with valid JSON only, strictly conforming to this JSON schema:\n"
+                    f"{json.dumps(response_schema)}\n"
+                    "Output raw JSON only - do not wrap it in markdown code fences, "
+                    "and do not include any text before or after the JSON."
+                )
+                system_prompt = (
+                    f"{system_prompt}\n\n{schema_instruction}" if system_prompt else schema_instruction
+                )
 
         if system_prompt:
             args["system"] = system_prompt
