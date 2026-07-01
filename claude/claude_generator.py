@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import logging
 from typing import Dict, List, Tuple
 import json
@@ -8,7 +7,6 @@ import httpx
 from anthropic import AsyncAnthropicVertex, APIStatusError, APITimeoutError
 from anthropic.types import Message
 from google.oauth2.credentials import Credentials
-from anthropic.resources.messages.messages import AsyncMessages
 from query.config.environment import ClaudeEnvironment
 from query.core.generator.generator import Generator
 from query.models.confidence_score_response import ConfidenceScoreResponse
@@ -48,85 +46,42 @@ _CLAUDE_DOCUMENT_MIME_TYPES: frozenset[str] = frozenset({
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 })
 
-# Params already handled explicitly in _build_create_args — never forwarded from model_parameters.
-_CLAUDE_HANDLED_PARAMS: frozenset[str] = frozenset({
-    "model", "max_tokens", "max_output_tokens",  # resolved separately
-    "messages", "system",                        # built from prompts
-    "thinking", "thinking_config",                # thinking built from thinking_config
-})
-
-# SDK / transport keys that appear in the method signature but are not API body params.
-_SDK_INTERNAL_PARAMS: frozenset[str] = frozenset({
-    "self", "extra_headers", "extra_query", "extra_body", "timeout", "stream",
-})
-
-# Static fallback used when SDK introspection fails.
-_FALLBACK_ALLOWED_PARAMS: frozenset[str] = frozenset({
+# Model parameters from llm_config.model_parameters that may be forwarded to
+# the Anthropic Messages API. Anything not listed here is silently ignored —
+# a deliberate safety property: config typos or provider-specific keys never
+# reach the API. Extend this list when a new API param should become
+# configurable. (model / max_tokens / system / messages / thinking are built
+# explicitly in _build_create_args, so they don't belong here.)
+_ALLOWED_MODEL_PARAMS: frozenset[str] = frozenset({
     "temperature", "top_p", "stop_sequences", "top_k", "metadata",
 })
-
-
-def _derive_claude_api_params() -> frozenset[str]:
-    """
-    Derive forwardable Anthropic API parameters from the SDK's AsyncMessages.create
-    signature. Called exactly once, at import time (see _CLAUDE_API_PARAMS below) —
-    the signature can't change during the process lifetime, so there is nothing to
-    cache or recompute on later calls. Falls back to a static safe set if
-    introspection fails (e.g. SDK internal refactor changes the import path).
-    """
-    try:
-        sig = inspect.signature(AsyncMessages.create)
-        params = frozenset(
-            name for name in sig.parameters
-            if name not in _SDK_INTERNAL_PARAMS
-            and name not in _CLAUDE_HANDLED_PARAMS
-        )
-        if params:
-            logger.debug("Claude API params derived from SDK signature: %s", sorted(params))
-            return params
-    except Exception as exc:
-        logger.warning(
-            "Could not introspect Anthropic SDK signature; using fallback params. Error: %s", exc
-        )
-    return _FALLBACK_ALLOWED_PARAMS
-
-
-# Computed once at import time — every call site reads this constant directly,
-# no decorator/cache lookup involved.
-_CLAUDE_API_PARAMS: frozenset[str] = _derive_claude_api_params()
 
 
 # Parameters whose values must always be sent as float
 _FLOAT_MODEL_PARAMS: frozenset[str] = frozenset({"temperature", "top_p"})
 
-# Conservative output-token ceiling used when a model isn't in the 128K set below.
-_CLAUDE_MAX_OUTPUT_TOKENS: int = 64000
-
-# Model-ID prefixes whose Anthropic-hosted output ceiling is 128K tokens
-# (Opus 4.6+, Sonnet 4.6+, Fable 5 / Mythos 5). Everything else — Haiku,
-# Sonnet <= 4.5, Opus <= 4.5, and any model ID we don't recognize yet — falls
-# back to the conservative 64K ceiling in _CLAUDE_MAX_OUTPUT_TOKENS. Update
-# this tuple as new model tiers launch.
-_CLAUDE_128K_MODEL_PREFIXES: Tuple[str, ...] = (
+# Model-ID prefixes (4.6+) where manual extended thinking
+# ({"type": "enabled", "budget_tokens": N}) is deprecated (4.6) or returns a
+# 400 (4.7+ / Sonnet 5 / Fable 5) — these models take {"type": "adaptive"}.
+_CLAUDE_ADAPTIVE_THINKING_PREFIXES: Tuple[str, ...] = (
     "claude-opus-4-6",
     "claude-opus-4-7",
     "claude-opus-4-8",
     "claude-sonnet-4-6",
+    "claude-sonnet-4-7",
+    "claude-sonnet-4-8",
     "claude-sonnet-5",
     "claude-fable-5",
     "claude-mythos-5",
 )
-
-# Model-ID prefixes (4.6+) where manual extended thinking
-# ({"type": "enabled", "budget_tokens": N}) is deprecated (4.6) or returns a
-# 400 (4.7+ / Sonnet 5 / Fable 5) — these models take {"type": "adaptive"}.
-_CLAUDE_ADAPTIVE_THINKING_PREFIXES: Tuple[str, ...] = _CLAUDE_128K_MODEL_PREFIXES
 
 # Model-ID prefixes (4.7+) where sampling params (temperature / top_p / top_k)
 # were removed from the API — sending them returns a 400.
 _CLAUDE_NO_SAMPLING_PREFIXES: Tuple[str, ...] = (
     "claude-opus-4-7",
     "claude-opus-4-8",
+    "claude-sonnet-4-7",
+    "claude-sonnet-4-8",
     "claude-sonnet-5",
     "claude-fable-5",
     "claude-mythos-5",
@@ -138,13 +93,6 @@ _SAMPLING_PARAMS: frozenset[str] = frozenset({"temperature", "top_p", "top_k"})
 def _bare_model_name(model_name: str) -> str:
     """Strip the Vertex "@<snapshot-date>" suffix (e.g. "claude-opus-4-5@20251101")."""
     return model_name.split("@", 1)[0]
-
-
-def _resolve_model_max_output_tokens(model_name: str) -> int:
-    """Return the real output-token ceiling for a Claude model ID."""
-    if _bare_model_name(model_name).startswith(_CLAUDE_128K_MODEL_PREFIXES):
-        return 128000
-    return _CLAUDE_MAX_OUTPUT_TOKENS
 
 
 # Explicit request timeout (seconds) passed to client.messages.stream() to ensure
@@ -416,21 +364,22 @@ class ClaudeGenerator(Generator):
         """
         Assemble the keyword arguments for client.messages.stream().
 
-        Forwards only the model parameters listed in _CLAUDE_API_PARAMS.
+        Forwards only the model parameters listed in _ALLOWED_MODEL_PARAMS.
         Numeric float parameters (temperature, top_p) are coerced to float.
         When response_schema is provided it is injected into the system prompt
         as a JSON schema instruction (Claude has no native schema parameter).
         """
 
-        resolved_max_tokens = min(
+        # No client-side ceiling: model_parameters is per-model config, so the
+        # configured value is trusted as-is. If it ever exceeds the model's real
+        # output limit (64K/128K depending on tier), the API rejects it with a
+        # clearly-worded 400 (surfaced as GR007) — an explicit failure we prefer
+        # over silently clamping to a maintained per-model table.
+        resolved_max_tokens = (
             max_tokens
             or self.llm_config.model_parameters.get("max_tokens")
             or self.llm_config.model_parameters.get("max_output_tokens")
-            or 8192,
-            # Per-model ceiling (64K or 128K) instead of a single global
-            # constant — a flat 64K cap silently halves the real ceiling on
-            # every 4.6+ model (Opus 4.6/4.7/4.8, Sonnet 4.6/5, Fable 5).
-            _resolve_model_max_output_tokens(self.llm_config.name),
+            or 8192
         )
         args: dict = {
             "model": self.llm_config.name,
@@ -467,7 +416,7 @@ class ClaudeGenerator(Generator):
                 thinking_enabled = True
 
         for param, value in self.llm_config.model_parameters.items():
-            if param not in _CLAUDE_API_PARAMS:
+            if param not in _ALLOWED_MODEL_PARAMS:
                 continue
             if sampling_removed_model and param in _SAMPLING_PARAMS:
                 # temperature/top_p/top_k were removed on 4.7+ models —
