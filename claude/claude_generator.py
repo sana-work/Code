@@ -95,9 +95,12 @@ def _bare_model_name(model_name: str) -> str:
     return model_name.split("@", 1)[0]
 
 
-# Explicit request timeout (seconds) passed to client.messages.stream() to ensure
-# the SDK uses this value instead of calculating one from max_tokens.
-_CLAUDE_REQUEST_TIMEOUT: httpx.Timeout = httpx.Timeout(timeout=600.0, connect=30.0)
+# Explicit request timeout passed to client.messages.create() — this suppresses
+# the SDK's guard against long non-streaming requests, so it must cover the
+# slowest generation we expect (large max_tokens configs, e.g. 64K for the
+# LC-rules use case). A flat ceiling costs nothing on small requests — timeout
+# only bounds how long the SDK waits, it doesn't force a wait.
+_CLAUDE_REQUEST_TIMEOUT: httpx.Timeout = httpx.Timeout(timeout=1200.0, connect=30.0)
 
 
 # ------------------------------------------------------------------------------
@@ -276,19 +279,13 @@ class ClaudeGenerator(Generator):
     ) -> Tuple[Message, LLMUsageMetrics]:
 
         try:
-            # Streamed rather than a single non-streaming create() call: at
-            # this model's max_tokens (up to 128K), generation can run well
-            # past the point where an idle non-streaming connection gets
-            # dropped by an intermediate proxy/load balancer. Streaming keeps
-            # bytes flowing continuously so the connection is never idle, and
-            # get_final_message() still hands back the same Message object
-            # create() would have — callers of __generate are unaffected.
-            async with client.messages.stream(
+            # Non-streaming create(), matching Citi's canonical R2D2 sample —
+            # streaming (SSE) support through the R2D2 proxy is unverified.
+            response = await client.messages.create(
                 extra_headers={"x-r2d2-user": soeid},
                 timeout=_CLAUDE_REQUEST_TIMEOUT,
                 **create_args,
-            ) as stream:
-                response = await stream.get_final_message()
+            )
         except APIStatusError as e:
             # Always log the raw API error body so we can diagnose 400s
             logger.error(
@@ -362,7 +359,7 @@ class ClaudeGenerator(Generator):
         response_schema: dict | None = None,
     ) -> dict:
         """
-        Assemble the keyword arguments for client.messages.stream().
+        Assemble the keyword arguments for client.messages.create().
 
         Forwards only the model parameters listed in _ALLOWED_MODEL_PARAMS.
         Numeric float parameters (temperature, top_p) are coerced to float.
