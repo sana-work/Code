@@ -1,0 +1,34 @@
+Refactor the user-feedback service's POST /feedback endpoint schema. Apply these changes across the Pydantic request/response models, validation logic, DB models/migrations, OpenAPI docs, and all tests.
+## 1. Rename `correctness` → `reaction` (type change: bool → enum)
+- Remove the boolean `correctness` field from the request model.
+- Add `reaction: Optional[str]` accepting exactly "positive" or "negative" (use a str Enum).
+- Backward compatibility: continue accepting `correctness` as a deprecated alias for one release. If a request contains `correctness` and not `reaction`, map true → "positive", false → "negative", and log a deprecation warning. If both are provided, `reaction` wins.
+- Persist as the enum string. Write a DB migration converting the existing boolean column: true → 'positive', false → 'negative', NULL stays NULL.
+## 2. Rename `feedback_type` → `feedback_reason` (type change: string → list of strings)
+- New field: `feedback_reason: Optional[list[str]]`.
+- Allowed values (unchanged vocabulary): incorrect_response, incomplete, low_confidence, slow, tool_failed, unsafe, rag_missing, formatting, other.
+- Remove the silent normalisation of unrecognised values to "other". Instead: reject unrecognised values with a 422 listing the invalid value(s) and the allowed vocabulary.
+- Backward compatibility: accept `feedback_type` (single string) as a deprecated alias; wrap it into a one-element list, keep the OLD silent-normalise-to-"other" behaviour only for this legacy path, and log a deprecation warning.
+- DB migration: convert the existing single-value column to a list/array (or JSON) column, wrapping existing values in one-element lists.
+## 3. Rename `response_text` (dict) → `response_payload`
+- Rename the field; type stays dict, optional. Accept `response_text` as a deprecated alias.
+- `llm_response_text` (string, optional) is unchanged.
+## 4. New optional request fields
+Add these to the request model, persist them, and expose in the stored record:
+- `model_id: Optional[str]` — id of the model that generated the rated response
+- `model_version: Optional[str]`
+- `prompt_id: Optional[str]` and `prompt_version: Optional[str]`
+- `conversation_id: Optional[str]` and `message_index: Optional[int]` (>= 0)
+- `response_timestamp: Optional[datetime]` — when the rated response was generated (distinct from server received-at)
+- `suggested_correction: Optional[str]` — user-provided text of what the answer should have been
+- `source: Optional[str]` — surface the feedback came from (e.g. "web", "api", "batch_eval")
+- `client_version: Optional[str]`
+- `latency_ms: Optional[int]` (>= 0)
+- `locale: Optional[str]`
+## 5. New validation rule: no empty feedback
+Reject with 422 any request where ALL of `reaction`, `rating`, `comments`, `suggested_correction`, and `feedback_reason` are absent/empty. Error message: "At least one feedback signal is required (reaction, rating, feedback_reason, comments, or suggested_correction)."
+## 6. Unchanged fields — do not touch
+trace_id, user_id, usecase_id, correlation_id, prompt, metadata, confidence_score, comments, external_user, user_email, rating, and the header-sourcing behaviour for user_id/usecase_id/correlation_id.
+## 7. Tests & docs
+- Update all existing tests for the renames; add tests for: alias mapping (correctness→reaction, feedback_type→feedback_reason, response_text→response_payload), both-provided precedence, 422 on invalid feedback_reason values, 422 on empty-feedback rule, and each new field round-tripping to the DB.
+- Update the OpenAPI/schema docs: mark the three old fields as deprecated with their replacements, document the reaction enum and feedback_reason vocabulary.
