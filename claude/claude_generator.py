@@ -4,7 +4,7 @@ import logging
 from typing import Dict, List, Tuple
 import json
 import httpx
-from anthropic import AsyncAnthropicVertex, APIStatusError, APITimeoutError
+from anthropic import AsyncAnthropicVertex, APIConnectionError, APIStatusError, APITimeoutError
 from anthropic.types import Message
 from google.oauth2.credentials import Credentials
 from query.config.environment import ClaudeEnvironment
@@ -16,7 +16,6 @@ from query.models.observability import ObservabilityLogType, ObservabilityLogger
 from query.models.part_holder import PartHolder
 from query.util.error_codes import ErrorCodes
 from query.util.exception_handler import GenaiCommonException
-from query.util.logging_utils import is_debug_logging_enabled
 from query.util.proxy_token_roller import ProxyTokenRoller
 from query.util.retry_utils import retry_wrapper
 
@@ -46,12 +45,6 @@ _CLAUDE_DOCUMENT_MIME_TYPES: frozenset[str] = frozenset({
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 })
 
-# Model parameters from llm_config.model_parameters that may be forwarded to
-# the Anthropic Messages API. Anything not listed here is silently ignored —
-# a deliberate safety property: config typos or provider-specific keys never
-# reach the API. Extend this list when a new API param should become
-# configurable. (model / max_tokens / system / messages / thinking are built
-# explicitly in _build_create_args, so they don't belong here.)
 _ALLOWED_MODEL_PARAMS: frozenset[str] = frozenset({
     "temperature", "top_p", "stop_sequences", "top_k", "metadata",
 })
@@ -62,7 +55,7 @@ _FLOAT_MODEL_PARAMS: frozenset[str] = frozenset({"temperature", "top_p"})
 
 # Model-ID prefixes (4.6+) where manual extended thinking
 # ({"type": "enabled", "budget_tokens": N}) is deprecated (4.6) or returns a
-# 400 (4.7+ / Sonnet 5 / Fable 5) — these models take {"type": "adaptive"}.
+# 400 (4.7+ / Sonnet 5) — these models take {"type": "adaptive"}.
 _CLAUDE_ADAPTIVE_THINKING_PREFIXES: Tuple[str, ...] = (
     "claude-opus-4-6",
     "claude-opus-4-7",
@@ -70,9 +63,7 @@ _CLAUDE_ADAPTIVE_THINKING_PREFIXES: Tuple[str, ...] = (
     "claude-sonnet-4-6",
     "claude-sonnet-4-7",
     "claude-sonnet-4-8",
-    "claude-sonnet-5",
-    "claude-fable-5",
-    "claude-mythos-5",
+    "claude-sonnet-5"
 )
 
 # Model-ID prefixes (4.7+) where sampling params (temperature / top_p / top_k)
@@ -82,9 +73,7 @@ _CLAUDE_NO_SAMPLING_PREFIXES: Tuple[str, ...] = (
     "claude-opus-4-8",
     "claude-sonnet-4-7",
     "claude-sonnet-4-8",
-    "claude-sonnet-5",
-    "claude-fable-5",
-    "claude-mythos-5",
+    "claude-sonnet-5"
 )
 
 _SAMPLING_PARAMS: frozenset[str] = frozenset({"temperature", "top_p", "top_k"})
@@ -95,17 +84,10 @@ def _bare_model_name(model_name: str) -> str:
     return model_name.split("@", 1)[0]
 
 
-# Explicit request timeout passed to client.messages.create() — this suppresses
-# the SDK's guard against long non-streaming requests, so it must cover the
-# slowest generation we expect (large max_tokens configs, e.g. 64K for the
-# LC-rules use case). A flat ceiling costs nothing on small requests — timeout
-# only bounds how long the SDK waits, it doesn't force a wait.
+# Explicit request timeout (seconds) passed to client.messages.create() to ensure
+# the SDK uses this value instead of calculating one from max_tokens.
 _CLAUDE_REQUEST_TIMEOUT: httpx.Timeout = httpx.Timeout(timeout=1200.0, connect=30.0)
 
-
-# ------------------------------------------------------------------------------
-# Module-level helpers
-# ------------------------------------------------------------------------------
 
 def _make_r2d2_header_hook(headers_capture: dict):
     """Factory: returns a per-request httpx event-hook that captures and logs R2D2 rate-limit headers."""
@@ -143,10 +125,6 @@ def _build_content_block(part: PartHolder) -> dict | None:
     return None
 
 
-# ------------------------------------------------------------------------------
-# ClaudeGenerator
-# ------------------------------------------------------------------------------
-
 class ClaudeGenerator(Generator):
     """
     Generator implementation for Anthropic Claude models.
@@ -171,13 +149,7 @@ class ClaudeGenerator(Generator):
         self.token_roller = token_roller
         self.llm_config = llm_config
         self.use_case = use_case
-        # Mirrors VertexAiGenerator's resolution order: explicit model_config
-        # override wins, otherwise fall back to the environment default.
         self.project_id = self.llm_config.project_id or environment.claude_project_id
-
-    # ------------------------------------------------------------------
-    # Generator interface
-    # ------------------------------------------------------------------
 
     async def generate(
         self,
@@ -220,7 +192,10 @@ class ClaudeGenerator(Generator):
         """
 
         r2d2_headers: dict = {}
-        client = self._build_client(r2d2_headers)
+        try:
+            client = self._build_client(r2d2_headers)
+        except httpx.ConnectError as e:
+            raise GenaiCommonException(ErrorCodes.ER010, ErrorCodes.ER010.get_description(), e) from e
         content = self._build_message_content(parts, prompt)
         create_args = self._build_create_args(system_prompt, content, max_tokens, response_schema)
 
@@ -233,8 +208,6 @@ class ClaudeGenerator(Generator):
             generate_with_retry = retry_wrapper(self.__generate, retry_config)
             return await generate_with_retry(client, create_args, soeid, r2d2_headers)
         finally:
-            # A fresh httpx.AsyncClient is created per request in _build_client;
-            # close it (after all retries) or each request leaks a connection pool.
             await client.close()
 
     @staticmethod
@@ -270,24 +243,18 @@ class ClaudeGenerator(Generator):
     def get_platform() -> ModelProvider:
         return ModelProvider.CLAUDE
 
-    # ------------------------------------------------------------------
-    # Internal implementation
-    # ------------------------------------------------------------------
-
     async def __generate(
         self, client: AsyncAnthropicVertex, create_args: dict, soeid: str, r2d2_headers: dict = None
     ) -> Tuple[Message, LLMUsageMetrics]:
 
         try:
-            # Non-streaming create(), matching Citi's canonical R2D2 sample —
-            # streaming (SSE) support through the R2D2 proxy is unverified.
-            response = await client.messages.create(
+            async with client.messages.stream(
                 extra_headers={"x-r2d2-user": soeid},
                 timeout=_CLAUDE_REQUEST_TIMEOUT,
                 **create_args,
-            )
+            ) as stream:
+                response = await stream.get_final_message()
         except APIStatusError as e:
-            # Always log the raw API error body so we can diagnose 400s
             logger.error(
                 "Claude API error %s: %s | request_id=%s | body=%s",
                 e.status_code,
@@ -305,6 +272,8 @@ class ClaudeGenerator(Generator):
                 raise GenaiCommonException(ErrorCodes.GR009, ErrorCodes.GR009.get_description(), e) from e
         except APITimeoutError as e:
             raise GenaiCommonException(ErrorCodes.GR012, ErrorCodes.GR012.get_description(), e) from e
+        except APIConnectionError as e:
+            raise GenaiCommonException(ErrorCodes.ER012, ErrorCodes.ER012.get_description(), e) from e
 
         usage_metrics = LLMUsageMetrics.from_claude_response(response)
         logger.info("Logging for usage_metrics = %s , response = %s", usage_metrics, response)
@@ -363,25 +332,15 @@ class ClaudeGenerator(Generator):
 
         Forwards only the model parameters listed in _ALLOWED_MODEL_PARAMS.
         Numeric float parameters (temperature, top_p) are coerced to float.
-
-        response_schema handling (two modes):
-          - model_parameters["native_json_schema"] is truthy -> platform-enforced
-            structured outputs via output_config.format (same guarantee as
-            Vertex's response_schema).
-          - otherwise -> schema injected into the system prompt as an
-            instruction (reliable, but not enforced).
+        When response_schema is provided it is injected into the system prompt
+        as a JSON schema instruction (Claude has no native schema parameter).
         """
 
-        # No client-side ceiling: model_parameters is per-model config, so the
-        # configured value is trusted as-is. If it ever exceeds the model's real
-        # output limit (64K/128K depending on tier), the API rejects it with a
-        # clearly-worded 400 (surfaced as GR007) — an explicit failure we prefer
-        # over silently clamping to a maintained per-model table.
         resolved_max_tokens = (
             max_tokens
             or self.llm_config.model_parameters.get("max_tokens")
             or self.llm_config.model_parameters.get("max_output_tokens")
-            or 8192
+            or 64000
         )
         args: dict = {
             "model": self.llm_config.name,
@@ -391,19 +350,10 @@ class ClaudeGenerator(Generator):
 
         if response_schema:
             if self.llm_config.model_parameters.get("native_json_schema"):
-                # Platform-enforced JSON conformance — the exact analog of
-                # Vertex's response_schema + response_mime_type. Guaranteed
-                # valid, schema-conformant JSON (barring max_tokens truncation).
-                # Opt-in per model via config: requires a model generation that
-                # supports output_config.format AND schemas with
-                # additionalProperties: false on every object. Smoke-test a
-                # model on R2D2 before enabling its flag.
                 args["output_config"] = {
                     "format": {"type": "json_schema", "schema": response_schema}
                 }
             else:
-                # Fallback: prompt-level steering. Highly reliable but not
-                # enforced — downstream consumers should still parse defensively.
                 schema_instruction = (
                     "You must respond with valid JSON only, strictly conforming to this JSON schema:\n"
                     f"{json.dumps(response_schema)}\n"
@@ -413,7 +363,6 @@ class ClaudeGenerator(Generator):
                 system_prompt = (
                     f"{system_prompt}\n\n{schema_instruction}" if system_prompt else schema_instruction
                 )
-
         if system_prompt:
             args["system"] = system_prompt
 
@@ -427,9 +376,6 @@ class ClaudeGenerator(Generator):
             budget = thinking_config.get("thinking_budget")
             if budget is not None:
                 if adaptive_thinking_model:
-                    # budget_tokens is deprecated on 4.6 and returns a 400 on
-                    # 4.7+ / Sonnet 5 / Fable 5 — these models decide their own
-                    # thinking depth via adaptive mode.
                     args["thinking"] = {"type": "adaptive"}
                 else:
                     args["thinking"] = {"type": "enabled", "budget_tokens": int(budget)}
@@ -439,8 +385,6 @@ class ClaudeGenerator(Generator):
             if param not in _ALLOWED_MODEL_PARAMS:
                 continue
             if sampling_removed_model and param in _SAMPLING_PARAMS:
-                # temperature/top_p/top_k were removed on 4.7+ models —
-                # forwarding them returns a 400, so drop them from the request.
                 logger.warning(
                     "Dropping sampling param '%s' — not supported by model %s",
                     param, self.llm_config.name,
