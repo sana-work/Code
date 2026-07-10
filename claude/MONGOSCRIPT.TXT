@@ -1,0 +1,62 @@
+// ============================================================
+// Copies collection STRUCTURE ONLY (validation rules + indexes)
+// from agentic_middleware -> target DB. No documents are copied.
+//
+// Run this from Compass's "Open MongoDB shell" (or any mongosh
+// session connected to the same cluster/connection as OPSUI_DEV),
+// since it uses db.getSiblingDB() to reach both databases.
+// ============================================================
+
+// ===== CONFIG: edit these two lines =====
+const sourceDbName = "agentic_middleware";
+const targetDbName = "REPLACE_WITH_TARGET_DB_NAME"; // <-- set this
+const collectionsToCopy = ["events", "recon", "sessions"];
+// ==========================================
+
+const sourceDb = db.getSiblingDB(sourceDbName);
+const targetDb = db.getSiblingDB(targetDbName);
+
+collectionsToCopy.forEach((collName) => {
+  print(`\n--- ${collName} ---`);
+
+  const collInfo = sourceDb.getCollectionInfos({ name: collName })[0];
+  if (!collInfo) {
+    print(`  Source collection '${collName}' not found in '${sourceDbName}', skipping.`);
+    return;
+  }
+
+  const opts = collInfo.options || {};
+  const createOptions = {};
+  if (opts.validator) createOptions.validator = opts.validator;
+  if (opts.validationLevel) createOptions.validationLevel = opts.validationLevel;
+  if (opts.validationAction) createOptions.validationAction = opts.validationAction;
+
+  // 1. Create the collection in the target DB with the same validation rules
+  try {
+    targetDb.createCollection(collName, createOptions);
+    print(`  Created '${collName}' in '${targetDbName}' with validation rules.`);
+  } catch (e) {
+    print(`  Skipped create (may already exist): ${e.message || e}`);
+  }
+
+  // 2. Recreate indexes (skipping the default _id_ index)
+  const indexes = sourceDb.getCollection(collName).getIndexes();
+  indexes.forEach((idx) => {
+    if (idx.name === "_id_") return;
+
+    const spec = Object.assign({}, idx);
+    delete spec.v;
+    delete spec.ns;
+    const key = spec.key;
+    delete spec.key;
+
+    try {
+      targetDb.getCollection(collName).createIndex(key, spec);
+      print(`  Created index '${idx.name}' on '${collName}'.`);
+    } catch (e) {
+      print(`  Could not create index '${idx.name}': ${e.message || e}`);
+    }
+  });
+});
+
+print("\nDone. No documents were copied — structure only.");
