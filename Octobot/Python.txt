@@ -1,0 +1,31 @@
+## 10 Essential Backend Python Developer Skills
+
+1. **Advanced Python Programming**
+   Strong knowledge of OOP, decorators, generators, context managers, exception handling, typing, and asynchronous programming.
+
+2. **Backend Frameworks**
+   Experience with Django, Flask, or FastAPI for building scalable backend applications.
+
+3. **REST API Development**
+   Ability to design, develop, document, secure, and test RESTful APIs.
+
+4. **Database Management**
+   Strong SQL knowledge and experience with PostgreSQL, MySQL, SQLite, or MongoDB.
+
+5. **ORM Tools**
+   Experience using SQLAlchemy, Django ORM, or similar tools for database operations and migrations.
+
+6. **Authentication and Security**
+   Knowledge of JWT, OAuth, session authentication, password hashing, authorization, input validation, and common web vulnerabilities.
+
+7. **Testing and Debugging**
+   Ability to write unit and integration tests using `pytest` or `unittest`, along with effective debugging and logging.
+
+8. **Git and Version Control**
+   Experience with Git, GitHub, branching, merging, pull requests, code reviews, and conflict resolution.
+
+9. **Docker and Deployment**
+   Knowledge of Docker, Linux servers, environment variables, application deployment, and CI/CD pipelines.
+
+10. **System Design and Performance**
+    Understanding of caching, background jobs, message queues, API scalability, database optimization, and clean application architecture.
