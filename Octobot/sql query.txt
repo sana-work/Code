@@ -834,3 +834,142 @@ WHERE OWNER = 'PACTDATA'
   )
 ORDER BY TABLE_NAME, COLUMN_ID;
 ```
+
+
+Great. The next task is to identify how the seven tables are connected. Do not let the agent guess joins.
+
+Run these two blocks.
+
+## Step 5 — Create the relationship metadata table
+
+```sql
+CREATE TABLE AI_RELATIONSHIP_METADATA
+(
+    SOURCE_OWNER               VARCHAR2(128) NOT NULL,
+    SOURCE_TABLE               VARCHAR2(128) NOT NULL,
+    RELATIONSHIP_NAME          VARCHAR2(128) NOT NULL,
+
+    SOURCE_COLUMNS             VARCHAR2(1000) NOT NULL,
+
+    TARGET_OWNER               VARCHAR2(128) NOT NULL,
+    TARGET_TABLE               VARCHAR2(128) NOT NULL,
+    TARGET_COLUMNS             VARCHAR2(1000) NOT NULL,
+
+    JOIN_EXPRESSION            VARCHAR2(4000) NOT NULL,
+    CARDINALITY                VARCHAR2(30),
+
+    RELATIONSHIP_DESCRIPTION   VARCHAR2(2000),
+    VERIFIED_FLAG              CHAR(1) DEFAULT 'N' NOT NULL,
+
+    LAST_REFRESHED_AT          TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+
+    CONSTRAINT PK_AI_RELATIONSHIP
+        PRIMARY KEY
+        (
+            SOURCE_OWNER,
+            SOURCE_TABLE,
+            RELATIONSHIP_NAME
+        ),
+
+    CONSTRAINT CK_AI_REL_VERIFIED
+        CHECK (VERIFIED_FLAG IN ('Y', 'N'))
+);
+```
+
+If you receive:
+
+```text
+ORA-00955: name is already used by an existing object
+```
+
+the table already exists, so continue.
+
+## Step 6 — Find columns appearing in multiple tables
+
+Run:
+
+```sql
+SELECT
+    COLUMN_NAME,
+    COUNT(DISTINCT TABLE_NAME) AS NUMBER_OF_TABLES,
+
+    LISTAGG(TABLE_NAME, ', ')
+        WITHIN GROUP (ORDER BY TABLE_NAME)
+        AS TABLES_CONTAINING_COLUMN
+
+FROM AI_COLUMN_METADATA
+
+WHERE TABLE_NAME IN
+(
+    'PACT_HISTORY_WORK',
+    'EMT_WORK_HISTORY',
+    'CITI_DATA_AI_INSIGHTS',
+    'CITI_DATA_NLP_REPORTING',
+    'CITI_DATA_NLP_CASEDATA',
+    'PACT_WORK',
+    'CITI_DATA_LOG'
+)
+
+GROUP BY COLUMN_NAME
+
+HAVING COUNT(DISTINCT TABLE_NAME) > 1
+
+ORDER BY
+    NUMBER_OF_TABLES DESC,
+    COLUMN_NAME;
+```
+
+This will show possible join columns such as:
+
+```text
+CASE_ID
+CASE_NUMBER
+REQUEST_ID
+EMAIL_ID
+SESSION_ID
+```
+
+Do not insert relationships yet. Columns with the same name are not always valid join keys.
+
+## Also run this detailed version
+
+```sql
+SELECT
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE_TEXT,
+    IS_PRIMARY_KEY,
+    IS_FOREIGN_KEY,
+    NULLABLE_FLAG
+FROM AI_COLUMN_METADATA
+WHERE COLUMN_NAME IN
+(
+    SELECT COLUMN_NAME
+    FROM AI_COLUMN_METADATA
+    WHERE TABLE_NAME IN
+    (
+        'PACT_HISTORY_WORK',
+        'EMT_WORK_HISTORY',
+        'CITI_DATA_AI_INSIGHTS',
+        'CITI_DATA_NLP_REPORTING',
+        'CITI_DATA_NLP_CASEDATA',
+        'PACT_WORK',
+        'CITI_DATA_LOG'
+    )
+    GROUP BY COLUMN_NAME
+    HAVING COUNT(DISTINCT TABLE_NAME) > 1
+)
+AND TABLE_NAME IN
+(
+    'PACT_HISTORY_WORK',
+    'EMT_WORK_HISTORY',
+    'CITI_DATA_AI_INSIGHTS',
+    'CITI_DATA_NLP_REPORTING',
+    'CITI_DATA_NLP_CASEDATA',
+    'PACT_WORK',
+    'CITI_DATA_LOG'
+)
+ORDER BY COLUMN_NAME, TABLE_NAME;
+```
+
+Send the result of Step 6. From that output, the correct relationship inserts can be created without guessing.
