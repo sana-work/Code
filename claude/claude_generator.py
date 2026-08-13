@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import base64
 import logging
 from typing import Dict, List, Tuple
 import json
@@ -14,14 +14,16 @@ from query.models.generation_metadata import ModelConfig, ModelProvider, ModelRe
 from query.models.llm_usage_metrics import LLMUsageMetrics
 from query.models.observability import ObservabilityLogType, ObservabilityLogger
 from query.models.part_holder import PartHolder
+from query.util.document_utils import word_to_text, xlsx_to_text, odt_to_text, tiff_to_png
 from query.util.error_codes import ErrorCodes
 from query.util.exception_handler import GenaiCommonException
 from query.util.proxy_token_roller import ProxyTokenRoller
 from query.util.retry_utils import retry_wrapper
 
+
 logger = logging.getLogger(__name__)
 
-
+#Sent to Claude as "type": "image" blocks with source type "base64"
 _CLAUDE_IMAGE_MIME_TYPES: frozenset[str] = frozenset({
     "image/jpeg",
     "image/png",
@@ -29,21 +31,38 @@ _CLAUDE_IMAGE_MIME_TYPES: frozenset[str] = frozenset({
     "image/webp",
 })
 
-# Sent to Claude as "type": "document" blocks
-_CLAUDE_DOCUMENT_MIME_TYPES: frozenset[str] = frozenset({
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.oasis.opendocument.text",
-    "application/epub+zip",
-    "text/plain",
+# Constant for the only media_type accepted by Anthropic's PlainTextSourceParam
+TEXT_PLAIN: str = "text/plain"
+
+#Sent to Claude as "type": "text" blocks with source type "base64"
+_CLAUDE_TEXT_MIME_TYPES: frozenset[str] = frozenset({
+    TEXT_PLAIN,
     "text/html",
+    "text/htm",
     "text/csv",
     "text/tab-separated-values",
     "application/json",
     "application/rtf",
     "text/rtf",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 })
+
+# Sent to Claude as "type": "document" blocks with source type "base64"
+_CLAUDE_DOCUMENT_MIME_TYPES: frozenset[str] = frozenset({
+    "application/pdf",
+})
+
+#Sent to Claude as "type": "text" blocks converted to plain text
+_CLAUDE_OTHER_MIME_TYPES: frozenset[str] = frozenset({
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.oasis.opendocument.text",
+})
+
+# Sent to Claude as "type": "image" blocks after converting to PNG
+_CLAUDE_CONVERT_IMAGE_MIME_TYPES: frozenset[str] = frozenset({
+    "image/tiff",
+})
+
 
 _ALLOWED_MODEL_PARAMS: frozenset[str] = frozenset({
     "temperature", "top_p", "stop_sequences", "top_k", "metadata",
@@ -53,68 +72,39 @@ _ALLOWED_MODEL_PARAMS: frozenset[str] = frozenset({
 # Parameters whose values must always be sent as float
 _FLOAT_MODEL_PARAMS: frozenset[str] = frozenset({"temperature", "top_p"})
 
-# Bare model IDs (Vertex "@<snapshot>" suffix stripped) that still take MANUAL
-# extended thinking ({"type": "enabled", "budget_tokens": N}). This is a
-# closed set: 4.6 deprecated budget_tokens and 4.7+ / Sonnet 5 reject it with
-# a 400, so every newer model — and anything unrecognized, i.e. future models —
-# defaults to {"type": "adaptive"} and works without touching this file.
-_CLAUDE_MANUAL_THINKING_MODELS: frozenset[str] = frozenset({
-    "claude-3-7-sonnet",
-    "claude-opus-4",
-    "claude-opus-4-1",
-    "claude-opus-4-5",
-    "claude-sonnet-4",
-    "claude-sonnet-4-5",
-    "claude-haiku-4-5",
-})
+# Model-ID prefixes (4.6+) where manual extended thinking is deprecated — these models use {"type": "adaptive"}.
+_CLAUDE_ADAPTIVE_THINKING_PREFIXES: Tuple[str, ...] = (
+    "claude-opus-4-6", "claude-opus-4-7", "claude-opus-4-8",
+    "claude-sonnet-4-6", "claude-sonnet-4-7", "claude-sonnet-4-8", "claude-sonnet-5",
+)
 
-# Bare model IDs that still accept sampling params (temperature / top_p /
-# top_k). Sampling was removed from the API in 4.7, so on 4.7+ / Sonnet 5 —
-# and by default on unrecognized future models — these params are dropped
-# before the request. 4.6 kept sampling while deprecating manual thinking,
-# hence the extra entries beyond the manual-thinking set. Also a closed set.
-_CLAUDE_SAMPLING_PARAM_MODELS: frozenset[str] = _CLAUDE_MANUAL_THINKING_MODELS | frozenset({
-    "claude-opus-4-6",
-    "claude-sonnet-4-6",
-    "claude-3-5-sonnet",
-    "claude-3-5-sonnet-v2",
-    "claude-3-5-haiku",
-    "claude-3-opus",
-    "claude-3-sonnet",
-    "claude-3-haiku",
-})
+# Model-ID prefixes (4.7+) where sampling params are removed from the API — sending them returns a 400.
+_CLAUDE_NO_SAMPLING_PREFIXES: Tuple[str, ...] = (
+    "claude-opus-4-7", "claude-opus-4-8",
+    "claude-sonnet-4-7", "claude-sonnet-4-8", "claude-sonnet-5",
+)
 
 _SAMPLING_PARAMS: frozenset[str] = frozenset({"temperature", "top_p", "top_k"})
 
+# R2D2 rate-limit response headers to capture and forward to observability logs
+_R2D2_TRACKED_HEADERS: Tuple[str, ...] = ("x-r2d2-requestid", "ratelimit-limit", "ratelimit-remaining")
 
 def _bare_model_name(model_name: str) -> str:
     """Strip the Vertex "@<snapshot-date>" suffix (e.g. "claude-opus-4-5@20251101")."""
     return model_name.split("@", 1)[0]
 
 
-# Explicit request timeout (seconds) passed on every request so the SDK uses
-# this value instead of deriving one from max_tokens. Must cover the slowest
-# generation we run (e.g. 64K-token outputs); a large ceiling costs nothing on
-# fast requests — it only bounds how long the SDK will wait.
+# Explicit request timeout (seconds) passed to client.messages.create() to ensure
+# the SDK uses this value instead of calculating one from max_tokens.
 _CLAUDE_REQUEST_TIMEOUT: httpx.Timeout = httpx.Timeout(timeout=1200.0, connect=30.0)
 
 
 def _make_r2d2_header_hook(headers_capture: dict):
     """Factory: returns a per-request httpx event-hook that captures and logs R2D2 rate-limit headers."""
     async def _hook(response: httpx.Response) -> None:
-        header_keys = {
-            "x-r2d2-requestid":   "x-r2d2-requestid",
-            "ratelimit-limit":    "ratelimit-limit",
-            "ratelimit-remaining": "ratelimit-remaining",
-        }
-        extra = {
-            field: response.headers[header]
-            for header, field in header_keys.items()
-            if response.headers.get(header)
-        }
+        extra = {h: response.headers[h] for h in _R2D2_TRACKED_HEADERS if response.headers.get(h)}
         if extra:
             headers_capture.update(extra)
-            logger.info("R2D2 response headers", extra=extra)
     return _hook
 
 
@@ -124,15 +114,53 @@ def _build_content_block(part: PartHolder) -> dict | None:
 
     Returns None when the MIME type is unsupported (caller logs and skips it).
     """
-    source = {"type": "base64", "media_type": part.mime_type, "data": part.data}
 
+    #Check the type
     if part.mime_type in _CLAUDE_IMAGE_MIME_TYPES:
+        source = {"type": "base64", "media_type": part.mime_type, "data": part.data}
         return {"type": "image", "source": source}
 
-    if part.mime_type in _CLAUDE_DOCUMENT_MIME_TYPES:
+    if part.mime_type in _CLAUDE_TEXT_MIME_TYPES:
+        decoded_text = base64.b64decode(part.data).decode("utf-8")
+        source = {"type": "text", "media_type": TEXT_PLAIN, "data": decoded_text}
         return {"type": "document", "source": source}
 
+    if part.mime_type in _CLAUDE_DOCUMENT_MIME_TYPES:
+        source = {"type": "base64", "media_type": part.mime_type, "data": part.data}
+        return {"type": "document", "source": source}
+
+    if part.mime_type in _CLAUDE_OTHER_MIME_TYPES:
+        raw_bytes = base64.b64decode(part.data)
+        mime = part.mime_type
+        if mime == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            converted_text = word_to_text(raw_bytes)
+        elif mime == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+            converted_text = xlsx_to_text(raw_bytes)
+        elif mime == "application/vnd.oasis.opendocument.text":
+            converted_text = odt_to_text(raw_bytes)
+        else:
+            return None
+        source = {"type": "text", "media_type": TEXT_PLAIN, "data": converted_text}
+        return {"type": "document", "source": source}
+
+    if part.mime_type in _CLAUDE_CONVERT_IMAGE_MIME_TYPES:
+        raw_bytes = base64.b64decode(part.data)
+        png_bytes = tiff_to_png(raw_bytes)
+        png_b64 = base64.b64encode(png_bytes).decode("utf-8")
+        source = {"type": "base64", "media_type": "image/png", "data": png_b64}
+        return {"type": "image", "source": source}
+
     return None
+
+
+def resolve_error_code(status_code: int) -> ErrorCodes:
+    if status_code == 429:
+        return ErrorCodes.GR008
+    if status_code == 400:
+        return ErrorCodes.GR007
+    if 400 <= status_code < 500:
+        return ErrorCodes.GR010
+    return ErrorCodes.GR009
 
 
 class ClaudeGenerator(Generator):
@@ -142,10 +170,6 @@ class ClaudeGenerator(Generator):
     Builds requests in the Anthropic Messages API format and routes them
     through the Citi R2D2 proxy via AnthropicVertex SDK.
 
-    Part routing:
-      - image/jpeg, image/png, image/gif, image/webp  ->  type: image
-      - PDF, DOCX, TXT, HTML, RTF, ODT, EPUB,
-        CSV, XLSX, JSON, TSV                           ->  type: document
     """
 
     def __init__(
@@ -168,7 +192,7 @@ class ClaudeGenerator(Generator):
         soeid: str,
         response_schema: Dict = None,
         max_tokens: int = None,
-        retry_config: ModelRetryConfig = None,
+        retry_config: ModelRetryConfig = ModelRetryConfig(),
     ) -> Tuple[Message, LLMUsageMetrics]:
         """Text-only generation - delegates to generate_multimodal with no parts."""
         return await self.generate_multimodal(
@@ -183,7 +207,7 @@ class ClaudeGenerator(Generator):
         soeid: str,
         response_schema: Dict = None,
         max_tokens: int = None,
-        retry_config: ModelRetryConfig = None,
+        retry_config: ModelRetryConfig = ModelRetryConfig(),
     ) -> Tuple[Message, LLMUsageMetrics]:
         """
         Multimodal generation supporting images and documents alongside text.
@@ -193,45 +217,27 @@ class ClaudeGenerator(Generator):
             prompt:        User text prompt (always appended last in the message).
             parts:         Optional list of image / document parts.
             soeid:         SOEID of the requesting user (forwarded as x-r2d2-user).
-            response_schema: Optional JSON schema (native or prompt-injected,
-                           depending on the model's native_json_schema flag).
+            response_schema: Optional JSON schema injected into the system prompt.
             max_tokens:    Override for maximum output tokens.
-            retry_config:  Retry configuration (defaults to ModelRetryConfig()).
+            retry_config:  Retry configuration.
 
         Returns:
             Tuple of (Anthropic Message, LLMUsageMetrics).
         """
 
-        # Not a signature default: a mutable default instance would be shared
-        # across every call and could leak retry state between requests.
-        retry_config = retry_config or ModelRetryConfig()
-
-        # Build the request payload BEFORE the client: these can raise on bad
-        # config, and no client exists yet to leak.
-        content = self._build_message_content(parts, prompt)
-        create_args = self._build_create_args(system_prompt, content, max_tokens, response_schema)
-
-        logger.info(
-            "Calling Claude LLM with R2D2 - %s - using model - %s",
-            self.llm_config.r2d2_coin, self.llm_config.name,
-        )
-
         r2d2_headers: dict = {}
         try:
             client = self._build_client(r2d2_headers)
-        except Exception as e:
-            # Client construction does no network I/O, but the COIN token fetch
-            # via ProxyTokenRoller can fail (expired session, IAM hiccup).
-            # Surface any setup failure as ER010 — deliberately outside the
-            # retry loop, since retrying with broken setup cannot succeed.
+        except httpx.ConnectError as e:
             raise GenaiCommonException(ErrorCodes.ER010, ErrorCodes.ER010.get_description(), e) from e
+        content = self._build_message_content(parts, prompt)
+        create_args = self._build_create_args(system_prompt, content, max_tokens, response_schema)
+
 
         try:
             generate_with_retry = retry_wrapper(self.__generate, retry_config)
             return await generate_with_retry(client, create_args, soeid, r2d2_headers)
         finally:
-            # A fresh httpx.AsyncClient is created per request in _build_client;
-            # close it (after all retries) or each request leaks a connection pool.
             await client.close()
 
     @staticmethod
@@ -241,9 +247,8 @@ class ClaudeGenerator(Generator):
 
         Claude does not expose log-probabilities, so confidence_score is always 0.
         (Unlike VertexAiGenerator.unwrap_llm_response, there is no dict-vs-str
-        branch here — whether response_schema was prompt-injected or natively
-        enforced via output_config, the answer arrives as a text block, so
-        block.text is always a plain string.)
+        branch here — Claude has no native JSON mode; response_schema is injected
+        into the system prompt, so block.text is always a plain string.)
 
         Raises:
             ValueError: If the response contains no content or no text block.
@@ -251,14 +256,10 @@ class ClaudeGenerator(Generator):
         if not response.content:
             raise ValueError("No content in Claude completion response")
 
-        for block in response.content:
-            if block.type == "text":
-                return block.text, ConfidenceScoreResponse(
-                    confidence_score=0,
-                    token_wise_confidence_scores=[],
-                )
-
-        raise ValueError("No text content block in Claude completion response")
+        text_block = next((b for b in response.content if b.type == "text"), None)
+        if not text_block:
+            raise ValueError("No text content block in Claude completion response")
+        return text_block.text, ConfidenceScoreResponse(confidence_score=0, token_wise_confidence_scores=[])
 
     @property
     def default_prompt_id(self) -> str:
@@ -273,39 +274,35 @@ class ClaudeGenerator(Generator):
     ) -> Tuple[Message, LLMUsageMetrics]:
 
         try:
-            async with client.messages.stream(
+            response = await client.messages.create(
                 extra_headers={"x-r2d2-user": soeid},
                 timeout=_CLAUDE_REQUEST_TIMEOUT,
                 **create_args,
-            ) as stream:
-                response = await stream.get_final_message()
-        except APIStatusError as e:
-            logger.error(
-                "Claude API error %s: %s | request_id=%s | body=%s",
-                e.status_code,
-                e.message,
-                getattr(e, 'request_id', 'n/a'),
-                e.body if hasattr(e, 'body') else str(e),
             )
-            if e.status_code == 429:
-                raise GenaiCommonException(ErrorCodes.GR008, ErrorCodes.GR008.get_description(), e) from e
-            elif e.status_code == 400:
-                raise GenaiCommonException(ErrorCodes.GR007, ErrorCodes.GR007.get_description(), e) from e
-            elif 400 <= e.status_code < 500:
-                raise GenaiCommonException(ErrorCodes.GR010, ErrorCodes.GR010.get_description(), e) from e
-            else:
-                raise GenaiCommonException(ErrorCodes.GR009, ErrorCodes.GR009.get_description(), e) from e
+        except APIStatusError as e:
+            status = e.status_code
+            response_obj = getattr(e, "response", None)
+            hdrs = dict(getattr(response_obj, "headers", {}) or {})
+
+            ObservabilityLogger.get_logger().error({
+                "observability_type": ObservabilityLogType.ERROR.value,
+                "model": self.llm_config.name,
+                "r2d2_coin": self.llm_config.r2d2_coin,
+                "status_code": status,
+                "x_r2d2_requestid": hdrs.get("x-r2d2-requestid"),
+                "ratelimit_limit": hdrs.get("ratelimit-limit"),
+                "ratelimit_remaining": hdrs.get("ratelimit-remaining"),
+                "x_r2d2_response_source": hdrs.get("x-r2d2-response-source")
+            })
+            raise GenaiCommonException(resolve_error_code(e.status_code), e.message, e) from e
         except APITimeoutError as e:
-            # Must precede APIConnectionError: APITimeoutError subclasses it.
-            raise GenaiCommonException(ErrorCodes.GR012, ErrorCodes.GR012.get_description(), e) from e
+            msg = ErrorCodes.GR012.get_description()
+            raise GenaiCommonException(ErrorCodes.GR012, msg, e) from e
         except APIConnectionError as e:
-            raise GenaiCommonException(ErrorCodes.ER012, ErrorCodes.ER012.get_description(), e) from e
+            msg = ErrorCodes.ER012.get_description()
+            raise GenaiCommonException(ErrorCodes.ER012, msg, e) from e
 
         usage_metrics = LLMUsageMetrics.from_claude_response(response)
-        logger.info("Claude usage metrics: %s", usage_metrics)
-        # Full model output only at DEBUG: at 64K max_tokens this can be huge
-        # and may contain client data — keep it out of routine INFO logs.
-        logger.debug("Claude raw response: %s", response)
         self._log_observability(usage_metrics, r2d2_headers or {})
         return response, usage_metrics
 
@@ -357,16 +354,12 @@ class ClaudeGenerator(Generator):
         response_schema: dict | None = None,
     ) -> dict:
         """
-        Assemble the keyword arguments for the Messages API call.
+        Assemble the keyword arguments for client.messages.create().
 
         Forwards only the model parameters listed in _ALLOWED_MODEL_PARAMS.
         Numeric float parameters (temperature, top_p) are coerced to float.
-
-        response_schema handling (two modes):
-          - model_parameters["native_json_schema"] truthy -> platform-enforced
-            structured outputs via output_config.format.
-          - otherwise -> schema injected into the system prompt as an
-            instruction (reliable, but not enforced).
+        When response_schema is provided it is injected into the system prompt
+        as a JSON schema instruction (Claude has no native schema parameter).
         """
 
         resolved_max_tokens = (
@@ -400,39 +393,52 @@ class ClaudeGenerator(Generator):
             args["system"] = system_prompt
 
         bare_model = _bare_model_name(self.llm_config.name)
-        manual_thinking_model = bare_model in _CLAUDE_MANUAL_THINKING_MODELS
-        sampling_param_model = bare_model in _CLAUDE_SAMPLING_PARAM_MODELS
+        adaptive_thinking_prefixes = _CLAUDE_ADAPTIVE_THINKING_PREFIXES + tuple(
+            self.environment.claude_extra_adaptive_thinking_prefixes
+        )
+        no_sampling_prefixes = _CLAUDE_NO_SAMPLING_PREFIXES + tuple(
+            self.environment.claude_extra_no_sampling_prefixes
+        )
+        adaptive_thinking_model = bare_model.startswith(adaptive_thinking_prefixes)
+        sampling_removed_model = bare_model.startswith(no_sampling_prefixes)
 
-        thinking_enabled = False
+        thinking_enabled = self._apply_thinking_config(args, adaptive_thinking_model)
+        self._apply_model_params(args, sampling_removed_model, thinking_enabled)
+
+        return args
+
+    def _apply_thinking_config(self, args: dict, adaptive_thinking_model: bool) -> bool:
+        """Mutate *args* with thinking config if present; return whether thinking is enabled."""
         thinking_config = self.llm_config.model_parameters.get("thinking_config")
-        if isinstance(thinking_config, dict):
-            budget = thinking_config.get("thinking_budget")
-            if budget is not None:
-                if manual_thinking_model:
-                    args["thinking"] = {"type": "enabled", "budget_tokens": int(budget)}
-                else:
-                    # 4.6+ and anything unrecognized (i.e. future models):
-                    # budget_tokens is deprecated/rejected — the model manages
-                    # its own thinking depth in adaptive mode.
-                    args["thinking"] = {"type": "adaptive"}
-                thinking_enabled = True
+        if not isinstance(thinking_config, dict):
+            return False
+        budget = thinking_config.get("thinking_budget")
+        if budget is None:
+            return False
+        if adaptive_thinking_model:
+            args["thinking"] = {"type": "adaptive"}
+        else:
+            args["thinking"] = {"type": "enabled", "budget_tokens": int(budget)}
+        return True
 
+    def _apply_model_params(
+        self, args: dict, sampling_removed_model: bool, thinking_enabled: bool
+    ) -> None:
+        """Forward allowed model parameters into *args*, coercing types where needed."""
         for param, value in self.llm_config.model_parameters.items():
             if param not in _ALLOWED_MODEL_PARAMS:
                 continue
-            if param in _SAMPLING_PARAMS and not sampling_param_model:
-                logger.warning(
-                    "Dropping sampling param '%s' — not supported by model %s",
-                    param, self.llm_config.name,
+            if sampling_removed_model and param in _SAMPLING_PARAMS:
+                raise GenaiCommonException(
+                    ErrorCodes.GR007,
+                    f"Sampling parameter '{param}' is not supported by model {self.llm_config.name}. "
+                    "Remove it from the model configuration.",
                 )
-                continue
             coerced = float(value) if param in _FLOAT_MODEL_PARAMS else value
             # Anthropic requires temperature=1 when extended thinking is enabled
             if param == "temperature" and thinking_enabled:
                 coerced = 1.0
             args[param] = coerced
-
-        return args
 
     def _log_observability(self, usage_metrics: LLMUsageMetrics, r2d2_headers: dict = None) -> None:
         """Emit a structured observability log entry after a successful call."""
@@ -445,7 +451,6 @@ class ClaudeGenerator(Generator):
             "observability_type": ObservabilityLogType.OTHER.value,
             "model": self.llm_config.name,
             "project_id": self.project_id,
-            "use_case": self.use_case,
             "r2d2_coin": self.llm_config.r2d2_coin,
             "usage_metrics": usage_metrics_dict,
         })

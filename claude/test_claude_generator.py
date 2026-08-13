@@ -1,16 +1,17 @@
 """
-Unit tests for ClaudeGenerator's pure request-assembly logic.
+Unit tests for ClaudeGenerator's pure logic: MIME routing / file conversion,
+request assembly, model-capability gating, and response unwrapping.
 
 The production module imports the `query` framework, the `anthropic` SDK and
-`google` auth — none of which are needed to exercise `_build_create_args`,
-`_bare_model_name`, `_build_content_block` or `unwrap_llm_response`.
+`google` auth — none of which are needed to exercise the pure functions.
 Lightweight stubs are injected into sys.modules before the module is loaded
-from its file path, so the tests run anywhere with a bare Python install.
+from its file path, so the suite runs anywhere with a bare Python install.
 
 Run from this directory:
     python3 -m unittest test_claude_generator -v
 """
 
+import base64
 import importlib.util
 import pathlib
 import sys
@@ -24,12 +25,34 @@ from unittest import mock
 # Stub external dependencies so claude_generator.py imports cleanly
 # ---------------------------------------------------------------------------
 
+DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+ODT = "application/vnd.oasis.opendocument.text"
+
+
 def _module(name, **attrs):
     mod = types.ModuleType(name)
     for key, value in attrs.items():
         setattr(mod, key, value)
     sys.modules[name] = mod
     return mod
+
+
+class _ErrorCode:
+    def __init__(self, name):
+        self._name = name
+
+    def get_description(self):
+        return f"{self._name} description"
+
+    def __repr__(self):
+        return f"<ErrorCode {self._name}>"
+
+
+class _GenaiCommonException(Exception):
+    def __init__(self, code, description, cause=None):
+        super().__init__(description)
+        self.code, self.description, self.cause = code, description, cause
 
 
 def _install_stub_modules():
@@ -85,18 +108,6 @@ def _install_stub_modules():
     class _ModelRetryConfig:
         pass
 
-    class _ErrorCode:
-        def __init__(self, name):
-            self._name = name
-
-        def get_description(self):
-            return self._name
-
-    class _GenaiCommonException(Exception):
-        def __init__(self, code, description, cause=None):
-            super().__init__(description)
-            self.code, self.description, self.cause = code, description, cause
-
     _module("query")
     _module("query.config")
     _module("query.config.environment", ClaudeEnvironment=object)
@@ -117,11 +128,22 @@ def _install_stub_modules():
     _module("query.models.llm_usage_metrics", LLMUsageMetrics=mock.MagicMock())
     _module(
         "query.models.observability",
-        ObservabilityLogType=SimpleNamespace(OTHER=SimpleNamespace(value="other")),
+        ObservabilityLogType=SimpleNamespace(
+            OTHER=SimpleNamespace(value="other"),
+            ERROR=SimpleNamespace(value="error"),
+        ),
         ObservabilityLogger=mock.MagicMock(),
     )
     _module("query.models.part_holder", PartHolder=object)
     _module("query.util")
+    # Document converters return recognizable sentinels so routing is assertable.
+    _module(
+        "query.util.document_utils",
+        word_to_text=lambda b: f"WORD::{b.decode('utf-8')}",
+        xlsx_to_text=lambda b: f"XLSX::{b.decode('utf-8')}",
+        odt_to_text=lambda b: f"ODT::{b.decode('utf-8')}",
+        tiff_to_png=lambda b: b"PNGBYTES:" + b,
+    )
     _module(
         "query.util.error_codes",
         ErrorCodes=SimpleNamespace(**{
@@ -144,6 +166,7 @@ def _load_module():
 
 
 cg = _load_module()
+ErrorCodes = sys.modules["query.util.error_codes"].ErrorCodes
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +176,23 @@ cg = _load_module()
 CONTENT = [{"type": "text", "text": "hi"}]
 
 
-def make_generator(model_name="claude-sonnet-5@20260101", model_parameters=None):
+def b64(raw: bytes | str) -> str:
+    """Encode to the base64 string shape PartHolder.data carries."""
+    if isinstance(raw, str):
+        raw = raw.encode("utf-8")
+    return base64.b64encode(raw).decode("utf-8")
+
+
+def part(mime: str, raw: bytes | str = b"payload", filename: str = "f"):
+    return SimpleNamespace(mime_type=mime, data=b64(raw), filename=filename)
+
+
+def make_generator(
+    model_name="claude-sonnet-5@20260101",
+    model_parameters=None,
+    extra_adaptive=(),
+    extra_no_sampling=(),
+):
     llm_config = SimpleNamespace(
         name=model_name,
         model_parameters=model_parameters if model_parameters is not None else {},
@@ -165,6 +204,8 @@ def make_generator(model_name="claude-sonnet-5@20260101", model_parameters=None)
         claude_project_id="env-proj",
         claude_region="us-east5",
         claude_api_base="https://r2d2.example",
+        claude_extra_adaptive_thinking_prefixes=list(extra_adaptive),
+        claude_extra_no_sampling_prefixes=list(extra_no_sampling),
     )
     token_roller = SimpleNamespace(get_token=lambda: "tok")
     return cg.ClaudeGenerator(environment, token_roller, llm_config, use_case="unit-test")
@@ -187,6 +228,132 @@ class TestBareModelName(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# resolve_error_code
+# ---------------------------------------------------------------------------
+
+class TestResolveErrorCode(unittest.TestCase):
+    def test_429_is_rate_limit(self):
+        self.assertIs(cg.resolve_error_code(429), ErrorCodes.GR008)
+
+    def test_400_is_bad_request(self):
+        self.assertIs(cg.resolve_error_code(400), ErrorCodes.GR007)
+
+    def test_other_4xx_is_client_error(self):
+        for status in (401, 403, 404, 422):
+            with self.subTest(status=status):
+                self.assertIs(cg.resolve_error_code(status), ErrorCodes.GR010)
+
+    def test_5xx_is_server_error(self):
+        for status in (500, 503, 529):
+            with self.subTest(status=status):
+                self.assertIs(cg.resolve_error_code(status), ErrorCodes.GR009)
+
+
+# ---------------------------------------------------------------------------
+# _build_content_block — the five-way MIME router
+# ---------------------------------------------------------------------------
+
+class TestBuildContentBlockImages(unittest.TestCase):
+    def test_native_image_passes_base64_through_untouched(self):
+        p = part("image/png", b"rawpng")
+        block = cg._build_content_block(p)
+        self.assertEqual(block["type"], "image")
+        self.assertEqual(block["source"]["type"], "base64")
+        self.assertEqual(block["source"]["media_type"], "image/png")
+        self.assertEqual(block["source"]["data"], p.data)  # not re-encoded
+
+    def test_all_four_native_image_types_route_to_image(self):
+        for mime in ("image/jpeg", "image/png", "image/gif", "image/webp"):
+            with self.subTest(mime=mime):
+                self.assertEqual(cg._build_content_block(part(mime))["type"], "image")
+
+    def test_tiff_is_converted_to_png_and_re_encoded(self):
+        block = cg._build_content_block(part("image/tiff", b"tiffdata"))
+        self.assertEqual(block["type"], "image")
+        self.assertEqual(block["source"]["media_type"], "image/png")
+        self.assertEqual(base64.b64decode(block["source"]["data"]), b"PNGBYTES:tiffdata")
+
+
+class TestBuildContentBlockText(unittest.TestCase):
+    def test_text_is_decoded_and_sent_as_plain_text_document(self):
+        block = cg._build_content_block(part("text/csv", "a,b\n1,2"))
+        self.assertEqual(block["type"], "document")
+        self.assertEqual(block["source"]["type"], "text")
+        self.assertEqual(block["source"]["media_type"], cg.TEXT_PLAIN)
+        self.assertEqual(block["source"]["data"], "a,b\n1,2")  # decoded, not base64
+
+    def test_every_text_mime_routes_to_text_document(self):
+        for mime in cg._CLAUDE_TEXT_MIME_TYPES:
+            with self.subTest(mime=mime):
+                block = cg._build_content_block(part(mime, "hello"))
+                self.assertEqual(block["source"]["media_type"], cg.TEXT_PLAIN)
+
+    def test_non_utf8_text_raises_unicodedecodeerror(self):
+        """Documents current behavior: latin-1 bytes crash rather than being skipped."""
+        with self.assertRaises(UnicodeDecodeError):
+            cg._build_content_block(part("text/csv", b"caf\xe9"))
+
+
+class TestBuildContentBlockDocuments(unittest.TestCase):
+    def test_pdf_passes_base64_through_as_document(self):
+        p = part("application/pdf", b"%PDF-1.7")
+        block = cg._build_content_block(p)
+        self.assertEqual(block["type"], "document")
+        self.assertEqual(block["source"]["type"], "base64")
+        self.assertEqual(block["source"]["media_type"], "application/pdf")
+        self.assertEqual(block["source"]["data"], p.data)
+
+    def test_pdf_is_the_only_native_document_type(self):
+        self.assertEqual(cg._CLAUDE_DOCUMENT_MIME_TYPES, frozenset({"application/pdf"}))
+
+    def test_docx_is_converted_to_text(self):
+        block = cg._build_content_block(part(DOCX, "docbody"))
+        self.assertEqual(block["type"], "document")
+        self.assertEqual(block["source"]["type"], "text")
+        self.assertEqual(block["source"]["data"], "WORD::docbody")
+
+    def test_xlsx_is_converted_to_text(self):
+        block = cg._build_content_block(part(XLSX, "sheet"))
+        self.assertEqual(block["source"]["data"], "XLSX::sheet")
+
+    def test_odt_is_converted_to_text(self):
+        block = cg._build_content_block(part(ODT, "odtbody"))
+        self.assertEqual(block["source"]["data"], "ODT::odtbody")
+
+
+class TestBuildContentBlockUnsupported(unittest.TestCase):
+    def test_unsupported_mime_returns_none(self):
+        for mime in ("video/mp4", "application/zip", "image/bmp", "application/octet-stream"):
+            with self.subTest(mime=mime):
+                self.assertIsNone(cg._build_content_block(part(mime)))
+
+
+# ---------------------------------------------------------------------------
+# _build_message_content
+# ---------------------------------------------------------------------------
+
+class TestBuildMessageContent(unittest.TestCase):
+    def test_parts_precede_prompt_text(self):
+        gen = make_generator()
+        content = gen._build_message_content(
+            [part("image/png"), part("application/pdf")], "the question"
+        )
+        self.assertEqual([b["type"] for b in content], ["image", "document", "text"])
+        self.assertEqual(content[-1], {"type": "text", "text": "the question"})
+
+    def test_unsupported_parts_are_skipped_not_fatal(self):
+        gen = make_generator()
+        content = gen._build_message_content(
+            [part("video/mp4"), part("image/png")], "q"
+        )
+        self.assertEqual([b["type"] for b in content], ["image", "text"])
+
+    def test_text_only_still_appends_prompt(self):
+        gen = make_generator()
+        self.assertEqual(gen._build_message_content([], "q"), [{"type": "text", "text": "q"}])
+
+
+# ---------------------------------------------------------------------------
 # max_tokens resolution
 # ---------------------------------------------------------------------------
 
@@ -204,12 +371,11 @@ class TestMaxTokensResolution(unittest.TestCase):
         self.assertEqual(build_args(gen)["max_tokens"], 2000)
 
     def test_default_is_64000(self):
-        gen = make_generator()
-        self.assertEqual(build_args(gen)["max_tokens"], 64000)
+        self.assertEqual(build_args(make_generator())["max_tokens"], 64000)
 
 
 # ---------------------------------------------------------------------------
-# response_schema modes
+# response_schema — native vs prompt-injected
 # ---------------------------------------------------------------------------
 
 SCHEMA = {"type": "object", "properties": {"a": {"type": "string"}}}
@@ -223,12 +389,10 @@ class TestResponseSchema(unittest.TestCase):
             args["output_config"],
             {"format": {"type": "json_schema", "schema": SCHEMA}},
         )
-        # system prompt must NOT be polluted with the schema in native mode
-        self.assertEqual(args["system"], "sys")
+        self.assertEqual(args["system"], "sys")  # system prompt left clean
 
     def test_fallback_mode_injects_into_system_prompt(self):
-        gen = make_generator()
-        args = build_args(gen, system_prompt="sys", response_schema=SCHEMA)
+        args = build_args(make_generator(), system_prompt="sys", response_schema=SCHEMA)
         self.assertNotIn("output_config", args)
         self.assertTrue(args["system"].startswith("sys\n\n"))
         self.assertIn("valid JSON only", args["system"])
@@ -236,19 +400,17 @@ class TestResponseSchema(unittest.TestCase):
         self.assertIn("markdown code fences", args["system"])
 
     def test_fallback_mode_with_empty_system_prompt(self):
-        gen = make_generator()
-        args = build_args(gen, system_prompt="", response_schema=SCHEMA)
+        args = build_args(make_generator(), system_prompt="", response_schema=SCHEMA)
         self.assertTrue(args["system"].startswith("You must respond with valid JSON"))
 
-    def test_no_schema_no_output_config_no_system(self):
-        gen = make_generator()
-        args = build_args(gen)
+    def test_no_schema_leaves_both_out(self):
+        args = build_args(make_generator())
         self.assertNotIn("output_config", args)
         self.assertNotIn("system", args)
 
 
 # ---------------------------------------------------------------------------
-# Extended thinking translation
+# _apply_thinking_config
 # ---------------------------------------------------------------------------
 
 class TestThinking(unittest.TestCase):
@@ -257,20 +419,28 @@ class TestThinking(unittest.TestCase):
             model_name="claude-sonnet-4-5@20250929",
             model_parameters={"thinking_config": {"thinking_budget": "1024"}},
         )
-        args = build_args(gen)
-        self.assertEqual(args["thinking"], {"type": "enabled", "budget_tokens": 1024})
+        self.assertEqual(build_args(gen)["thinking"], {"type": "enabled", "budget_tokens": 1024})
 
-    def test_modern_model_gets_adaptive(self):
+    def test_modern_model_gets_adaptive_and_ignores_budget_value(self):
         gen = make_generator(
             model_name="claude-sonnet-5@20260101",
             model_parameters={"thinking_config": {"thinking_budget": 1024}},
         )
         self.assertEqual(build_args(gen)["thinking"], {"type": "adaptive"})
 
-    def test_unknown_future_model_defaults_to_adaptive(self):
+    def test_unknown_model_falls_back_to_manual_budget(self):
+        """Unlisted models take the legacy path — this is why the env override exists."""
         gen = make_generator(
             model_name="claude-opus-5@20270101",
-            model_parameters={"thinking_config": {"thinking_budget": 1024}},
+            model_parameters={"thinking_config": {"thinking_budget": 2048}},
+        )
+        self.assertEqual(build_args(gen)["thinking"], {"type": "enabled", "budget_tokens": 2048})
+
+    def test_env_extra_prefix_promotes_unknown_model_to_adaptive(self):
+        gen = make_generator(
+            model_name="claude-opus-5@20270101",
+            model_parameters={"thinking_config": {"thinking_budget": 2048}},
+            extra_adaptive=["claude-opus-5"],
         )
         self.assertEqual(build_args(gen)["thinking"], {"type": "adaptive"})
 
@@ -284,31 +454,35 @@ class TestThinking(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Param forwarding: allowlist, sampling removal, coercion, temperature rule
+# _apply_model_params
 # ---------------------------------------------------------------------------
 
-class TestParamForwarding(unittest.TestCase):
-    def test_modern_model_drops_sampling_but_keeps_others(self):
+class TestModelParams(unittest.TestCase):
+    def test_sampling_param_on_modern_model_raises_gr007(self):
         gen = make_generator(
             model_name="claude-sonnet-5@20260101",
-            model_parameters={
-                "temperature": 0.2,
-                "top_p": 0.9,
-                "top_k": 40,
-                "stop_sequences": ["END"],
-            },
-        )
-        args = build_args(gen)
-        for dropped in ("temperature", "top_p", "top_k"):
-            self.assertNotIn(dropped, args)
-        self.assertEqual(args["stop_sequences"], ["END"])
-
-    def test_unknown_future_model_drops_sampling(self):
-        gen = make_generator(
-            model_name="claude-opus-5@20270101",
             model_parameters={"temperature": 0.2},
         )
-        self.assertNotIn("temperature", build_args(gen))
+        with self.assertRaises(_GenaiCommonException) as ctx:
+            build_args(gen)
+        self.assertIs(ctx.exception.code, ErrorCodes.GR007)
+        self.assertIn("temperature", ctx.exception.description)
+
+    def test_env_extra_prefix_makes_unknown_model_reject_sampling(self):
+        gen = make_generator(
+            model_name="claude-opus-5@20270101",
+            model_parameters={"top_k": 40},
+            extra_no_sampling=["claude-opus-5"],
+        )
+        with self.assertRaises(_GenaiCommonException):
+            build_args(gen)
+
+    def test_non_sampling_params_still_forwarded_on_modern_model(self):
+        gen = make_generator(
+            model_name="claude-sonnet-5@20260101",
+            model_parameters={"stop_sequences": ["END"]},
+        )
+        self.assertEqual(build_args(gen)["stop_sequences"], ["END"])
 
     def test_legacy_model_keeps_sampling_with_float_coercion(self):
         gen = make_generator(
@@ -346,27 +520,6 @@ class TestParamForwarding(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _build_content_block
-# ---------------------------------------------------------------------------
-
-class TestBuildContentBlock(unittest.TestCase):
-    def _part(self, mime):
-        return SimpleNamespace(mime_type=mime, data="b64data", filename="f")
-
-    def test_image_mime_routes_to_image_block(self):
-        block = cg._build_content_block(self._part("image/png"))
-        self.assertEqual(block["type"], "image")
-        self.assertEqual(block["source"]["media_type"], "image/png")
-
-    def test_document_mime_routes_to_document_block(self):
-        block = cg._build_content_block(self._part("application/pdf"))
-        self.assertEqual(block["type"], "document")
-
-    def test_unsupported_mime_returns_none(self):
-        self.assertIsNone(cg._build_content_block(self._part("video/mp4")))
-
-
-# ---------------------------------------------------------------------------
 # unwrap_llm_response
 # ---------------------------------------------------------------------------
 
@@ -375,6 +528,7 @@ class TestUnwrapLlmResponse(unittest.TestCase):
         response = SimpleNamespace(content=[
             SimpleNamespace(type="thinking", thinking="..."),
             SimpleNamespace(type="text", text="answer"),
+            SimpleNamespace(type="text", text="ignored"),
         ])
         text, confidence = cg.ClaudeGenerator.unwrap_llm_response(response)
         self.assertEqual(text, "answer")
