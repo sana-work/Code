@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Command Center – Agentic Chatbot Architecture</title>
+<style>
+:root{
+  --navy:#0b2f6b; --blue:#1557c0; --blue2:#eaf2ff; --ink:#142033; --muted:#5d6b82;
+  --green:#137a4a; --green2:#eaf8f1; --orange:#d8660b; --orange2:#fff3e9;
+  --purple:#5631b6; --purple2:#f2efff; --red:#cb3425; --red2:#fff0ee;
+  --teal:#087b78; --teal2:#eaf8f7; --gold:#c98700; --gold2:#fff8df;
+  --line:#dce5f3; --panel:#ffffff; --bg:#f6f9fd;
+  --shadow:0 16px 40px rgba(20,46,86,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-snap-type:y mandatory}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.page{
+  min-height:100vh; scroll-snap-align:start; position:relative;
+  padding:56px 6vw 52px 9vw; display:flex; flex-direction:column; justify-content:center;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(21,87,192,.07), transparent 26%),
+    linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+}
+.page:nth-of-type(even){background:
+  radial-gradient(circle at 10% 15%, rgba(19,122,74,.06), transparent 24%),
+  linear-gradient(180deg,#f9fbfe 0%,#fff 100%)}
+.page-no{position:absolute;right:28px;bottom:22px;color:#8ca0bf;font-size:12px;font-weight:700;letter-spacing:.12em}
+.kicker{font-size:13px;font-weight:800;letter-spacing:.18em;color:var(--blue);text-transform:uppercase;margin-bottom:10px}
+h1{font-size:48px;line-height:1.04;margin:0 0 16px;color:var(--navy)}
+h2{font-size:34px;line-height:1.15;margin:0 0 18px;color:var(--navy)}
+h3{font-size:20px;margin:0 0 10px;color:var(--navy)}
+p{font-size:16px;line-height:1.65;color:#344158;margin:0 0 12px}
+.small{font-size:13px;color:var(--muted)}
+.lead{font-size:20px;max-width:980px;color:#344158}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:var(--blue2);color:var(--blue);font-size:13px;font-weight:800}
+.badge.green{background:var(--green2);color:var(--green)}
+.badge.orange{background:var(--orange2);color:var(--orange)}
+.badge.purple{background:var(--purple2);color:var(--purple)}
+.badge.gold{background:var(--gold2);color:#8e6500}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 8px 20px rgba(20,46,86,.05)}
+.card.soft{box-shadow:none;background:#fbfdff}
+.stat{padding:18px 20px;border-radius:18px;background:#fff;border:1px solid var(--line)}
+.stat .num{font-size:34px;font-weight:900;color:var(--navy)}
+.stat .label{font-size:13px;color:var(--muted);font-weight:700;margin-top:4px}
+.icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-weight:900;font-size:18px;background:var(--blue2);color:var(--blue);margin-bottom:12px}
+.note{border-left:4px solid var(--blue);background:#eef5ff;padding:14px 16px;border-radius:12px;color:#294263;font-size:14px;line-height:1.55}
+.sidebar{
+  position:fixed;left:18px;top:50%;transform:translateY(-50%);z-index:50;
+  display:flex;flex-direction:column;gap:9px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);
+  padding:10px;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)
+}
+.navdot{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:12px;font-weight:900;color:#71829c;cursor:pointer;transition:.2s}
+.navdot:hover,.navdot.active{background:var(--navy);color:#fff;transform:scale(1.06)}
+.progress{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--blue),var(--teal));z-index:99;width:0}
+.hero-wrap{display:grid;grid-template-columns:1.35fr .65fr;gap:34px;align-items:center}
+.hero-art{position:relative;height:430px;border-radius:28px;border:1px solid #d6e4fa;background:
+  linear-gradient(145deg,#f8fbff,#edf4ff);box-shadow:var(--shadow);overflow:hidden}
+.orbit{position:absolute;border:1px dashed rgba(21,87,192,.35);border-radius:50%}
+.orbit.o1{width:300px;height:300px;right:40px;top:65px}.orbit.o2{width:210px;height:210px;right:85px;top:110px}
+.core{position:absolute;right:145px;top:170px;width:90px;height:90px;border-radius:24px;background:linear-gradient(145deg,var(--navy),var(--blue));color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:0 16px 30px rgba(21,87,192,.3)}
+.node{position:absolute;width:90px;padding:10px;border-radius:14px;background:#fff;border:1px solid var(--line);font-size:11px;font-weight:800;text-align:center;box-shadow:0 6px 16px rgba(20,46,86,.08)}
+.n1{right:260px;top:70px}.n2{right:20px;top:120px}.n3{right:260px;bottom:62px}.n4{right:18px;bottom:78px}
+.arrow{font-size:30px;color:var(--blue);margin:0 4px}
+.split{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.arch-toolbar{display:flex;justify-content:space-between;gap:14px;align-items:center;margin:0 0 16px}
+.toggle{display:flex;background:#edf2fa;border-radius:12px;padding:4px;border:1px solid var(--line)}
+.toggle button{border:0;background:transparent;padding:9px 14px;border-radius:9px;font-weight:800;color:#647793;cursor:pointer}
+.toggle button.active{background:#fff;color:var(--navy);box-shadow:0 3px 10px rgba(20,46,86,.08)}
+.pipeline{display:grid;grid-template-columns:repeat(9,minmax(112px,1fr));gap:9px;align-items:stretch}
+.pipeline.future-mode{grid-template-columns:repeat(4,minmax(190px,1fr));gap:16px}
+.agent{
+  min-height:210px;border-radius:17px;padding:14px 12px;border:1px solid var(--line);
+  background:#fff;display:flex;flex-direction:column;position:relative;cursor:pointer;transition:.22s
+}
+.agent:hover{transform:translateY(-5px);box-shadow:0 14px 24px rgba(20,46,86,.10)}
+.agent .idx{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;font-size:12px;color:#fff;font-weight:900;background:var(--navy);margin-bottom:10px}
+.agent .aname{font-size:12px;font-weight:900;line-height:1.25;color:#182845;word-break:break-word}
+.agent .role{font-size:11px;color:var(--muted);margin-top:5px}
+.agent .desc{font-size:11px;line-height:1.45;color:#344158;margin-top:auto;padding-top:12px;border-top:1px solid var(--line)}
+.agent[data-kind="meta"]{background:linear-gradient(#fff,#f7fff9);border-color:#cfe8db}
+.agent[data-kind="route"]{background:linear-gradient(#fff,#fff9f3);border-color:#f0d4bb}
+.agent[data-kind="sample"]{background:linear-gradient(#fff,#f7f5ff);border-color:#dcd3ff}
+.agent[data-kind="ground"]{background:linear-gradient(#fff,#f2fbfb);border-color:#cde7e6}
+.agent[data-kind="validate"]{background:linear-gradient(#fff,#fff6f5);border-color:#f4c9c4}
+.agent[data-kind="exec"]{background:linear-gradient(#fff,#f4fbf7);border-color:#cfe8db}
+.agent[data-kind="sum"]{background:linear-gradient(#fff,#fffaf0);border-color:#f3deae}
+.layer-row{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:16px;margin-top:18px}
+.layer{border-radius:18px;padding:18px;border:1px solid var(--line);background:#fff}
+.layer ul{margin:8px 0 0;padding-left:18px}.layer li{margin:7px 0;font-size:13px;color:#344158}
+.flowline{height:2px;background:linear-gradient(90deg,var(--blue),var(--teal));margin:12px 0 4px;position:relative}
+.flowline:after{content:"";position:absolute;right:-1px;top:-4px;border-left:8px solid var(--teal);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.agent-detail{display:none;position:fixed;right:24px;top:24px;bottom:24px;width:min(480px,92vw);z-index:80;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 28px 70px rgba(15,40,75,.22);padding:24px;overflow:auto}
+.agent-detail.open{display:block}
+.agent-detail .close{position:absolute;right:16px;top:14px;border:0;background:#edf3fb;width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:18px}
+.mini-flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:800;color:#294263}
+table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:13px}
+th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:#eef4fc;color:var(--navy);font-size:12px}
+tr:last-child td{border-bottom:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.kpi{border-radius:18px;border:1px solid var(--line);background:#fff;padding:17px;position:relative;overflow:hidden}
+.kpi:before{content:"";position:absolute;left:0;top:0;width:5px;height:100%;background:var(--blue)}
+.kpi h4{margin:0 0 7px;color:var(--navy);font-size:15px}.kpi p{font-size:13px;margin:0}
+.future-layout{display:grid;grid-template-columns:1fr 1.15fr;gap:20px}
+.future-road{display:grid;gap:12px}
+.step{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line);border-radius:16px;padding:15px;background:#fff}
+.step .snum{min-width:34px;height:34px;border-radius:10px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:900}
+.report{background:#0f1c2e;color:#fff;border-radius:24px;padding:20px;box-shadow:var(--shadow)}
+.report-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.report h3{color:#fff}.report .sub{color:#93a8c4;font-size:12px}
+.report-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.metric{background:#162841;border:1px solid #29405e;border-radius:14px;padding:12px}
+.metric b{display:block;font-size:23px}.metric span{font-size:11px;color:#9eb1c9}
+.chart{margin-top:12px;background:#132238;border-radius:14px;padding:12px;border:1px solid #29405e}
+.bars{height:120px;display:flex;align-items:flex-end;gap:7px}
+.bar{flex:1;background:linear-gradient(180deg,#65a4ff,#2b6ed1);border-radius:5px 5px 2px 2px;min-height:14px}
+.report-table{margin-top:12px;width:100%;border-collapse:collapse;font-size:10px;color:#d9e5f2;border:0;background:transparent}
+.report-table th,.report-table td{border-bottom:1px solid #2b405a;padding:7px;background:transparent;color:inherit}
+.report-table th{color:#8fb2dc}
+.roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.phase{border-radius:18px;padding:17px;background:#fff;border:1px solid var(--line);min-height:180px}
+.phase .pnum{font-size:12px;font-weight:900;color:var(--blue);letter-spacing:.12em}
+.phase h3{font-size:17px;margin-top:8px}.phase ul{padding-left:18px;margin:8px 0}.phase li{font-size:12px;line-height:1.5;margin:5px 0;color:#435168}
+.checks{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.check{padding:12px 14px;border-radius:13px;background:#fff;border:1px solid var(--line);font-size:13px}
+.check:before{content:"✓";color:var(--green);font-weight:900;margin-right:8px}
+@media(max-width:1200px){
+  .pipeline{grid-template-columns:repeat(3,1fr)} .layer-row,.future-layout{grid-template-columns:1fr}
+  .kpi-grid,.roadmap{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:760px){
+  .page{padding:74px 20px 42px}.sidebar{left:8px;top:auto;bottom:8px;transform:none;flex-direction:row}
+  .hero-wrap,.g2,.g3,.g4{grid-template-columns:1fr}.hero-art{height:320px}h1{font-size:38px}
+  .pipeline,.kpi-grid,.roadmap{grid-template-columns:1fr}.report-grid{grid-template-columns:1fr}
+}
+
+.demo-shell{display:grid;grid-template-columns:.78fr 1.22fr;gap:18px;align-items:stretch}
+.question-box{padding:20px;border-radius:20px;background:linear-gradient(145deg,#0b2f6b,#1557c0);color:#fff;box-shadow:var(--shadow)}
+.question-box h3{color:#fff}.question-box p{color:#d9e8ff}
+.demo-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn{border:0;border-radius:11px;padding:10px 14px;font-weight:850;cursor:pointer;transition:.18s}
+.btn.primary{background:#fff;color:var(--navy)}.btn.secondary{background:#eaf2ff;color:var(--blue);border:1px solid #cbdcf8}
+.btn.green{background:var(--green);color:#fff}.btn:hover{transform:translateY(-2px)}
+.demo-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.demo-step{min-height:92px;padding:12px;border-radius:15px;border:1px solid var(--line);background:#fff;transition:.25s;position:relative}
+.demo-step .num{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#edf3fb;color:var(--navy);font-size:11px;font-weight:900;margin-bottom:7px}
+.demo-step .name{font-size:11px;font-weight:900;color:#1c2a43;line-height:1.25}
+.demo-step .status{font-size:10px;color:#8a9ab2;margin-top:5px}
+.demo-step.active{transform:translateY(-3px);border-color:#77a9f2;box-shadow:0 10px 20px rgba(21,87,192,.13);background:#f5f9ff}
+.demo-step.done{border-color:#abd9c3;background:#f5fcf8}
+.demo-step.done .num{background:var(--green);color:#fff}
+.demo-console{border:1px solid var(--line);border-radius:20px;background:#0f1c2e;color:#d9e8f6;padding:18px;min-height:280px;box-shadow:var(--shadow)}
+.demo-console .console-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.demo-console .console-head b{color:#fff}.live-dot{width:9px;height:9px;border-radius:50%;background:#5fca8b;box-shadow:0 0 0 5px rgba(95,202,139,.12)}
+.log-line{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.55;padding:7px 0;border-bottom:1px solid #263a54}
+.log-line:last-child{border-bottom:0}.log-agent{color:#7fb1ff;font-weight:800}.log-out{color:#dbe8f5}
+.final-response{margin-top:14px;padding:16px;border-radius:16px;background:var(--green2);border:1px solid #bfe5d2;display:none}
+.final-response.show{display:block}.final-response h3{color:var(--green);margin-bottom:6px}
+.future-flow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:12px 0 18px}
+.future-node{padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:850;color:#294263}
+.future-node.future{background:#f5f1ff;border-color:#d8ccff;color:var(--purple)}
+.report-actions{display:flex;gap:9px;flex-wrap:wrap}
+.download-status{font-size:12px;color:var(--green);font-weight:800;margin-top:9px;min-height:18px}
+.report-preview{display:grid;grid-template-columns:.9fr 1.1fr;gap:16px}
+.report-panel{border:1px solid var(--line);border-radius:20px;background:#fff;padding:16px}
+.spark{height:150px;display:flex;gap:9px;align-items:flex-end;padding:10px;border-radius:14px;background:#f5f8fc}
+.spark .sbar{flex:1;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#5b9af1,#1f63bf);transition:.35s}
+.future-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:11px}
+.future-kpi{padding:12px;border:1px solid var(--line);border-radius:14px;background:#fbfdff}
+.future-kpi b{display:block;font-size:21px;color:var(--navy)}.future-kpi span{font-size:10px;color:var(--muted);font-weight:700}
+@media(max-width:1000px){.demo-shell,.report-preview{grid-template-columns:1fr}.demo-flow{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.demo-flow,.future-kpis{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<nav class="sidebar" aria-label="Page navigation">
+  <a class="navdot active" href="#p1" title="Overview">1</a>
+  <a class="navdot" href="#p2" title="Problem & Scope">2</a>
+  <a class="navdot" href="#p3" title="Architecture">3</a>
+  <a class="navdot" href="#p4" title="Agents & Tools">4</a>
+  <a class="navdot" href="#p5" title="Metadata & Data">5</a>
+  <a class="navdot" href="#p6" title="KPIs">6</a>
+  <a class="navdot" href="#p7" title="Future State">7</a>
+  <a class="navdot" href="#p8" title="Roadmap">8</a>
+  <a class="navdot" href="#p9" title="Live Query Flow">9</a>
+  <a class="navdot" href="#p10" title="Future Report Flow">10</a>
+</nav>
+
+<section class="page" id="p1">
+  <div class="hero-wrap">
+    <div>
+      <div class="kicker">Command Center • Agentic Chatbot Architecture</div>
+      <h1>Command Center Agentic Chatbot for governed business insight</h1>
+      <p class="lead">A conversational Command Center that understands business questions, discovers the right governed data, safely generates and executes queries, and returns concise business-friendly answers. Text-to-SQL is an internal capability of the chatbot, not the product identity.</p>
+      <div class="split">
+        <span class="badge">PostgreSQL PoC</span>
+        <span class="badge purple">Oracle Future State</span>
+        <span class="badge green">Metadata Driven</span>
+        <span class="badge">Agentic Chatbot PoC</span>
+        <span class="badge orange">Read Only</span>
+        <span class="badge gold">Future Reports & Visuals</span>
+      </div>
+      <div class="grid g3" style="margin-top:28px">
+        <div class="stat"><div class="num">9</div><div class="label">Current PoC agents</div></div>
+        <div class="stat"><div class="num">4</div><div class="label">Future optimized agents</div></div>
+        <div class="stat"><div class="num">3</div><div class="label">Core metadata objects</div></div>
+      </div>
+    </div>
+    <div class="hero-art">
+      <div class="orbit o1"></div><div class="orbit o2"></div>
+      <div class="core">CC<br/>ROOT</div>
+      <div class="node n1">Metadata<br/>Discovery</div>
+      <div class="node n2">SQL<br/>Generation</div>
+      <div class="node n3">Validation<br/>Gate</div>
+      <div class="node n4">Business<br/>Response</div>
+    </div>
+  </div>
+  <div class="page-no">01 / 10</div>
+</section>
+
+<section class="page" id="p2">
+  <div class="kicker">Why Command Center</div>
+  <h2>From scattered data and SQL expertise to one governed interface</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Current challenge</h3>
+      <p>Business and operational data is distributed across case, history, AI insights, NLP, API log and external KPI sources. Users often need to know the correct source, table, column and SQL logic before they can answer a business question.</p>
+      <div class="checks">
+        <div class="check">Multiple source systems</div>
+        <div class="check">Manual query creation</div>
+        <div class="check">Inconsistent KPI interpretation</div>
+        <div class="check">Schema names are not business friendly</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>PoC objective</h3>
+      <p>Provide a single Chat UI that uses governed metadata and controlled query intelligence to answer business questions safely and concisely.</p>
+      <div class="checks">
+        <div class="check">Natural-language questions</div>
+        <div class="check">Approved metadata only</div>
+        <div class="check">Validation before execution</div>
+        <div class="check">Auditable read-only access</div>
+      </div>
+    </div>
+  </div>
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card soft"><div class="icon">IN</div><h3>In scope now</h3><p>Chat UI, metadata discovery, single-table query generation, validation, execution, summarization and auditability.</p></div>
+    <div class="card soft"><div class="icon">→</div><h3>Controlled expansion</h3><p>Additional KPIs, verified relationships and external data sources are introduced only after data-owner validation.</p></div>
+    <div class="card soft"><div class="icon">F</div><h3>Future state</h3><p>A faster, simplified agentic chatbot on Oracle with fewer agents, conditional sampling, and optional generated reports with graphs, tables and downloadable data.</p></div>
+  </div>
+  <div class="page-no">02 / 10</div>
+</section>
+
+<section class="page" id="p3">
+  <div class="arch-toolbar">
+    <div>
+      <div class="kicker">Current & Future Architecture</div>
+      <h2 style="margin-bottom:0">Command Center Agentic Chatbot workflow</h2>
+    </div>
+    <div class="toggle">
+      <button class="active" id="btnCurrent" onclick="setMode('current')">Current PoC</button>
+      <button id="btnFuture" onclick="setMode('future')">Future State</button>
+    </div>
+  </div>
+
+  <div class="pipeline" id="pipeline">
+    <div class="agent" data-agent="orchestrator"><div class="idx">1</div><div class="aname">cc_orchestrator_agent</div><div class="role">Sequential Root Container</div><div class="desc">Runs the configured sub-agents in a fixed controlled order.</div></div>
+    <div class="agent" data-kind="meta" data-agent="metadata"><div class="idx">2</div><div class="aname">cc_metadata_discovery_agent</div><div class="role">Metadata Discovery</div><div class="desc">Retrieves approved table/column metadata for the current user request.</div></div>
+    <div class="agent" data-kind="route" data-agent="routing"><div class="idx">3</div><div class="aname">cc_table_routing_agent</div><div class="role">Table Routing</div><div class="desc">Selects the single best table.</div></div>
+    <div class="agent" data-kind="sample" data-agent="sampling"><div class="idx">4</div><div class="aname">cc_table_sampling_agent</div><div class="role">Table Sampling</div><div class="desc">Fetches a small sample of table rows.</div></div>
+    <div class="agent" data-kind="ground" data-agent="grounding"><div class="idx">5</div><div class="aname">cc_column_grounding_agent</div><div class="role">Column Grounding</div><div class="desc">Grounds business wording to approved columns using metadata + sampled rows.</div></div>
+    <div class="agent" data-agent="generation"><div class="idx">6</div><div class="aname">cc_query_generation_agent</div><div class="role">Query Generation</div><div class="desc">Generates the PostgreSQL query.</div></div>
+    <div class="agent" data-kind="validate" data-agent="validation"><div class="idx">7</div><div class="aname">cc_query_validation_agent</div><div class="role">Query Validation</div><div class="desc">Checks intent, syntax and safety.</div></div>
+    <div class="agent" data-kind="exec" data-agent="execution"><div class="idx">8</div><div class="aname">cc_query_execution_agent</div><div class="role">Query Execution</div><div class="desc">Executes validated SQL.</div></div>
+    <div class="agent" data-kind="sum" data-agent="summary"><div class="idx">9</div><div class="aname">cc_response_summarization_agent</div><div class="role">Response Summarization</div><div class="desc">Returns a concise business answer.</div></div>
+  </div>
+
+  <div class="flowline"></div>
+  <div class="small" style="text-align:center;font-weight:800;color:var(--blue)">Shared workflow context carries the user request and controlled outputs between processing steps.</div>
+  <div class="note" style="margin-top:12px"><b>Optimization direction:</b> the current PoC keeps responsibilities separated for accuracy and control. The future state consolidates related responsibilities into fewer agents and makes table sampling conditional instead of mandatory, reducing processing time and agent-to-agent handoffs.</div>
+
+  <div class="layer-row">
+    <div class="layer">
+      <h3>Metadata & Governance</h3>
+      <ul>
+        <li><b>AI_AGENT_METADATA</b></li>
+        <li><b>AI_COLUMN_METADATA</b></li>
+        <li><b>AI_TABLE_METADATA</b></li>
+        <li>Security & access control</li>
+      </ul>
+    </div>
+    <div class="layer">
+      <h3>Tools</h3>
+      <ul>
+        <li><b>command_center_metadata_retrieval</b></li>
+        <li><b>command_center_run_sql</b></li>
+        <li><b>Current active tools:</b> metadata retrieval + read-only SQL execution</li>
+        <li><b>command_center_validate_sql</b> <span class="small">(optional future hardening)</span></li>
+      </ul>
+    </div>
+    <div class="layer">
+      <h3 id="dbTitle">Database Layer — Current</h3>
+      <ul id="dbList">
+        <li><b>PostgreSQL PoC</b></li>
+        <li>Business tables / views</li>
+        <li>Metadata tables</li>
+        <li>Read-only execution</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note" id="futureNote" style="display:none;margin-top:14px"><b>Future state:</b> the chatbot is simplified to four focused agents: Orchestrator, Data Context, Query Intelligence, and Response. Sampling becomes an on-demand capability rather than a dedicated always-on agent. Oracle becomes the production data layer, and an optional report-rendering service can create graphs, tables and downloadable data after successful query execution.</div>
+  <div class="page-no">03 / 10</div>
+</section>
+
+<section class="page" id="p4">
+  <div class="kicker">Agent & Tool Responsibilities</div>
+  <h2>Each agent has one clear job</h2>
+  <p class="small" style="margin-bottom:16px">Click an agent card below to open its detailed responsibility, inputs and tool usage.</p>
+  <div class="note" style="margin-bottom:16px"><b>Current PoC design:</b> responsibilities are intentionally separated into small steps for control and troubleshooting. Future optimization will consolidate related steps to reduce agent hops and improve response time.</div>
+  <div class="grid g3">
+    <div class="card agent-mini" onclick="openDetail('metadata')"><span class="badge green">Discovery</span><h3 style="margin-top:10px">Metadata Discovery</h3><p>Find relevant tables and column metadata.</p><div class="small"><b>Tool:</b> command_center_metadata_retrieval</div></div>
+    <div class="card agent-mini" onclick="openDetail('routing')"><span class="badge orange">Routing</span><h3 style="margin-top:10px">Table Routing</h3><p>Select the best single table for the request.</p><div class="small"><b>Tool:</b> none</div></div>
+    <div class="card agent-mini" onclick="openDetail('sampling')"><span class="badge purple">Sampling</span><h3 style="margin-top:10px">Table Sampling</h3><p>Fetch a small sample to understand table shape.</p><div class="small"><b>Tool:</b> command_center_run_sql</div></div>
+    <div class="card agent-mini" onclick="openDetail('grounding')"><span class="badge green">Grounding</span><h3 style="margin-top:10px">Column Grounding</h3><p>Map business wording to approved columns using retrieved metadata and the controlled table sample.</p><div class="small"><b>Tool:</b> none</div></div>
+    <div class="card agent-mini" onclick="openDetail('generation')"><span class="badge">SQL</span><h3 style="margin-top:10px">Query Generation</h3><p>Generate one read-only PostgreSQL query.</p><div class="small"><b>Tool:</b> none</div></div>
+    <div class="card agent-mini" onclick="openDetail('validation')"><span class="badge" style="background:var(--red2);color:var(--red)">Gate</span><h3 style="margin-top:10px">Query Validation</h3><p>Approve or reject SQL for safety, schema compliance, PostgreSQL correctness and business intent. It does not repair SQL.</p><div class="small"><b>Tool:</b> none <span class="small">(deterministic validator is future hardening)</span></div></div>
+    <div class="card agent-mini" onclick="openDetail('execution')"><span class="badge green">Execute</span><h3 style="margin-top:10px">Query Execution</h3><p>Execute only the validated SQL.</p><div class="small"><b>Tool:</b> command_center_run_sql</div></div>
+    <div class="card agent-mini" onclick="openDetail('summary')"><span class="badge gold">Answer</span><h3 style="margin-top:10px">Response Summarization</h3><p>Convert raw rows into a business-friendly answer.</p><div class="small"><b>Tool:</b> none</div></div>
+    <div class="card agent-mini" onclick="openDetail('orchestrator')"><span class="badge">Root</span><h3 style="margin-top:10px">Orchestrator</h3><p>Coordinates the complete workflow.</p><div class="small"><b>Tool:</b> none</div></div>
+  </div>
+  <div class="page-no">04 / 10</div>
+</section>
+
+<section class="page" id="p5">
+  <div class="kicker">Metadata & Data Foundation</div>
+  <h2>The chatbot is grounded by three approved metadata objects and targeted data evidence</h2>
+  <div class="grid g3">
+    <div class="card"><div class="icon">A</div><h3>AI_AGENT_METADATA</h3><p>Search-friendly consolidated metadata exposed to the metadata retrieval flow.</p></div>
+    <div class="card"><div class="icon">C</div><h3>AI_COLUMN_METADATA</h3><p>Technical/business descriptions, display names, normalized names, synonyms and semantic context used to map business language to physical fields.</p></div>
+    <div class="card"><div class="icon">T</div><h3>AI_TABLE_METADATA</h3><p>Table-level business purpose, row grain, date context and synonyms used for table selection.</p></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card">
+      <h3>Initial source tables</h3>
+      <table>
+        <tr><th>Business area</th><th>Table</th></tr>
+        <tr><td>Current Case Data</td><td>PACT_WORK</td></tr>
+        <tr><td>Case History</td><td>PACT_HISTORY_WORK</td></tr>
+        <tr><td>Email History</td><td>EMT_WORK_HISTORY</td></tr>
+        <tr><td>AI Insights</td><td>CITI_DATA_AI_INSIGHTS</td></tr>
+        <tr><td>NLP Reporting</td><td>CITI_DATA_NLP_REPORTING</td></tr>
+        <tr><td>NLP Case Data</td><td>CITI_DATA_NLP_CASEDATA</td></tr>
+        <tr><td>API Invocation Logs</td><td>CITI_DATA_LOG</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Metadata quality directly impacts SQL quality</h3>
+      <p>Physical names alone are not enough. Column descriptions should explain the business meaning and how the field is populated or used.</p>
+      <div class="small" style="margin-top:14px"><b>Recommended column enrichment:</b> display_name • normalized_name • business_description • synonyms • semantic_type • selectable/filterable flags.</div>
+      <div class="mini-flow" style="margin-top:18px">
+        <div class="pill">User phrase</div><span class="arrow">→</span><div class="pill">Business description</div><span class="arrow">→</span><div class="pill">Physical column</div>
+      </div>
+      <div class="note" style="margin-top:18px"><b>PoC priority:</b> enrich priority columns with display_name, normalized_name, business_description, synonyms and semantic_type. No separate glossary/value-profile metadata objects are required in the current design.</div>
+    </div>
+  </div>
+  <div class="page-no">05 / 10</div>
+</section>
+
+<section class="page" id="p6">
+  <div class="kicker">Business Outcomes</div>
+  <h2>Priority KPI domains for Command Center</h2>
+  <div class="kpi-grid">
+    <div class="kpi"><h4>Output Success</h4><p>Classification, summarization, sentiment and entity-extraction quality.</p></div>
+    <div class="kpi"><h4>User & Adoption</h4><p>Active users, Intent IQ usage, AI Insights views and usage by organization.</p></div>
+    <div class="kpi"><h4>Sentiment & Complaints</h4><p>Negative sentiment trends, potential complaints and correction volumes.</p></div>
+    <div class="kpi"><h4>Platform Performance</h4><p>API success/failure rate, latency, query duration and errors.</p></div>
+    <div class="kpi"><h4>Productivity</h4><p>Time saved, FTE impact, handle-time reduction and throughput.</p></div>
+    <div class="kpi"><h4>Risk & Compliance</h4><p>Feedback, monitoring, attestation, access exceptions and governance controls.</p></div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <h3>Example conversational questions</h3>
+    <div class="mini-flow">
+      <div class="pill">How many sentiment records were manually corrected?</div>
+      <div class="pill">What is the API success rate this week?</div>
+      <div class="pill">How many active cases currently exist?</div>
+      <div class="pill">How many NLP records were processed this month?</div>
+      <div class="pill">How much time has case summarization saved?</div>
+    </div>
+  </div>
+  <div class="page-no">06 / 10</div>
+</section>
+
+<section class="page" id="p7">
+  <div class="kicker">Future State</div>
+  <h2>Faster Oracle-backed chatbot with fewer, more capable agents</h2>
+  <div class="future-layout">
+    <div>
+      <div class="future-road">
+        <div class="step"><div class="snum">1</div><div><h3>Reduce agent hops</h3><p>Consolidate the current nine-step PoC into four focused agents to reduce orchestration overhead and improve end-to-end response time.</p></div></div>
+        <div class="step"><div class="snum">2</div><div><h3>Make sampling conditional</h3><p>Remove the dedicated sampling agent. Use targeted sampling only when metadata confidence is insufficient or value evidence is required.</p></div></div>
+        <div class="step"><div class="snum">3</div><div><h3>Move execution to Oracle</h3><p>Adopt Oracle-compatible query generation, deterministic validation and a read-only Oracle execution connection.</p></div></div>
+        <div class="step"><div class="snum">4</div><div><h3>Add optional report rendering</h3><p>Successful query results can feed a report service for KPI cards, charts, tables and downloadable data without adding another core agent hop.</p></div></div>
+      </div>
+    </div>
+    <div class="report">
+      <div class="report-top"><div><h3>Future Generated Report</h3><div class="sub">Illustrative preview • Query-driven</div></div><span class="badge green">Future</span></div>
+      <div class="report-grid">
+        <div class="metric"><b>96.8%</b><span>API Success Rate</span></div>
+        <div class="metric"><b>1,284</b><span>Cases Processed</span></div>
+        <div class="metric"><b>142 h</b><span>Estimated Time Saved</span></div>
+      </div>
+      <div class="chart">
+        <div class="sub" style="margin-bottom:8px">Illustrative weekly trend</div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <table class="report-table">
+        <tr><th>Metric</th><th>Current</th><th>Trend</th></tr>
+        <tr><td>AI Insights Adoption</td><td>72%</td><td>↑</td></tr>
+        <tr><td>Manual Sentiment Correction</td><td>8.4%</td><td>↓</td></tr>
+        <tr><td>Average Query Duration</td><td>1.8s</td><td>→</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="note" style="margin-top:16px"><b>Performance principle:</b> fewer LLM handoffs, conditional data sampling, targeted metadata retrieval, deterministic validation and direct read-only execution. Reporting remains a downstream rendering capability.</div>
+  <div class="page-no">07 / 10</div>
+</section>
+
+<section class="page" id="p8">
+  <div class="kicker">Delivery Plan</div>
+  <h2>Move from PoC accuracy to production readiness in controlled phases</h2>
+  <div class="roadmap">
+    <div class="phase"><div class="pnum">PHASE 01</div><h3>Metadata Foundation</h3><ul><li>Improve table/column descriptions</li><li>Validate priority use cases</li><li>Stabilize PostgreSQL PoC</li></ul></div>
+    <div class="phase"><div class="pnum">PHASE 02</div><h3>Performance Optimization</h3><ul><li>Reduce agent count</li><li>Make sampling conditional</li><li>Cache/reuse metadata context</li><li>Add deterministic validation</li></ul></div>
+    <div class="phase"><div class="pnum">PHASE 03</div><h3>Production Data Layer</h3><ul><li>Move to Oracle</li><li>Update dialect/driver adapters</li><li>Performance & security testing</li></ul></div>
+    <div class="phase"><div class="pnum">PHASE 04</div><h3>Reports & Visuals</h3><ul><li>Optional report generation</li><li>Graphs, tables and data</li><li>Download/export experience</li></ul></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card">
+      <h3>Definition of success</h3>
+      <div class="checks">
+        <div class="check">Natural-language questions resolve correctly</div>
+        <div class="check">Only approved schema objects are used</div>
+        <div class="check">Validation blocks unsafe SQL</div>
+        <div class="check">Read-only execution is enforced</div>
+        <div class="check">Answers match query results</div>
+        <div class="check">Activity is auditable</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Guiding principle</h3>
+      <p class="lead" style="font-size:18px">Ground questions in governed metadata, minimize unnecessary agent hops, sample data only when needed, validate before execution, and preserve a clean path to Oracle and richer report experiences.</p>
+    </div>
+  </div>
+  <div class="page-no">08 / 10</div>
+</section>
+
+
+<section class="page" id="p9">
+  <div class="kicker">Interactive PoC Walkthrough</div>
+  <h2>See how the current PoC processes one business question</h2>
+  <p class="small" style="margin-bottom:15px">Illustrative example only — the count below is demo data, not a live database result.</p>
+
+  <div class="demo-shell">
+    <div>
+      <div class="question-box">
+        <h3>User asks in natural language</h3>
+        <p style="font-size:20px;font-weight:800">“How many API invocation records are available?”</p>
+        <p>The user does not need to know the physical table name or write SQL.</p>
+        <div class="demo-actions">
+          <button class="btn primary" onclick="runAgentDemo()">▶ Run live flow</button>
+          <button class="btn secondary" onclick="resetAgentDemo()">Reset</button>
+        </div>
+      </div>
+
+      <div class="demo-flow" id="demoFlow">
+        <div class="demo-step" data-demo="0"><div class="num">1</div><div class="name">cc_orchestrator_agent</div><div class="status">Receives question</div></div>
+        <div class="demo-step" data-demo="1"><div class="num">2</div><div class="name">cc_metadata_discovery_agent</div><div class="status">Finds approved metadata</div></div>
+        <div class="demo-step" data-demo="2"><div class="num">3</div><div class="name">cc_table_routing_agent</div><div class="status">Chooses table</div></div>
+        <div class="demo-step" data-demo="3"><div class="num">4</div><div class="name">cc_table_sampling_agent</div><div class="status">Samples rows</div></div>
+        <div class="demo-step" data-demo="4"><div class="num">5</div><div class="name">cc_column_grounding_agent</div><div class="status">Grounds business terms to columns</div></div>
+        <div class="demo-step" data-demo="5"><div class="num">6</div><div class="name">cc_query_generation_agent</div><div class="status">Generates SQL</div></div>
+        <div class="demo-step" data-demo="6"><div class="num">7</div><div class="name">cc_query_validation_agent</div><div class="status">Validates query</div></div>
+        <div class="demo-step" data-demo="7"><div class="num">8</div><div class="name">cc_query_execution_agent</div><div class="status">Executes validated SQL</div></div>
+        <div class="demo-step" data-demo="8"><div class="num">9</div><div class="name">cc_response_summarization_agent</div><div class="status">Creates business answer</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="demo-console">
+        <div class="console-head"><b>Live Agent Trace</b><div class="live-dot"></div></div>
+        <div id="demoLog"><div class="log-line"><span class="log-out">Click “Run live flow” to start the example.</span></div></div>
+      </div>
+      <div class="final-response" id="demoFinal">
+        <h3>Natural-language response returned today</h3>
+        <p><b>There are 1,284 API invocation records available.</b></p>
+        <div class="small">The user receives the answer — not the internal agent trace — in the Command Center Chat UI.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-no">09 / 10</div>
+</section>
+
+
+<section class="page" id="p10">
+  <div class="kicker">Future Experience</div>
+  <h2>From conversational answer to downloadable report</h2>
+  <p class="lead" style="font-size:17px">After the PoC succeeds and the data layer moves to Oracle, a successful validated query can optionally feed a report-rendering branch that produces KPI cards, graphs, tables and downloadable data.</p>
+
+  <div class="future-flow">
+    <div class="future-node">User Question</div><span class="arrow">→</span>
+    <div class="future-node">Agentic Query Intelligence</div><span class="arrow">→</span>
+    <div class="future-node">Validated Query Result</div><span class="arrow">→</span>
+    <div class="future-node future">Future Report Renderer</div><span class="arrow">→</span>
+    <div class="future-node future">Graph + Table + Data</div><span class="arrow">→</span>
+    <div class="future-node future">Download / Share</div>
+  </div>
+
+  <div class="report-preview">
+    <div class="card">
+      <span class="badge purple">Future State • Oracle</span>
+      <h3 style="margin-top:12px">Example request</h3>
+      <p style="font-size:19px;font-weight:800;color:var(--navy)">“Generate a weekly API performance report for the last four weeks.”</p>
+      <p>The optimized governed query flow runs first. Only after successful validation and execution does the optional report branch render visuals.</p>
+
+      <div class="note" style="margin:14px 0"><b>No additional core report agent is required.</b> This can remain a future rendering/export service invoked after query results are available.</div>
+
+      <h3>Future controls</h3>
+      <div class="report-actions">
+        <button class="btn green" onclick="generateFutureReport()">Generate preview</button>
+        <button class="btn secondary" onclick="downloadDemoCSV()">Download CSV</button>
+        <button class="btn secondary" onclick="downloadDemoHTML()">Download HTML Report</button>
+      </div>
+      <div class="download-status" id="downloadStatus"></div>
+    </div>
+
+    <div class="report-panel" id="futureReportPanel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div><h3 style="margin:0">API Performance Report</h3><div class="small">Illustrative future report preview</div></div>
+        <span class="badge gold">Generated from query results</span>
+      </div>
+
+      <div class="future-kpis">
+        <div class="future-kpi"><b id="fk1">—</b><span>API Success Rate</span></div>
+        <div class="future-kpi"><b id="fk2">—</b><span>Invocations</span></div>
+        <div class="future-kpi"><b id="fk3">—</b><span>Avg. Response Time</span></div>
+      </div>
+
+      <div class="spark" id="futureBars">
+        <div class="sbar" style="height:10%"></div>
+        <div class="sbar" style="height:10%"></div>
+        <div class="sbar" style="height:10%"></div>
+        <div class="sbar" style="height:10%"></div>
+      </div>
+
+      <table style="margin-top:12px">
+        <tr><th>Week</th><th>Invocations</th><th>Success Rate</th><th>Avg. Response</th></tr>
+        <tbody id="futureRows">
+          <tr><td colspan="4" class="small">Click “Generate preview” to populate the illustrative report.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:15px"><b>Production principle:</b> the report renderer consumes approved query results. It must not independently query unrestricted data or bypass the Command Center validation and access-control path.</div>
+  <div class="page-no">10 / 10</div>
+</section>
+
+<div class="agent-detail" id="detail">
+  <button class="close" onclick="closeDetail()">×</button>
+  <div class="kicker">Agent Detail</div>
+  <h2 id="detailTitle" style="font-size:28px"></h2>
+  <div id="detailBody"></div>
+</div>
+
+<script>
+
+const currentPipelineMarkup = document.getElementById('pipeline').innerHTML;
+const futurePipelineMarkup = `
+  <div class="agent" data-agent="future_orchestrator">
+    <div class="idx">1</div><div class="aname">cc_orchestrator_agent</div>
+    <div class="role">Root Orchestrator</div>
+    <div class="desc">Coordinates only the required capabilities and keeps the flow lightweight.</div>
+  </div>
+  <div class="agent" data-kind="meta" data-agent="future_context">
+    <div class="idx">2</div><div class="aname">cc_data_context_agent</div>
+    <div class="role">Metadata + Data Context</div>
+    <div class="desc">Combines metadata discovery, table selection and column grounding. Sampling is invoked only when needed.</div>
+  </div>
+  <div class="agent" data-kind="validate" data-agent="future_query">
+    <div class="idx">3</div><div class="aname">cc_query_intelligence_agent</div>
+    <div class="role">Generate + Validate + Execute</div>
+    <div class="desc">Generates Oracle SQL, uses deterministic validation, then executes the approved read-only query.</div>
+  </div>
+  <div class="agent" data-kind="sum" data-agent="future_response">
+    <div class="idx">4</div><div class="aname">cc_response_agent</div>
+    <div class="role">Answer + Optional Report Handoff</div>
+    <div class="desc">Returns a concise business answer and can pass results to the optional report-rendering service.</div>
+  </div>`;
+
+const agentInfo = {
+  orchestrator:{title:"cc_orchestrator_agent", role:"Sequential Root Container", purpose:"Acts as the root workflow coordinator for the current PoC and ensures each processing step runs in the required controlled order.", inputs:"Current user request + workflow context", tool:"None"},
+  metadata:{title:"cc_metadata_discovery_agent", role:"Metadata Discovery", purpose:"Calls the metadata retrieval tool using the current user request and returns approved metadata for downstream agents.", inputs:"Current user request", tool:"command_center_metadata_retrieval"},
+  routing:{title:"cc_table_routing_agent", role:"Table Routing", purpose:"Chooses one approved table using the current user request plus retrieved metadata, or returns NO_MATCH rather than guessing.", inputs:"Current user request + retrieved metadata", tool:"None"},
+  sampling:{title:"cc_table_sampling_agent", role:"Table Sampling", purpose:"Fetches exactly a small controlled sample (LIMIT 8) from the selected table. The sample is evidence only and is not treated as the full value domain.", inputs:"Selected table", tool:"command_center_run_sql"},
+  grounding:{title:"cc_column_grounding_agent", role:"Column Grounding", purpose:"Maps normal business wording to approved physical columns using retrieved metadata, the selected table and sampled rows. It does not call SQL or a separate value-lookup tool.", inputs:"Current user request + retrieved_metadata + table_selection + sql_table_output", tool:"None"},
+  generation:{title:"cc_query_generation_agent", role:"Query Generation", purpose:"Generates exactly one single-table, read-only PostgreSQL query from the grounded context. It fails safely when required schema evidence is missing.", inputs:"Current user request + selected table + sample + column_info", tool:"None"},
+  validation:{title:"cc_query_validation_agent", role:"Query Validation", purpose:"Approves or rejects SQL for read-only safety, approved table/column usage, PostgreSQL correctness and alignment to the current user request. It returns the original SQL unchanged only when VALID; it does not repair SQL.", inputs:"sql_generation_output + approved metadata + current user request", tool:"Future: command_center_validate_sql"},
+  execution:{title:"cc_query_execution_agent", role:"Query Execution", purpose:"Executes only the exact validated query. If validation is INVALID, the SQL tool is not called.", inputs:"sql_validation_output", tool:"command_center_run_sql"},
+  summary:{title:"cc_response_summarization_agent", role:"Response Summarization", purpose:"Returns a concise business answer grounded only in query results.", inputs:"Current user request + SQL result", tool:"None"},
+  future_orchestrator:{title:"cc_orchestrator_agent", role:"Future Root Orchestrator", purpose:"Coordinates a smaller number of focused agents and avoids unnecessary processing steps.", inputs:"User request + workflow context", tool:"None"},
+  future_context:{title:"cc_data_context_agent", role:"Metadata + Data Context", purpose:"Combines metadata discovery, table routing and column grounding. Targeted sampling is conditional rather than mandatory.", inputs:"User request + governed metadata", tool:"Metadata retrieval + conditional sampling"},
+  future_query:{title:"cc_query_intelligence_agent", role:"Query Intelligence", purpose:"Generates Oracle-compatible SQL, validates it deterministically and executes only approved read-only queries.", inputs:"Grounded data context", tool:"SQL validation + read-only SQL execution"},
+  future_response:{title:"cc_response_agent", role:"Response & Report Handoff", purpose:"Creates the natural-language answer and optionally hands validated results to the report-rendering service.", inputs:"Validated query results", tool:"Optional report renderer"}
+};
+function openDetail(key){
+  const d=agentInfo[key]; if(!d) return;
+  document.getElementById('detailTitle').textContent=d.title;
+  document.getElementById('detailBody').innerHTML=`<span class="badge">${d.role}</span>
+    <div class="card soft" style="margin-top:16px"><h3>What it does</h3><p>${d.purpose}</p></div>
+    <div class="grid g2" style="margin-top:12px"><div class="card soft"><h3>Inputs</h3><p>${d.inputs}</p></div>
+    <div class="card soft"><h3>Tool</h3><p>${d.tool}</p></div></div>`;
+  document.getElementById('detail').classList.add('open');
+}
+function closeDetail(){document.getElementById('detail').classList.remove('open')}
+function bindAgentCards(){
+  document.querySelectorAll('.agent').forEach(el=>el.addEventListener('click',()=>openDetail(el.dataset.agent)));
+}
+bindAgentCards();
+
+function setMode(mode){
+  document.getElementById('btnCurrent').classList.toggle('active',mode==='current');
+  document.getElementById('btnFuture').classList.toggle('active',mode==='future');
+  const title=document.getElementById('dbTitle'), list=document.getElementById('dbList'), note=document.getElementById('futureNote');
+  const pipeline=document.getElementById('pipeline');
+  if(mode==='future'){
+    pipeline.innerHTML=futurePipelineMarkup;
+    pipeline.classList.add('future-mode');
+    title.textContent='Database Layer — Future';
+    list.innerHTML='<li><b>Oracle Database</b></li><li>Governed business tables / views</li><li>Metadata tables</li><li>Read-only execution</li><li>Optional report-rendering service</li>';
+    note.style.display='block';
+  }else{
+    pipeline.innerHTML=currentPipelineMarkup;
+    pipeline.classList.remove('future-mode');
+    title.textContent='Database Layer — Current';
+    list.innerHTML='<li><b>PostgreSQL PoC</b></li><li>Business tables / views</li><li>Metadata tables</li><li>Read-only execution</li>';
+    note.style.display='none';
+  }
+  bindAgentCards();
+}
+const barVals=[54,72,63,88,76,95,84,91,78,97,89,93];
+document.getElementById('bars').innerHTML=barVals.map(v=>`<div class="bar" style="height:${v}%"></div>`).join('');
+
+
+let demoTimer = null;
+const demoEvents = [
+  ["cc_orchestrator_agent","Receives the original natural-language question and starts the controlled workflow."],
+  ["cc_metadata_discovery_agent","command_center_metadata_retrieval returns API log metadata, including CITI_DATA_LOG as a relevant source."],
+  ["cc_table_routing_agent","Selects CITI_DATA_LOG as the best table for the request."],
+  ["cc_table_sampling_agent","command_center_run_sql retrieves a small 8-row sample to inspect the table shape."],
+  ["cc_column_grounding_agent","Uses retrieved metadata + the 8-row sample; no filter column is required for this count-only question."],
+  ["cc_query_generation_agent","Generates: SELECT COUNT(*) AS api_invocation_count FROM citi_data_log;"],
+  ["cc_query_validation_agent","Passes read-only, single-table, PostgreSQL and user-intent checks."],
+  ["cc_query_execution_agent","command_center_run_sql returns: { api_invocation_count: 1284 }  [illustrative]"],
+  ["cc_response_summarization_agent","Creates the natural-language answer: “There are 1,284 API invocation records available.”"]
+];
+
+function resetAgentDemo(){
+  if(demoTimer){clearTimeout(demoTimer);demoTimer=null}
+  document.querySelectorAll('.demo-step').forEach(x=>x.classList.remove('active','done'));
+  document.getElementById('demoLog').innerHTML='<div class="log-line"><span class="log-out">Click “Run live flow” to start the example.</span></div>';
+  document.getElementById('demoFinal').classList.remove('show');
+}
+function runAgentDemo(){
+  resetAgentDemo();
+  const log=document.getElementById('demoLog');
+  let i=0;
+  function next(){
+    document.querySelectorAll('.demo-step').forEach((x,idx)=>{
+      x.classList.toggle('active',idx===i);
+      if(idx<i)x.classList.add('done');
+    });
+    const [agent,msg]=demoEvents[i];
+    if(i===0)log.innerHTML='';
+    log.innerHTML += `<div class="log-line"><span class="log-agent">${agent}</span><br><span class="log-out">${msg}</span></div>`;
+    log.scrollTop=log.scrollHeight;
+    i++;
+    if(i<demoEvents.length){demoTimer=setTimeout(next,850)}
+    else{
+      document.querySelectorAll('.demo-step').forEach(x=>{x.classList.remove('active');x.classList.add('done')});
+      demoTimer=setTimeout(()=>document.getElementById('demoFinal').classList.add('show'),450);
+    }
+  }
+  next();
+}
+
+const futureData = [
+  ["Week 1",1180,"95.8%","1.9s"],
+  ["Week 2",1245,"96.4%","1.8s"],
+  ["Week 3",1320,"97.1%","1.7s"],
+  ["Week 4",1284,"96.8%","1.8s"]
+];
+function generateFutureReport(){
+  document.getElementById('fk1').textContent='96.8%';
+  document.getElementById('fk2').textContent='1,284';
+  document.getElementById('fk3').textContent='1.8s';
+  const heights=[68,79,92,84];
+  [...document.querySelectorAll('#futureBars .sbar')].forEach((b,i)=>b.style.height=heights[i]+'%');
+  document.getElementById('futureRows').innerHTML=futureData.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+  document.getElementById('downloadStatus').textContent='Preview generated from illustrative query-result data.';
+}
+function triggerDownload(filename,content,type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),500);
+}
+function downloadDemoCSV(){
+  const rows=[["Week","Invocations","Success Rate","Avg Response Time"],...futureData];
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
+  triggerDownload('Command_Center_API_Performance_Demo.csv',csv,'text/csv');
+  document.getElementById('downloadStatus').textContent='Illustrative CSV report downloaded.';
+}
+function downloadDemoHTML(){
+  const bodyRows=futureData.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+  const report=`<!doctype html><html><head><meta charset="utf-8"><title>Command Center API Performance Report</title>
+  <style>body{font-family:Arial;padding:36px;color:#17233a}h1{color:#0b2f6b}.k{display:inline-block;padding:14px 20px;margin:8px;border:1px solid #d9e2ef;border-radius:12px}.k b{font-size:24px;display:block}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{padding:10px;border:1px solid #d9e2ef;text-align:left}th{background:#eef4fc}</style></head>
+  <body><h1>Command Center – API Performance Report</h1><p>Illustrative future generated report.</p>
+  <div class="k"><b>96.8%</b>API Success Rate</div><div class="k"><b>1,284</b>Invocations</div><div class="k"><b>1.8s</b>Avg Response Time</div>
+  <table><tr><th>Week</th><th>Invocations</th><th>Success Rate</th><th>Avg Response</th></tr>${bodyRows}</table></body></html>`;
+  triggerDownload('Command_Center_API_Performance_Demo.html',report,'text/html');
+  document.getElementById('downloadStatus').textContent='Illustrative HTML report downloaded.';
+}
+
+const pages=[...document.querySelectorAll('.page')], dots=[...document.querySelectorAll('.navdot')];
+function onScroll(){
+  const max=document.documentElement.scrollHeight-innerHeight;
+  document.getElementById('progress').style.width=((scrollY/max)*100)+'%';
+  let idx=0,best=Infinity;
+  pages.forEach((p,i)=>{const d=Math.abs(p.getBoundingClientRect().top); if(d<best){best=d;idx=i}});
+  dots.forEach((d,i)=>d.classList.toggle('active',i===idx));
+}
+addEventListener('scroll',onScroll,{passive:true}); onScroll();
+addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeDetail();
+  if(['ArrowDown','PageDown'].includes(e.key)){e.preventDefault(); const i=dots.findIndex(d=>d.classList.contains('active')); dots[Math.min(i+1,dots.length-1)].click()}
+  if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault(); const i=dots.findIndex(d=>d.classList.contains('active')); dots[Math.max(i-1,0)].click()}
+});
+</script>
+</body>
+</html>
