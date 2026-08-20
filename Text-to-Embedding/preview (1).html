@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text-to-Embedding PoC — Interactive Architecture</title>
+<style>
+:root{
+  --bg:#f5f8fc;
+  --surface:#ffffff;
+  --surface2:#f8fbff;
+  --line:#d9e4f1;
+  --line2:#c7d7ea;
+  --text:#17324d;
+  --muted:#607a95;
+  --blue:#4e7fda;
+  --blue2:#6c9cf0;
+  --teal:#4daea4;
+  --violet:#8879d4;
+  --green:#2f9b67;
+  --amber:#c98a22;
+  --red:#ca586d;
+  --shadow:0 10px 28px rgba(76,101,139,.13);
+  --radius:18px;
+  --font:"Aptos","Segoe UI Variable","Segoe UI","Inter",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:var(--font);
+  color:var(--text);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(107,156,240,.12), transparent 28%),
+    radial-gradient(circle at 100% 0%, rgba(77,174,164,.10), transparent 28%),
+    var(--bg);
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1450px;margin:0 auto;padding:24px 26px 56px}
+.hero{
+  background:linear-gradient(135deg,#ffffff,#f8fbff);
+  border:1px solid var(--line);
+  border-radius:26px;
+  padding:28px 30px;
+  box-shadow:var(--shadow);
+}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.badge{
+  display:inline-flex;align-items:center;
+  padding:6px 10px;border-radius:999px;
+  border:1px solid #cfdded;background:#eef5ff;
+  color:#5072a0;font-size:12px;font-weight:700;
+}
+.badge.green{background:#edf9f3;border-color:#c6e8d4;color:#2e8059}
+h1{margin:0 0 10px;font-size:38px;letter-spacing:-.6px;line-height:1.12}
+.hero p{max-width:1050px;margin:0;color:var(--muted);line-height:1.6}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 14px;min-width:145px}
+.stat b{display:block;font-size:19px}.stat span{font-size:11px;color:var(--muted)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 16px}
+.tab{
+  border:1px solid var(--line2);background:#fff;color:#607994;
+  border-radius:12px;padding:10px 14px;font-weight:700;
+}
+.tab.active{background:var(--blue);color:white;border-color:var(--blue)}
+.view{display:none}
+.view.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.85px;color:var(--blue);font-weight:800;margin-bottom:7px}
+h2{font-size:22px;margin:0 0 10px}
+h3{font-size:17px;margin:0 0 8px}
+p{line-height:1.55}
+.muted{color:var(--muted)}
+.flow{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px
+}
+.pill{
+  border:1px solid #d4e1f1;background:#f4f8ff;color:#536f91;
+  border-radius:999px;padding:7px 10px;font-size:12px;font-weight:700
+}
+.arr{color:var(--teal);font-weight:900}
+.callout{
+  background:#f2f7ff;border-left:4px solid var(--blue);
+  border-radius:11px;padding:13px 14px;color:#4f6680;
+}
+.callout.good{background:#effaf5;border-left-color:var(--green)}
+.callout.warn{background:#fff8e9;border-left-color:var(--amber)}
+.list{margin:0;padding-left:20px;color:#4f6882}.list li{margin:7px 0;line-height:1.45}
+
+/* architecture */
+.arch{
+  display:grid;grid-template-columns:1fr;gap:12px
+}
+.lane{
+  border:1px solid var(--line);border-radius:16px;background:#fbfdff;padding:12px
+}
+.lane-title{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#7290b5;font-weight:800;margin:0 0 9px 3px}
+.nodes{display:flex;gap:9px;flex-wrap:wrap;align-items:stretch}
+.node{
+  flex:1 1 180px;min-height:88px;text-align:left;
+  border:1px solid #d3e1f1;background:#fff;border-radius:14px;
+  padding:12px;position:relative;color:var(--text);
+  transition:.16s ease;
+}
+.node:hover{border-color:#91b2e5;transform:translateY(-1px)}
+.node.teal{background:#f4fcfa;border-color:#cce9e3}
+.node.violet{background:#faf8ff;border-color:#e0d8f6}
+.node strong{display:block;font-size:14px;margin-bottom:4px}
+.node small{display:block;color:#7389a1;line-height:1.4}
+.node.active{outline:2px solid #79a6e9;box-shadow:0 0 0 5px rgba(121,166,233,.15)}
+.num{
+  position:absolute;right:9px;top:9px;width:23px;height:23px;border-radius:50%;
+  background:#eef4ff;color:#6687ad;border:1px solid #ccdaec;
+  display:grid;place-items:center;font-size:11px;font-weight:800
+}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.btn{
+  border:1px solid var(--line2);background:#fff;color:#385875;
+  border-radius:11px;padding:9px 12px;font-weight:700
+}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.secondary{background:#f5f9ff}
+.inspector{position:sticky;top:16px}
+.kv{display:grid;grid-template-columns:135px 1fr;gap:8px 12px;font-size:13px}
+.kv div:nth-child(odd){font-weight:800;color:#55799e}
+pre{
+  background:#f7faff;border:1px solid #dbe6f2;border-radius:13px;
+  padding:14px;overflow:auto;white-space:pre-wrap;color:#36516c;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.48
+}
+
+/* simulator */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{font-size:12px;font-weight:700;color:#5c7690}
+input,select,textarea{
+  width:100%;margin-top:6px;border:1px solid #d2e0f0;background:#fff;
+  border-radius:11px;padding:10px 11px;color:var(--text);outline:none
+}
+textarea{min-height:92px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:#7fa8e4;box-shadow:0 0 0 3px rgba(127,168,228,.14)}
+.trace{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.trace-row{
+  display:grid;grid-template-columns:24px 1fr auto;gap:9px;align-items:center;
+  border:1px solid #dce6f1;background:#fff;border-radius:11px;padding:9px 10px
+}
+.dot{width:10px;height:10px;border-radius:50%;background:#b7c5d3}
+.trace-row.running{border-color:#8fb3e7;background:#f4f8ff}.trace-row.running .dot{background:var(--blue2)}
+.trace-row.done{border-color:#bde3cd;background:#f4fbf7}.trace-row.done .dot{background:var(--green)}
+.trace-row b{font-size:13px}.trace-row small{display:block;color:#7890a8;margin-top:2px}
+.trace-row em{font-size:11px;color:#8ba0b5;font-style:normal}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#688099}
+.status i{width:9px;height:9px;border-radius:50%;background:#b7c5d3}.status.running i{background:var(--amber)}.status.done i{background:var(--green)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.metric{border:1px solid #dce7f2;background:#fbfdff;border-radius:12px;padding:11px}
+.metric b{display:block;font-size:18px}.metric span{font-size:11px;color:#748aa0}
+.bars{height:120px;display:flex;align-items:center;gap:6px;border:1px solid #dce7f2;background:#f9fbff;border-radius:12px;padding:10px;margin-top:10px}
+.bwrap{height:100%;flex:1;display:flex;align-items:center;justify-content:center}
+.bar{width:100%;max-width:18px;min-height:5px;border-radius:4px;background:linear-gradient(180deg,#69bfd4,#5686df)}
+.bar.neg{background:linear-gradient(180deg,#b6a5e8,#8577cf)}
+.contract-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.ctab{border:1px solid #d2dfef;background:#fff;color:#68809a;border-radius:9px;padding:7px 9px;font-size:12px;font-weight:700}
+.ctab.active{background:#edf4ff;border-color:#aac3e8;color:#416a9e}
+.rule{
+  display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+  border:1px solid #dfe8f3;border-radius:12px;padding:11px;margin-bottom:8px
+}
+.rule span{font-size:11px;color:#7c92a8;display:block;margin-top:3px}
+.tag{font-size:11px;border-radius:999px;padding:4px 8px;border:1px solid #d2dfed;background:#f5f8fc;color:#617b95}
+.tag.good{background:#effaf5;border-color:#c4e7d1;color:#2e815a}
+.tag.open{background:#fff8ea;border-color:#ead8ae;color:#946b24}
+.decision{
+  display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+  border:1px solid #dfe8f3;border-radius:12px;padding:11px;margin-bottom:8px
+}
+.decision select{width:auto;min-width:170px;margin:0}
+.progress{height:10px;background:#edf3fa;border:1px solid #dce6f1;border-radius:999px;overflow:hidden}
+.progress>div{height:100%;width:0;background:linear-gradient(90deg,#4fae83,#e1b34a);transition:.2s}
+.check{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #edf2f8}
+.check input{width:auto;margin:3px 0 0}
+.check label{font-size:13px;color:#526c85;font-weight:500}
+.footer{text-align:center;color:#7a90a6;font-size:11px;margin-top:18px}
+.toast{
+  position:fixed;right:20px;bottom:20px;opacity:0;pointer-events:none;
+  transform:translateY(8px);transition:.18s;background:#fff;border:1px solid var(--line2);
+  box-shadow:var(--shadow);padding:10px 13px;border-radius:11px;color:#35536e;font-size:12px;font-weight:700
+}
+.toast.show{opacity:1;transform:translateY(0)}
+@media(max-width:1050px){
+  .c8,.c7,.c6,.c5,.c4{grid-column:span 12}
+  .inspector{position:static}
+}
+@media(max-width:700px){
+  .shell{padding:14px}.hero{padding:20px}h1{font-size:31px}
+  .form-grid,.metrics{grid-template-columns:1fr}
+  .kv{grid-template-columns:1fr}
+  .decision{grid-template-columns:1fr}.decision select{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <section class="hero">
+    <div class="badges">
+      <span class="badge green">PoC Proposal</span>
+      <span class="badge">Text-to-Embedding</span>
+      <span class="badge">Existing Sync API</span>
+      <span class="badge">Reusable Embedding Tool</span>
+    </div>
+    <h1>Text-to-Embedding — E2E Architecture & Interactive PoC</h1>
+    <p>
+      A lightweight stateless embedding-generation use case. The platform reuses the existing synchronous orchestration path,
+      dispatches one high-level Text-to-Embedding step, and keeps embedding-specific behavior inside a reusable tool.
+      Internal orchestration and executor call-stack details are intentionally hidden from this PoC view.
+    </p>
+    <div class="stats">
+      <div class="stat"><b>1–250</b><span>draft batch range</span></div>
+      <div class="stat"><b>Sync</b><span>request-response execution</span></div>
+      <div class="stat"><b>0</b><span>embedding persistence</span></div>
+      <div class="stat"><b>1 tool</b><span>reusable embedding capability</span></div>
+    </div>
+  </section>
+
+  <nav class="tabs" aria-label="PoC sections">
+    <button type="button" class="tab active" data-view="overview">Overview</button>
+    <button type="button" class="tab" data-view="architecture">Architecture</button>
+    <button type="button" class="tab" data-view="simulator">Interactive Flow</button>
+    <button type="button" class="tab" data-view="contract">Contract Lab</button>
+    <button type="button" class="tab" data-view="decisions">Decisions & DoD</button>
+  </nav>
+
+  <section id="overview" class="view active">
+    <div class="grid">
+      <div class="card c7">
+        <div class="kicker">Recommended pattern</div>
+        <h2>Reuse the existing sync execution path</h2>
+        <p class="muted">
+          The platform should treat Text-to-Embedding as another synchronous use case. Orchestration remains generic,
+          the executor remains generic, and the new reusable tool owns model-specific embedding preparation and validation.
+        </p>
+        <div class="flow">
+          <span class="pill">Use Case</span><span class="arr">→</span>
+          <span class="pill">Sync API</span><span class="arr">→</span>
+          <span class="pill">Execution Platform</span><span class="arr">→</span>
+          <span class="pill">Embedding Agent</span><span class="arr">→</span>
+          <span class="pill">Embedding Tool</span><span class="arr">→</span>
+          <span class="pill">Approved Model</span>
+        </div>
+      </div>
+      <div class="card c5">
+        <div class="kicker">Separation of responsibilities</div>
+        <h3>Keep the architecture clean</h3>
+        <ul class="list">
+          <li><b>Platform:</b> auth, config, guardrails, timeout, dispatch and response lifecycle.</li>
+          <li><b>Agent:</b> thin use-case wrapper that invokes the tool.</li>
+          <li><b>Tool:</b> validation, normalization, optional address parsing, model invocation and vector checks.</li>
+          <li><b>Model adapter:</b> approved provider/model integration.</li>
+        </ul>
+      </div>
+
+      <div class="card c4">
+        <div class="kicker">General text</div>
+        <h3>One text → one vector</h3>
+        <p class="muted">Company names and short text are normalized and embedded without address parsing.</p>
+      </div>
+      <div class="card c4">
+        <div class="kicker">Address mode</div>
+        <h3>Full address + components</h3>
+        <p class="muted">For address inputs, generate the full-address vector plus available street, city, postcode and country vectors.</p>
+      </div>
+      <div class="card c4">
+        <div class="kicker">Out of scope</div>
+        <h3>Generation only</h3>
+        <p class="muted">No persistence, Neo4j, cosine search, ranking, entity matching or custom model training in this PoC.</p>
+      </div>
+
+      <div class="card c8">
+        <div class="kicker">Endpoint approach</div>
+        <h3>Existing Sync API first</h3>
+        <p class="muted">
+          The draft <code>POST /v1/embeddings</code> contract can remain a business-facing payload or optional facade.
+          The actual platform execution should still flow through the existing synchronous orchestration capability.
+        </p>
+        <div class="callout good">
+          <b>Key design choice:</b> avoid creating a second embedding-specific orchestration service.
+        </div>
+      </div>
+      <div class="card c4">
+        <div class="kicker">Open design items</div>
+        <ul class="list">
+          <li>Approved embedding model.</li>
+          <li>Supported dimensions.</li>
+          <li>Long-text policy.</li>
+          <li>Address parser choice.</li>
+          <li>Batch failure behavior.</li>
+          <li>Timeout and performance SLO.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="architecture" class="view">
+    <div class="grid">
+      <div class="card c8">
+        <div class="toolbar">
+          <button type="button" id="play" class="btn primary">▶ Animate Flow</button>
+          <button type="button" id="reset" class="btn secondary">Reset</button>
+          <span class="muted" style="font-size:12px">Click a component to inspect it.</span>
+        </div>
+
+        <div class="arch">
+          <div class="lane">
+            <div class="lane-title">1 — Consumer</div>
+            <div class="nodes">
+              <button type="button" class="node" data-node="caller">
+                <span class="num">1</span>
+                <strong>Use Case Caller</strong>
+                <small>Company name, address, or short text with model/dimension requirements.</small>
+              </button>
+              <button type="button" class="node teal" data-node="config">
+                <span class="num">2</span>
+                <strong>Use Case Configuration</strong>
+                <small>Approved model, dimensions, validation and policy settings.</small>
+              </button>
+              <button type="button" class="node violet" data-node="facade">
+                <strong>Optional /v1/embeddings Facade</strong>
+                <small>Compatibility adapter only; not a separate execution stack.</small>
+              </button>
+            </div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-title">2 — Existing Platform Execution</div>
+            <div class="nodes">
+              <button type="button" class="node" data-node="platform">
+                <span class="num">3</span>
+                <strong>Orchestration Sync API</strong>
+                <small>Generic auth, config, guardrail, timeout, planning and dispatch.</small>
+              </button>
+              <button type="button" class="node teal" data-node="executor">
+                <span class="num">4</span>
+                <strong>Executor / Sync Runtime</strong>
+                <small>Runs the requested Text-to-Embedding step and returns the result.</small>
+              </button>
+            </div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-title">3 — Text-to-Embedding Capability</div>
+            <div class="nodes">
+              <button type="button" class="node violet" data-node="agent">
+                <span class="num">5</span>
+                <strong>Text-to-Embedding Agent</strong>
+                <small>Thin deterministic wrapper around the reusable embedding tool.</small>
+              </button>
+              <button type="button" class="node teal" data-node="tool">
+                <span class="num">6</span>
+                <strong>Embedding Tool</strong>
+                <small>Validates, normalizes, parses address input, batches and reconstructs results.</small>
+              </button>
+              <button type="button" class="node teal" data-node="parser">
+                <span class="num">7</span>
+                <strong>Address Parser</strong>
+                <small>Used only for address inputs; returns available address components.</small>
+              </button>
+              <button type="button" class="node" data-node="adapter">
+                <span class="num">8</span>
+                <strong>Model Adapter</strong>
+                <small>Provider-neutral integration with the approved embedding model.</small>
+              </button>
+              <button type="button" class="node violet" data-node="model">
+                <span class="num">9</span>
+                <strong>Approved Embedding Model</strong>
+                <small>Returns numeric vectors matching the configured dimension.</small>
+              </button>
+            </div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-title">4 — Response</div>
+            <div class="nodes">
+              <button type="button" class="node" data-node="response">
+                <span class="num">10</span>
+                <strong>Structured Sync Response</strong>
+                <small>Full-text/full-address vector, component vectors where applicable, and metadata.</small>
+              </button>
+              <button type="button" class="node teal" data-node="observability">
+                <strong>Observability & Governance</strong>
+                <small>Correlation, model metadata, latency, errors and safe logging.</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card c4 inspector">
+        <div class="kicker">Component inspector</div>
+        <h2 id="iTitle">Embedding Tool</h2>
+        <p id="iSummary" class="muted">Reusable deterministic capability for embedding generation.</p>
+        <div class="kv" id="iKv"></div>
+        <pre id="iCode"></pre>
+      </aside>
+    </div>
+  </section>
+
+  <section id="simulator" class="view">
+    <div class="grid">
+      <div class="card c5">
+        <div class="kicker">Interactive request</div>
+        <h2>Run the PoC flow</h2>
+        <div class="form-grid">
+          <label>Model
+            <input id="model" value="gemini-embedding-001">
+          </label>
+          <label>Dimension
+            <input id="dimension" type="number" min="1" value="1536">
+          </label>
+          <label>Input ID
+            <input id="inputId" value="2">
+          </label>
+          <label>Input type
+            <select id="isAddress">
+              <option value="true">Address</option>
+              <option value="false">General text</option>
+            </select>
+          </label>
+          <label style="grid-column:1/-1">Text
+            <textarea id="text">1 Canary Wharf, London, E14 5AB, UK</textarea>
+          </label>
+          <label>Long text policy
+            <select id="longPolicy">
+              <option value="reject">Reject > 2,000 chars</option>
+              <option value="truncate">Truncate + flag</option>
+            </select>
+          </label>
+          <label>Batch failure policy
+            <select id="batchPolicy">
+              <option value="all_or_nothing">Reject whole batch</option>
+              <option value="per_item">Per-item errors</option>
+            </select>
+          </label>
+        </div>
+        <div class="toolbar" style="margin-top:13px;margin-bottom:0">
+          <button type="button" id="run" class="btn primary">▶ Run</button>
+          <button type="button" id="sampleText" class="btn">General-text sample</button>
+          <button type="button" id="sampleAddress" class="btn">Address sample</button>
+        </div>
+        <p class="muted" style="font-size:12px;margin-bottom:0">
+          The vector preview is deterministic mock data for UI demonstration only. No external API is called from this HTML.
+        </p>
+      </div>
+
+      <div class="card c7">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+          <div>
+            <div class="kicker">High-level execution trace</div>
+            <h2 style="margin-bottom:0">PoC Flow</h2>
+          </div>
+          <span id="status" class="status"><i></i>Ready</span>
+        </div>
+        <div id="trace" class="trace"></div>
+      </div>
+
+      <div class="card c6">
+        <div class="kicker">Prepared model inputs</div>
+        <pre id="prepared"></pre>
+      </div>
+      <div class="card c6">
+        <div class="kicker">Response preview</div>
+        <pre id="result"></pre>
+      </div>
+
+      <div class="card c12">
+        <div class="metrics">
+          <div class="metric"><b id="mDim">1536</b><span>configured dimension</span></div>
+          <div class="metric"><b id="mPrepared">5</b><span>prepared model inputs</span></div>
+          <div class="metric"><b id="mMode">Address</b><span>routing mode</span></div>
+          <div class="metric"><b id="mLatency">—</b><span>simulated latency</span></div>
+        </div>
+        <div id="bars" class="bars" aria-label="Preview of sample embedding values"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contract" class="view">
+    <div class="grid">
+      <div class="card c6">
+        <div class="kicker">Business contract</div>
+        <h2>JSON examples</h2>
+        <div class="contract-tabs">
+          <button type="button" class="ctab active" data-contract="request">Request</button>
+          <button type="button" class="ctab" data-contract="internal">Prepared input</button>
+          <button type="button" class="ctab" data-contract="response">Response</button>
+          <button type="button" class="ctab" data-contract="errors">Errors</button>
+        </div>
+        <pre id="contractCode"></pre>
+      </div>
+
+      <div class="card c6">
+        <div class="kicker">Validation rules</div>
+        <h2>Draft contract</h2>
+        <div class="rule"><div><b>Required fields</b><span>id, text and is_address</span></div><span class="tag good">Required</span></div>
+        <div class="rule"><div><b>Batch size</b><span>1 to 250 input items</span></div><span class="tag">Draft</span></div>
+        <div class="rule"><div><b>Text length</b><span>Maximum 2,000 characters</span></div><span class="tag open">Policy open</span></div>
+        <div class="rule"><div><b>Address flag</b><span>true → parse; false → general text</span></div><span class="tag good">Clear</span></div>
+        <div class="rule"><div><b>Vector dimension</b><span>Each returned vector must match configured dimension</span></div><span class="tag good">Required</span></div>
+        <div class="rule"><div><b>Model selection</b><span>Must resolve to an approved model/provider</span></div><span class="tag open">Finalize</span></div>
+      </div>
+
+      <div class="card c12">
+        <div class="callout">
+          <b>Platform mapping:</b> keep the existing Sync API envelope and treat this JSON as the business payload for the Text-to-Embedding step.
+          Internal orchestration and executor implementation details are deliberately omitted from this interactive document.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="decisions" class="view">
+    <div class="grid">
+      <div class="card c7">
+        <div class="kicker">Design decisions</div>
+        <h2>PoC decision board</h2>
+        <div class="decision"><div><b>Approved embedding model</b><div class="muted" style="font-size:12px">Choose the production-approved model.</div></div><select class="dsel"><option>Open</option><option>Approved</option></select></div>
+        <div class="decision"><div><b>Standard vector dimension</b><div class="muted" style="font-size:12px">Validate requested dimension against the selected model.</div></div><select class="dsel"><option>Open</option><option>1536</option><option>Configurable</option></select></div>
+        <div class="decision"><div><b>Long-text behavior</b><div class="muted" style="font-size:12px">Reject or truncate over 2,000 characters.</div></div><select class="dsel"><option>Open</option><option>Reject</option><option>Truncate + flag</option></select></div>
+        <div class="decision"><div><b>Address parser</b><div class="muted" style="font-size:12px">Select an approved parser/library/service.</div></div><select class="dsel"><option>Open</option><option>Approved parser</option></select></div>
+        <div class="decision"><div><b>Batch failure behavior</b><div class="muted" style="font-size:12px">Whole-batch vs per-item errors.</div></div><select class="dsel"><option>Open</option><option>Whole batch</option><option>Per item</option></select></div>
+        <div class="decision"><div><b>Timeout & performance targets</b><div class="muted" style="font-size:12px">Define sync timeout, provider timeout and SLO.</div></div><select class="dsel"><option>Open</option><option>Defined</option></select></div>
+      </div>
+
+      <div class="card c5">
+        <div class="kicker">Readiness</div>
+        <h2>Decision completeness</h2>
+        <div class="progress"><div id="progressBar"></div></div>
+        <p id="progressText" class="muted" style="font-size:12px">0 of 6 decisions closed.</p>
+        <div class="callout warn"><b>Before load testing:</b> model allowlist, dimensions, long-text policy and timeouts should be finalized.</div>
+      </div>
+
+      <div class="card c6">
+        <div class="kicker">Definition of done</div>
+        <h3>Functional</h3>
+        <div class="check"><input id="f1" type="checkbox"><label for="f1">Sync request maps cleanly to a Text-to-Embedding step.</label></div>
+        <div class="check"><input id="f2" type="checkbox"><label for="f2">General text returns a vector with the configured dimension.</label></div>
+        <div class="check"><input id="f3" type="checkbox"><label for="f3">Address input returns full-address and available component vectors.</label></div>
+        <div class="check"><input id="f4" type="checkbox"><label for="f4">Results preserve one-to-one mapping by input ID.</label></div>
+        <div class="check"><input id="f5" type="checkbox"><label for="f5">Errors use a consistent JSON format.</label></div>
+      </div>
+      <div class="card c6">
+        <div class="kicker">Definition of done</div>
+        <h3>Platform & NFR</h3>
+        <div class="check"><input id="n1" type="checkbox"><label for="n1">Batch, Unicode, validation and repeatability tests pass.</label></div>
+        <div class="check"><input id="n2" type="checkbox"><label for="n2">Correlation, auth context and timeout propagate end to end.</label></div>
+        <div class="check"><input id="n3" type="checkbox"><label for="n3">Raw-text logging policy is documented.</label></div>
+        <div class="check"><input id="n4" type="checkbox"><label for="n4">No embedding persistence is introduced.</label></div>
+        <div class="check"><input id="n5" type="checkbox"><label for="n5">Latency and error metrics are available by component.</label></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">Text-to-Embedding PoC • simplified architecture • internal platform call-stack details intentionally hidden</div>
+</div>
+<div id="toast" class="toast">Done</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const qs = (s, root=document) => root.querySelector(s);
+  const qsa = (s, root=document) => Array.from(root.querySelectorAll(s));
+
+  function showToast(msg){
+    const t = qs("#toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1400);
+  }
+
+  /* tabs */
+  qsa(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      qsa(".tab").forEach(x => x.classList.remove("active"));
+      qsa(".view").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+      const target = qs("#" + btn.dataset.view);
+      if(target) target.classList.add("active");
+    });
+  });
+
+  /* architecture inspector */
+  const info = {
+    caller:{
+      title:"Use Case Caller",
+      summary:"Internal application requesting embeddings synchronously.",
+      kv:{Input:"company name, address, or short text",Config:"model + dimension requirements",Output:"structured embedding JSON"},
+      code:`{
+  "embedding_config": {
+    "model": "approved-model-id",
+    "dimension": 1536
+  },
+  "inputs": [...]
+}`
+    },
+    config:{
+      title:"Use Case Configuration",
+      summary:"Use-case-specific embedding policy resolved outside the tool implementation.",
+      kv:{Model:"approved model identifier",Dimension:"requested supported dimension",Policy:"batch size, long text, address handling"},
+      code:`embedding:
+  model: approved-model-id
+  dimension: 1536
+  max_batch: 250
+  max_chars: 2000`
+    },
+    facade:{
+      title:"Optional /v1/embeddings Facade",
+      summary:"Compatibility endpoint only when a consumer needs the draft REST shape.",
+      kv:{Purpose:"map the business request into the existing Sync API",Runtime:"reuse the same platform execution path",Recommendation:"optional"},
+      code:`POST /v1/embeddings
+   ↓
+map business payload
+   ↓
+Existing Sync API`
+    },
+    platform:{
+      title:"Orchestration Sync API",
+      summary:"Existing generic platform capability. Internal orchestration steps are intentionally hidden here.",
+      kv:{Owns:"auth, config, guardrail, timeout, dispatch","Does not own":"embedding parsing or vector logic",Result:"synchronous step response"},
+      code:`Caller
+  → Existing Sync API
+  → Execution Platform
+  → Text-to-Embedding step`
+    },
+    executor:{
+      title:"Executor / Sync Runtime",
+      summary:"Existing generic runtime that executes the Text-to-Embedding step. Internal executor details are intentionally hidden.",
+      kv:{Owns:"step execution lifecycle",Receives:"Text-to-Embedding step payload",Returns:"completed or failed step result"},
+      code:`Execution Platform
+  → run Text-to-Embedding step
+  → return structured result`
+    },
+    agent:{
+      title:"Text-to-Embedding Agent",
+      summary:"Thin deterministic use-case wrapper around a reusable tool.",
+      kv:{Owns:"use-case intent + tool invocation",Avoids:"provider-specific SDK logic",Pattern:"one tool call in the normal path"},
+      code:`result = generate_embeddings(
+  model=config.model,
+  dimension=config.dimension,
+  inputs=request.inputs
+)`
+    },
+    tool:{
+      title:"Embedding Tool",
+      summary:"Reusable capability for deterministic embedding generation.",
+      kv:{Validate:"model, dimension, batch, text length",Prepare:"normalize + optional address parse",Invoke:"approved model adapter",Check:"numeric vectors + exact dimension"},
+      code:`generate_embeddings({
+  model,
+  dimension,
+  inputs,
+  long_text_policy,
+  batch_failure_policy
+})`
+    },
+    parser:{
+      title:"Address Parser",
+      summary:"Used only when is_address=true.",
+      kv:{Produces:"street, city, postcode, country",Fallback:"full-address embedding is still created",Policy:"only non-empty parsed components are embedded"},
+      code:`{
+  "street": "1 Canary Wharf",
+  "city": "London",
+  "postcode": "E14 5AB",
+  "country": "UK"
+}`
+    },
+    adapter:{
+      title:"Model Adapter",
+      summary:"Provider-neutral boundary for embedding model access.",
+      kv:{Input:"prepared text batch",Config:"approved model + dimension",Output:"numeric vectors",Benefit:"provider-specific logic isolated from the tool"},
+      code:`adapter.embed({
+  model: "approved-model-id",
+  dimensions: 1536,
+  texts: [...]
+})`
+    },
+    model:{
+      title:"Approved Embedding Model",
+      summary:"Configured model returns one vector per prepared text.",
+      kv:{Contract:"numeric vector",Dimension:"must match configured dimension",Production:"must be explicitly approved"},
+      code:`[
+  0.0987,
+  -0.1234,
+  0.3210,
+  ...
+]`
+    },
+    response:{
+      title:"Structured Sync Response",
+      summary:"Returns vectors grouped by original input ID.",
+      kv:{General:"one text vector",Address:"full-address + component vectors",Metadata:"model, dimension, input count"},
+      code:`{
+  "results": [...],
+  "metadata": {
+    "model": "...",
+    "dimension": 1536
+  }
+}`
+    },
+    observability:{
+      title:"Observability & Governance",
+      summary:"Cross-cutting telemetry and safe operational controls.",
+      kv:{Trace:"correlation ID",Metrics:"latency, errors, model/dimension",Logging:"avoid sensitive raw text unless policy permits"},
+      code:`embedding.request.count
+embedding.model.latency_ms
+embedding.error.count
+embedding.dimension_mismatch`
+    }
+  };
+
+  function renderInspector(key){
+    const d = info[key] || info.tool;
+    qs("#iTitle").textContent = d.title;
+    qs("#iSummary").textContent = d.summary;
+    const kv = qs("#iKv");
+    kv.innerHTML = "";
+    Object.entries(d.kv).forEach(([k,v]) => {
+      const a = document.createElement("div");
+      const b = document.createElement("div");
+      a.textContent = k;
+      b.textContent = v;
+      kv.appendChild(a);
+      kv.appendChild(b);
+    });
+    qs("#iCode").textContent = d.code;
+  }
+  renderInspector("tool");
+
+  qsa(".node").forEach(node => {
+    node.addEventListener("click", () => renderInspector(node.dataset.node));
+  });
+
+  const archSeq = ["caller","config","platform","executor","agent","tool","parser","adapter","model","response"];
+  let archTimer = null;
+  qs("#play").addEventListener("click", () => {
+    if(archTimer) clearInterval(archTimer);
+    qsa(".node").forEach(n => n.classList.remove("active"));
+    let i = 0;
+    archTimer = setInterval(() => {
+      qsa(".node").forEach(n => n.classList.remove("active"));
+      const key = archSeq[i];
+      const node = qs('.node[data-node="' + key + '"]');
+      if(node){
+        node.classList.add("active");
+        renderInspector(key);
+      }
+      i += 1;
+      if(i >= archSeq.length){
+        clearInterval(archTimer);
+        archTimer = null;
+        setTimeout(() => qsa(".node").forEach(n => n.classList.remove("active")), 600);
+      }
+    }, 460);
+  });
+  qs("#reset").addEventListener("click", () => {
+    if(archTimer) clearInterval(archTimer);
+    archTimer = null;
+    qsa(".node").forEach(n => n.classList.remove("active"));
+    renderInspector("tool");
+  });
+
+  /* simulator */
+  const traceSteps = [
+    ["Receive request","Use case sends text/address payload to existing Sync API"],
+    ["Resolve config","Load approved model, dimension and embedding policies"],
+    ["Platform checks","Authenticate, apply guardrails and confirm sync execution"],
+    ["Execute use case","Run Text-to-Embedding step in the existing execution platform"],
+    ["Prepare embeddings","Normalize text and parse address when applicable"],
+    ["Invoke model","Call approved model through the embedding adapter"],
+    ["Validate vectors","Confirm numeric output and configured dimension"],
+    ["Return response","Map results by input ID and return structured JSON"]
+  ];
+
+  function renderTrace(){
+    const el = qs("#trace");
+    el.innerHTML = "";
+    traceSteps.forEach((s, i) => {
+      const row = document.createElement("div");
+      row.className = "trace-row";
+      row.dataset.index = String(i);
+      const dot = document.createElement("div"); dot.className = "dot";
+      const body = document.createElement("div");
+      const b = document.createElement("b"); b.textContent = (i+1) + ". " + s[0];
+      const sm = document.createElement("small"); sm.textContent = s[1];
+      body.appendChild(b); body.appendChild(sm);
+      const em = document.createElement("em"); em.textContent = "pending";
+      row.appendChild(dot); row.appendChild(body); row.appendChild(em);
+      el.appendChild(row);
+    });
+  }
+  renderTrace();
+
+  function hash(str){
+    let h = 2166136261 >>> 0;
+    for(let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h,16777619);
+    }
+    return h >>> 0;
+  }
+  function vector(seedText, n=12){
+    let s = hash(seedText) || 1;
+    const arr = [];
+    for(let i=0;i<n;i++){
+      s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0;
+      arr.push(Math.round((((s % 20001)-10000)/10000)*10000)/10000);
+    }
+    return arr;
+  }
+  function parseAddress(text){
+    const parts = text.split(",").map(x => x.trim()).filter(Boolean);
+    let postcode = "";
+    for(const p of parts){
+      if(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i.test(p)){ postcode = p; break; }
+    }
+    if(!postcode && parts.length > 2) postcode = parts[2] || "";
+    return {
+      street:parts[0] || "",
+      city:parts[1] || "",
+      postcode:postcode,
+      country:parts.length ? parts[parts.length-1] : ""
+    };
+  }
+  function preparedItems(){
+    const text = qs("#text").value.trim();
+    const isAddress = qs("#isAddress").value === "true";
+    if(!text) return [];
+    if(!isAddress) return [{type:"general_text",text:text}];
+    const p = parseAddress(text);
+    const out = [{type:"full_address",text:text}];
+    ["street","city","postcode","country"].forEach(k => {
+      if(p[k]) out.push({type:k,text:p[k]});
+    });
+    return out;
+  }
+  function buildResult(){
+    const model = qs("#model").value.trim();
+    const dim = Number(qs("#dimension").value) || 0;
+    const id = qs("#inputId").value.trim() || "1";
+    const text = qs("#text").value.trim();
+    const isAddress = qs("#isAddress").value === "true";
+    const prepared = preparedItems();
+    const item = {
+      id:id,
+      text:text,
+      embedding:vector(model + "|" + dim + "|" + text),
+      embedding_preview_only:true
+    };
+    if(isAddress){
+      item.address_components = {};
+      prepared.filter(x => x.type !== "full_address").forEach(x => {
+        item.address_components[x.type] = {
+          value:x.text,
+          embedding:vector(model + "|" + dim + "|" + x.text),
+          embedding_preview_only:true
+        };
+      });
+    }
+    return {
+      results:[item],
+      metadata:{
+        model:model,
+        dimension:dim,
+        input_count:1,
+        prepared_model_inputs:prepared.length,
+        preview_only:true
+      }
+    };
+  }
+  function refreshPreview(latency){
+    const prep = preparedItems();
+    const isAddress = qs("#isAddress").value === "true";
+    qs("#prepared").textContent = JSON.stringify({
+      id:qs("#inputId").value,
+      original_text:qs("#text").value.trim(),
+      is_address:isAddress,
+      embedding_inputs:prep
+    }, null, 2);
+    const res = buildResult();
+    qs("#result").textContent = JSON.stringify(res, null, 2);
+    qs("#mDim").textContent = qs("#dimension").value || "—";
+    qs("#mPrepared").textContent = String(prep.length);
+    qs("#mMode").textContent = isAddress ? "Address" : "General";
+    qs("#mLatency").textContent = latency || "—";
+
+    const bars = qs("#bars");
+    bars.innerHTML = "";
+    const vals = (res.results[0] && res.results[0].embedding) ? res.results[0].embedding : [];
+    vals.forEach(v => {
+      const wrap = document.createElement("div"); wrap.className = "bwrap";
+      const bar = document.createElement("div"); bar.className = "bar" + (v < 0 ? " neg" : "");
+      bar.style.height = Math.max(8, Math.round(Math.abs(v)*100)) + "%";
+      bar.title = String(v);
+      wrap.appendChild(bar); bars.appendChild(wrap);
+    });
+  }
+
+  ["model","dimension","inputId","isAddress","text","longPolicy","batchPolicy"].forEach(id => {
+    qs("#"+id).addEventListener("input", () => refreshPreview());
+    qs("#"+id).addEventListener("change", () => refreshPreview());
+  });
+
+  qs("#sampleText").addEventListener("click", () => {
+    qs("#inputId").value = "1";
+    qs("#isAddress").value = "false";
+    qs("#text").value = "Acme Corporation Ltd";
+    refreshPreview();
+  });
+  qs("#sampleAddress").addEventListener("click", () => {
+    qs("#inputId").value = "2";
+    qs("#isAddress").value = "true";
+    qs("#text").value = "1 Canary Wharf, London, E14 5AB, UK";
+    refreshPreview();
+  });
+
+  let running = false;
+  qs("#run").addEventListener("click", () => {
+    if(running) return;
+    const text = qs("#text").value.trim();
+    const dim = Number(qs("#dimension").value);
+    if(!text){ showToast("Text is required"); return; }
+    if(!dim || dim < 1){ showToast("Dimension must be greater than zero"); return; }
+    if(text.length > 2000 && qs("#longPolicy").value === "reject"){
+      showToast("Text exceeds 2,000 characters");
+      return;
+    }
+
+    running = true;
+    renderTrace();
+    const rows = qsa(".trace-row");
+    const status = qs("#status");
+    status.className = "status running";
+    status.innerHTML = "<i></i>Running";
+    const started = performance.now();
+    let i = 0;
+
+    function next(){
+      if(i > 0){
+        rows[i-1].classList.remove("running");
+        rows[i-1].classList.add("done");
+        rows[i-1].querySelector("em").textContent = "done";
+      }
+      if(i >= rows.length){
+        const ms = Math.round(performance.now() - started);
+        status.className = "status done";
+        status.innerHTML = "<i></i>Completed";
+        refreshPreview(ms + " ms");
+        running = false;
+        return;
+      }
+      rows[i].classList.add("running");
+      rows[i].querySelector("em").textContent = "running";
+      i += 1;
+      setTimeout(next, 230);
+    }
+    next();
+  });
+
+  refreshPreview();
+
+  /* contract */
+  const contractData = {
+    request:{
+      embedding_config:{model:"gemini-embedding-001",dimension:1536},
+      inputs:[{id:"2",text:"1 Canary Wharf, London, E14 5AB, UK",is_address:true}]
+    },
+    internal:{
+      id:"2",
+      original_text:"1 Canary Wharf, London, E14 5AB, UK",
+      is_address:true,
+      parsed_address:{street:"1 Canary Wharf",city:"London",postcode:"E14 5AB",country:"UK"},
+      embedding_inputs:[
+        {type:"full_address",text:"1 Canary Wharf, London, E14 5AB, UK"},
+        {type:"street",text:"1 Canary Wharf"},
+        {type:"city",text:"London"},
+        {type:"postcode",text:"E14 5AB"},
+        {type:"country",text:"UK"}
+      ]
+    },
+    response:{
+      results:[{
+        id:"2",
+        text:"1 Canary Wharf, London, E14 5AB, UK",
+        embedding:[0.0987,-0.1234,0.321,0.0456,-0.2871],
+        address_components:{
+          street:{value:"1 Canary Wharf",embedding:[0.201,-0.205,0.306,0.1472,-0.0914]},
+          city:{value:"London",embedding:[0.412,-0.512,0.611,0.0832,-0.1743]}
+        }
+      }],
+      metadata:{model:"gemini-embedding-001",dimension:1536,input_count:1},
+      note:"Sample vectors shortened for readability."
+    },
+    errors:{
+      examples:[
+        {error:{code:"INVALID_INPUT",message:"The text field is mandatory.",input_id:"2"}},
+        {error:{code:"BATCH_LIMIT_EXCEEDED",message:"A maximum of 250 input items is allowed.",received:251}},
+        {error:{code:"MODEL_NOT_APPROVED",message:"Requested embedding model is not approved."}},
+        {error:{code:"DIMENSION_MISMATCH",message:"Returned vector does not match configured dimension."}}
+      ]
+    }
+  };
+  let currentContract = "request";
+  function renderContract(){
+    qs("#contractCode").textContent = JSON.stringify(contractData[currentContract], null, 2);
+  }
+  qsa(".ctab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      qsa(".ctab").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+      currentContract = btn.dataset.contract;
+      renderContract();
+    });
+  });
+  renderContract();
+
+  /* decision progress */
+  function updateProgress(){
+    const sels = qsa(".dsel");
+    const closed = sels.filter(s => s.value !== "Open").length;
+    const pct = sels.length ? Math.round(closed/sels.length*100) : 0;
+    qs("#progressBar").style.width = pct + "%";
+    qs("#progressText").textContent = closed + " of " + sels.length + " decisions closed.";
+  }
+  qsa(".dsel").forEach(s => s.addEventListener("change", updateProgress));
+  updateProgress();
+
+})();
+</script>
+</body>
+</html>
