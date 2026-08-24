@@ -1,0 +1,151 @@
+MongoDB DEV/UAT Username Handling
+
+Requirement
+-----------
+- DEV:
+  OPSUI_APP_FID should be replaced with the real MongoDB username, read from the environment/secret the same way the MongoDB password is read.
+
+- UAT / UAT-Sandbox / PROD / other environments:
+  OPSUI_APP_FID should remain literally as OPSUI_APP_FID in the MongoDB URI.
+
+- Password should continue to be replaced in every environment.
+
+Recommended Settings Fields
+---------------------------
+Add a Mongo username setting, but keep it optional because only DEV requires it:
+
+from typing import Optional
+from pydantic import Field, AliasChoices
+
+MONGO_DB_USER: Optional[str] = Field(
+    default=None,
+    validation_alias=AliasChoices(
+        "178192_OPS_ASSIST_MONGODB_USER",
+        "MONGO_DB_USER",
+        "MONGODB_USER",
+    ),
+)
+
+MONGO_DB_PASSWORD: str = _mongo_pwd_field()
+
+
+Recommended mongodb_connection_uri
+----------------------------------
+
+@property
+def mongodb_connection_uri(self) -> str:
+    """
+    Build MongoDB connection URI.
+
+    DEV:
+        OPSUI_APP_FID is replaced with MongoDB username.
+
+    Other environments:
+        OPSUI_APP_FID remains literal.
+
+    Password, hosts and database are always resolved.
+    """
+
+    env = (self.APP_ENV or "").strip().lower()
+
+    if self.MONGODB_URI:
+        uri = self.MONGODB_URI
+
+        # Only DEV replaces OPSUI_APP_FID with actual Mongo username
+        if env in ("dev", "development"):
+            if not self.MONGO_DB_USER:
+                raise ValueError(
+                    "MONGO_DB_USER is required in DEV environment"
+                )
+
+            uri = uri.replace(
+                "OPSUI_APP_FID",
+                self.MONGO_DB_USER,
+            )
+
+        # These replacements happen for every environment
+        return (
+            uri
+            .replace(
+                "OPSUI_APP_PW",
+                self.MONGO_DB_PASSWORD,
+            )
+            .replace(
+                "MONGODB_HOSTS",
+                self.MONGODB_HOSTS,
+            )
+            .replace(
+                "MONGODB_DATABASE",
+                self.MONGODB_DATABASE,
+            )
+            .replace(
+                "MONGO_DB_NAME",
+                self.MONGODB_DATABASE,
+            )
+        )
+
+    # Fallback URI
+    username = "OPSUI_APP_FID"
+
+    if env in ("dev", "development"):
+        if not self.MONGO_DB_USER:
+            raise ValueError(
+                "MONGO_DB_USER is required in DEV environment"
+            )
+        username = self.MONGO_DB_USER
+
+    return (
+        f"mongodb://{username}:{self.MONGO_DB_PASSWORD}"
+        f"@{self.MONGODB_HOSTS}/{self.MONGODB_DATABASE}"
+        f"?authSource=admin"
+        f"&replicaSet=MGORPST_9955"
+        f"&tls=true"
+        f"&tlsInsecure=true"
+    )
+
+
+Example Template
+----------------
+MONGODB_URI=mongodb://OPSUI_APP_FID:OPSUI_APP_PW@MONGODB_HOSTS/MONGO_DB_NAME?authSource=admin
+
+
+DEV Example
+-----------
+APP_ENV=dev
+MONGO_DB_USER=actual_dev_user
+MONGO_DB_PASSWORD=actual_password
+MONGODB_DATABASE=ops-assist
+
+Final URI:
+
+mongodb://actual_dev_user:actual_password@.../ops-assist?authSource=admin
+
+
+UAT Example
+-----------
+APP_ENV=uat
+MONGO_DB_PASSWORD=actual_password
+MONGODB_DATABASE=ops-assist
+
+Final URI:
+
+mongodb://OPSUI_APP_FID:actual_password@.../ops-assist?authSource=admin
+
+
+Recommended Naming
+------------------
+Keep these concepts separate:
+
+OPSUI_APP_FID
+    Literal placeholder in the MongoDB URI for non-DEV environments.
+
+MONGO_DB_USER
+    Actual MongoDB username, required only in DEV.
+
+MONGO_DB_PASSWORD
+    Actual MongoDB password, required for all deployed environments.
+
+Important
+---------
+Do not use OPSUI_APP_FID itself as an alias for MONGO_DB_USER if you want OPSUI_APP_FID
+to remain literal in UAT/PROD. Keeping the names separate prevents accidental replacement.
