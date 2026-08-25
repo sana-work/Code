@@ -1,0 +1,1031 @@
+OPS-ASSIST COIN TOKEN MIGRATION
+Complete Required Code Changes + Step-by-Step Implementation
+
+============================================================
+GOAL
+============================================================
+
+Backend executor token and feedback token must use:
+
+- SAME COIN auth URL
+- SAME client ID
+- SAME client secret
+- DIFFERENT scope only
+
+Required config values:
+
+TOKEN_AUTH_URL
+TOKEN_CLIENT_ID
+TOKEN_CLIENT_SECRET
+TOKEN_SCOPE
+FEEDBACK_TOKEN_SCOPE
+TOKEN_TIMEOUT_SECONDS
+TOKEN_VERIFY_SSL
+TOKEN_DEFAULT_TTL_SECONDS
+
+Do NOT keep separate feedback token URL/client-id/client-secret settings.
+
+============================================================
+1. FINAL TOKEN DESIGN
+============================================================
+
+Backend token:
+    TOKEN_AUTH_URL
+    TOKEN_CLIENT_ID
+    TOKEN_CLIENT_SECRET
+    TOKEN_SCOPE
+
+Feedback token:
+    TOKEN_AUTH_URL
+    TOKEN_CLIENT_ID
+    TOKEN_CLIENT_SECRET
+    FEEDBACK_TOKEN_SCOPE
+
+Only the scope changes.
+
+============================================================
+2. config.py CHANGES
+============================================================
+
+File:
+src/api/app/core/config.py
+
+Keep MongoDB, Kafka, backend executor, WebSocket, SSE, JWT, etc. unchanged.
+
+Replace the existing token configuration with:
+
+------------------------------------------------------------
+# Token Settings
+------------------------------------------------------------
+
+TOKEN_AUTH_URL: str = _f(
+    "TOKEN_AUTH_URL",
+    "TOKEN_AUTH_URL",
+    "",
+)
+
+TOKEN_CLIENT_ID: str = _f(
+    "TOKEN_CLIENT_ID",
+    "TOKEN_CLIENT_ID",
+    "",
+)
+
+# Injected/exported by entry-point.sh from Vault
+TOKEN_CLIENT_SECRET: str = _f(
+    "TOKEN_CLIENT_SECRET",
+    "TOKEN_CLIENT_SECRET",
+    "",
+)
+
+# Backend/orchestration token scope
+TOKEN_SCOPE: str = _f(
+    "TOKEN_SCOPE",
+    "TOKEN_SCOPE",
+    "",
+)
+
+# Feedback-service token scope
+FEEDBACK_TOKEN_SCOPE: str = _f(
+    "FEEDBACK_TOKEN_SCOPE",
+    "FEEDBACK_TOKEN_SCOPE",
+    "",
+)
+
+TOKEN_TIMEOUT_SECONDS: int = _f(
+    "TOKEN_TIMEOUT_SECONDS",
+    "TOKEN_TIMEOUT_SECONDS",
+    30,
+)
+
+TOKEN_VERIFY_SSL: bool = _f(
+    "TOKEN_VERIFY_SSL",
+    "TOKEN_VERIFY_SSL",
+    True,
+)
+
+TOKEN_DEFAULT_TTL_SECONDS: int = _f(
+    "TOKEN_DEFAULT_TTL_SECONDS",
+    "TOKEN_DEFAULT_TTL_SECONDS",
+    300,
+)
+
+------------------------------------------------------------
+
+Keep feedback service settings:
+
+FEEDBACK_SERVICE_BASE_URL: str = _f(
+    "FEEDBACK_SERVICE_BASE_URL",
+    "FEEDBACK_SERVICE_BASE_URL",
+    "",
+)
+
+FEEDBACK_SERVICE_USECASE_ID: str = _f(
+    "FEEDBACK_SERVICE_USECASE_ID",
+    "FEEDBACK_SERVICE_USECASE_ID",
+    "178192",
+)
+
+FEEDBACK_SERVICE_VERIFY_SSL: bool = _f(
+    "FEEDBACK_SERVICE_VERIFY_SSL",
+    "FEEDBACK_SERVICE_VERIFY_SSL",
+    True,
+)
+
+REMOVE these old settings if present:
+
+TOKEN_URL
+FEEDBACK_TOKEN_URL
+FEEDBACK_TOKEN_CLIENT_ID
+FEEDBACK_TOKEN_CLIENT_SECRET
+
+Also REMOVE:
+
+FEEDBACK_TOKEN_CLIENT_SECRET: str = TOKEN_CLIENT_SECRET
+
+because feedback will directly use TOKEN_CLIENT_SECRET.
+
+============================================================
+3. COMPLETE token_client.py
+============================================================
+
+File:
+src/api/app/clients/token_client.py
+
+Replace the existing file with:
+
+------------------------------------------------------------
+
+import asyncio
+import base64
+import json
+import time
+from typing import Any, Optional
+
+import httpx
+from coin_auth.token import generate_m2m_token
+
+from app.core.config import settings
+from app.core.exceptions import TokenFetchError
+from app.core.logging import get_logger
+from app.utils.retry import async_retry
+
+
+logger = get_logger(__name__)
+
+_REFRESH_BUFFER_SECONDS = 60
+
+
+def _read_jwt_exp(token: str) -> Optional[float]:
+    """
+    Read exp from JWT only for cache expiration calculation.
+    This does NOT validate or authenticate the JWT.
+    """
+    try:
+        parts = token.split(".")
+
+        if len(parts) != 3:
+            return None
+
+        payload_part = parts[1]
+        payload_part += "=" * (-len(payload_part) % 4)
+
+        decoded = base64.urlsafe_b64decode(
+            payload_part.encode("utf-8")
+        ).decode("utf-8")
+
+        payload = json.loads(decoded)
+
+        exp = payload.get("exp")
+
+        if exp is None:
+            return None
+
+        return float(exp)
+
+    except Exception:
+        return None
+
+
+class TokenClient:
+    """
+    COIN M2M token client.
+
+    Backend and feedback use the same:
+      TOKEN_AUTH_URL
+      TOKEN_CLIENT_ID
+      TOKEN_CLIENT_SECRET
+
+    Only scope is different.
+    """
+
+    def __init__(
+        self,
+        scope: str,
+        client_name: str,
+    ) -> None:
+        self._scope = scope
+        self._client_name = client_name
+        self._token: Optional[str] = None
+        self._expires_at: float = 0.0
+
+    async def get_token(self) -> str:
+        if self._token and time.time() < self._expires_at:
+            return self._token
+
+        logger.info(
+            "Token expired or missing, fetching new token",
+            token_client=self._client_name,
+        )
+
+        return await self._fetch_token()
+
+    @async_retry(
+        attempts=settings.HTTP_RETRY_ATTEMPTS,
+        backoff_seconds=settings.HTTP_RETRY_BACKOFF_SECONDS,
+        exception_types=(TokenFetchError, httpx.HTTPError),
+    )
+    async def _fetch_token(self) -> str:
+        auth_url = settings.TOKEN_AUTH_URL
+        client_id = settings.TOKEN_CLIENT_ID
+        client_secret = settings.TOKEN_CLIENT_SECRET
+        scope = self._scope
+        verify = settings.TOKEN_VERIFY_SSL
+
+        if not auth_url:
+            raise TokenFetchError("TOKEN_AUTH_URL is not configured")
+
+        if not client_id:
+            raise TokenFetchError("TOKEN_CLIENT_ID is not configured")
+
+        if not client_secret:
+            raise TokenFetchError("TOKEN_CLIENT_SECRET is not configured")
+
+        if not scope:
+            raise TokenFetchError(
+                f"Token scope is not configured for {self._client_name}"
+            )
+
+        logger.info(
+            "Generating COIN M2M token",
+            token_client=self._client_name,
+            auth_url=auth_url,
+            client_id=client_id,
+            scope=scope,
+            client_secret_present=True,
+            client_secret_length=len(client_secret),
+        )
+
+        try:
+            result: Any = await asyncio.to_thread(
+                generate_m2m_token,
+                auth_url,
+                client_id,
+                client_secret,
+                scope,
+                verify,
+            )
+
+        except Exception as exc:
+            logger.error(
+                "COIN token generation failed",
+                token_client=self._client_name,
+                error=str(exc),
+            )
+
+            raise TokenFetchError(
+                f"COIN token generation failed for "
+                f"{self._client_name}: {exc}"
+            ) from exc
+
+        access_token: Optional[str] = None
+        expires_in: Optional[int] = None
+
+        if isinstance(result, dict):
+            access_token = (
+                result.get("access_token")
+                or result.get("accessToken")
+                or result.get("token")
+            )
+
+            raw_expires_in = result.get("expires_in")
+
+            if raw_expires_in is not None:
+                try:
+                    expires_in = int(raw_expires_in)
+                except (TypeError, ValueError):
+                    expires_in = None
+
+        elif isinstance(result, str):
+            access_token = result
+
+        if not access_token:
+            raise TokenFetchError(
+                f"COIN token response for {self._client_name} "
+                "did not contain an access token"
+            )
+
+        self._token = access_token
+
+        if expires_in and expires_in > 0:
+            refresh_after = max(
+                expires_in - _REFRESH_BUFFER_SECONDS,
+                1,
+            )
+
+            self._expires_at = time.time() + refresh_after
+
+        else:
+            jwt_exp = _read_jwt_exp(access_token)
+
+            if jwt_exp:
+                self._expires_at = max(
+                    jwt_exp - _REFRESH_BUFFER_SECONDS,
+                    time.time() + 1,
+                )
+            else:
+                fallback_ttl = max(
+                    settings.TOKEN_DEFAULT_TTL_SECONDS
+                    - _REFRESH_BUFFER_SECONDS,
+                    1,
+                )
+
+                self._expires_at = time.time() + fallback_ttl
+
+        logger.info(
+            "COIN token fetched successfully",
+            token_client=self._client_name,
+            expires_at=self._expires_at,
+        )
+
+        return self._token
+
+
+# Backend token client
+token_client = TokenClient(
+    scope=settings.TOKEN_SCOPE,
+    client_name="backend",
+)
+
+
+# Feedback token client
+feedback_token_client = TokenClient(
+    scope=settings.FEEDBACK_TOKEN_SCOPE,
+    client_name="feedback",
+)
+
+------------------------------------------------------------
+
+Delete old HTTP POST token-generation logic like:
+
+async with httpx.AsyncClient(...) as client:
+    resp = await client.post(
+        settings.TOKEN_URL,
+        json={"clientSecret": settings.TOKEN_CLIENT_SECRET},
+    )
+
+Also delete feedback-specific HTTP POST token code.
+
+All token generation must use:
+
+generate_m2m_token(
+    auth_url,
+    client_id,
+    client_secret,
+    scope,
+    verify,
+)
+
+============================================================
+4. deployment.yaml CHANGES
+============================================================
+
+File:
+helm/templates/ops-assist-api/deployment.yaml
+
+Use:
+
+------------------------------------------------------------
+
+# ----- COIN M2M Token -----
+
+- name: TOKEN_AUTH_URL
+  value: '{{ .Values.token.authUrl }}'
+
+- name: TOKEN_CLIENT_ID
+  value: '{{ .Values.token.clientId }}'
+
+- name: TOKEN_SCOPE
+  value: '{{ .Values.token.scope }}'
+
+- name: FEEDBACK_TOKEN_SCOPE
+  value: '{{ .Values.token.feedbackScope }}'
+
+- name: TOKEN_VERIFY_SSL
+  value: '{{ .Values.token.verifySsl }}'
+
+- name: TOKEN_TIMEOUT_SECONDS
+  value: '{{ .Values.token.timeoutSeconds }}'
+
+- name: TOKEN_DEFAULT_TTL_SECONDS
+  value: '{{ .Values.token.defaultTtlSeconds }}'
+
+------------------------------------------------------------
+
+REMOVE if present:
+
+TOKEN_URL
+FEEDBACK_TOKEN_URL
+FEEDBACK_TOKEN_CLIENT_ID
+FEEDBACK_TOKEN_CLIENT_SECRET
+
+Do NOT inject TOKEN_CLIENT_SECRET through Helm if Vault already exports it.
+
+============================================================
+5. helm/values.yaml
+============================================================
+
+Add:
+
+------------------------------------------------------------
+
+token:
+  authUrl: ''
+  clientId: ''
+  scope: ''
+  feedbackScope: ''
+  verifySsl: 'true'
+  timeoutSeconds: '30'
+  defaultTtlSeconds: '300'
+
+------------------------------------------------------------
+
+============================================================
+6. development-values.yaml
+============================================================
+
+File:
+helm/development-values.yaml
+
+Use this structure:
+
+------------------------------------------------------------
+
+token:
+  authUrl: 'https://sit.secureaccess.coin.nam.citigroup.net/as/token.oauth2'
+
+  clientId: '7cc19a3c-9e98-4cd8-a104-64f12aca4e87'
+
+  # Backend scope
+  scope: '716e1bde-a590-4432-b3b6-7827c8088fe7-AGENTIC'
+
+  # Feedback scope
+  feedbackScope: '<DEV_FEEDBACK_SCOPE>'
+
+  verifySsl: 'false'
+
+  timeoutSeconds: '30'
+
+  defaultTtlSeconds: '300'
+
+------------------------------------------------------------
+
+Set feedbackScope to the scope value that was previously used by
+your feedback token URL.
+
+============================================================
+7. uat-values.yaml
+============================================================
+
+File:
+helm/uat-values.yaml
+
+Use:
+
+------------------------------------------------------------
+
+token:
+  authUrl: 'https://uat.secureaccess.coin.nam.citigroup.net/as/token.oauth2'
+
+  clientId: '76051578-f7f2-428f-92fb-c7317b48ad83'
+
+  # Backend scope
+  scope: 'ed3cf6c1-4e05-4873-8afe-8a25276e42fd-AGENTIC'
+
+  # Feedback scope
+  feedbackScope: '<UAT_FEEDBACK_SCOPE>'
+
+  verifySsl: 'false'
+
+  timeoutSeconds: '30'
+
+  defaultTtlSeconds: '300'
+
+------------------------------------------------------------
+
+============================================================
+8. uat-sandbox-values.yaml
+============================================================
+
+File:
+helm/uat-sandbox-values.yaml
+
+Use:
+
+------------------------------------------------------------
+
+token:
+  authUrl: 'https://uat.secureaccess.coin.nam.citigroup.net/as/token.oauth2'
+
+  clientId: '76051578-f7f2-428f-92fb-c7317b48ad83'
+
+  # Backend scope
+  scope: 'ed3cf6c1-4e05-4873-8afe-8a25276e42fd-AGENTIC'
+
+  # Feedback scope
+  feedbackScope: '<UAT_SANDBOX_FEEDBACK_SCOPE>'
+
+  verifySsl: 'false'
+
+  timeoutSeconds: '30'
+
+  defaultTtlSeconds: '300'
+
+------------------------------------------------------------
+
+If UAT and UAT Sandbox use the same feedback scope, the same value
+can be used for feedbackScope.
+
+============================================================
+9. .dev.env
+============================================================
+
+Example local file:
+
+------------------------------------------------------------
+
+TOKEN_AUTH_URL=https://sit.secureaccess.coin.nam.citigroup.net/as/token.oauth2
+TOKEN_CLIENT_ID=7cc19a3c-9e98-4cd8-a104-64f12aca4e87
+TOKEN_CLIENT_SECRET=<LOCAL_DEV_SECRET>
+TOKEN_SCOPE=716e1bde-a590-4432-b3b6-7827c8088fe7-AGENTIC
+FEEDBACK_TOKEN_SCOPE=<DEV_FEEDBACK_SCOPE>
+TOKEN_VERIFY_SSL=false
+TOKEN_TIMEOUT_SECONDS=30
+TOKEN_DEFAULT_TTL_SECONDS=300
+
+------------------------------------------------------------
+
+Do NOT commit the real TOKEN_CLIENT_SECRET.
+
+============================================================
+10. .uat.env
+============================================================
+
+Example:
+
+------------------------------------------------------------
+
+TOKEN_AUTH_URL=https://uat.secureaccess.coin.nam.citigroup.net/as/token.oauth2
+TOKEN_CLIENT_ID=76051578-f7f2-428f-92fb-c7317b48ad83
+TOKEN_CLIENT_SECRET=<LOCAL_UAT_SECRET>
+TOKEN_SCOPE=ed3cf6c1-4e05-4873-8afe-8a25276e42fd-AGENTIC
+FEEDBACK_TOKEN_SCOPE=<UAT_FEEDBACK_SCOPE>
+TOKEN_VERIFY_SSL=false
+TOKEN_TIMEOUT_SECONDS=30
+TOKEN_DEFAULT_TTL_SECONDS=300
+
+------------------------------------------------------------
+
+============================================================
+11. entry-point.sh VAULT CHANGE
+============================================================
+
+File:
+src/api/scripts/entry-point.sh
+
+Use one Vault-loaded secret only:
+
+------------------------------------------------------------
+
+# -------------------------------------------------------------------
+# COIN TOKEN CLIENT SECRET
+# -------------------------------------------------------------------
+
+VAULT_COIN_FILE="/var/vault-data/coin-secret"
+
+if [ -f "$VAULT_COIN_FILE" ]; then
+
+    set -a
+
+    # shellcheck source=/dev/null
+    source "$VAULT_COIN_FILE"
+
+    set +a
+
+    echo "TOKEN_CLIENT_SECRET loaded from Vault"
+
+    if [ -z "$TOKEN_CLIENT_SECRET" ]; then
+        >&2 echo "ERROR: TOKEN_CLIENT_SECRET is empty after loading Vault file"
+        exit 1
+    fi
+
+    echo "TOKEN_CLIENT_SECRET is present"
+
+else
+
+    >&2 echo "ERROR: Vault coin-secret file not found at $VAULT_COIN_FILE"
+    exit 1
+
+fi
+
+------------------------------------------------------------
+
+Do NOT create a separate feedback secret.
+
+Feedback also uses TOKEN_CLIENT_SECRET.
+
+Never print the actual secret.
+
+Safe debug:
+
+echo "TOKEN_CLIENT_SECRET length=${#TOKEN_CLIENT_SECRET}"
+
+============================================================
+12. CHECK VAULT FILE IN POD
+============================================================
+
+Inside pod:
+
+grep -o '^[A-Za-z_][A-Za-z0-9_]*=' /var/vault-data/coin-secret
+
+Expected to include:
+
+TOKEN_CLIENT_SECRET=
+
+Then verify:
+
+if [ -n "$TOKEN_CLIENT_SECRET" ]; then
+  echo "TOKEN_CLIENT_SECRET is SET"
+else
+  echo "TOKEN_CLIENT_SECRET is MISSING"
+fi
+
+============================================================
+13. REMOVE TEMP token.py FILES
+============================================================
+
+Do NOT keep temporary scripts named:
+
+src/api/app/api/token.py
+src/api/app/api/token_Dev.py
+
+Python already has a standard-library module named token, and a local
+file named token.py can create circular-import problems.
+
+Use:
+
+src/api/scripts/test_coin_token.py
+src/api/scripts/test_feedback_coin_token.py
+
+============================================================
+14. BACKEND TOKEN TEST SCRIPT
+============================================================
+
+File:
+src/api/scripts/test_coin_token.py
+
+------------------------------------------------------------
+
+from coin_auth.token import generate_m2m_token
+
+from app.core.config import settings
+
+
+result = generate_m2m_token(
+    settings.TOKEN_AUTH_URL,
+    settings.TOKEN_CLIENT_ID,
+    settings.TOKEN_CLIENT_SECRET,
+    settings.TOKEN_SCOPE,
+    settings.TOKEN_VERIFY_SSL,
+)
+
+token = result["access_token"]
+
+print("Backend COIN token generated successfully")
+print("Token length:", len(token))
+
+------------------------------------------------------------
+
+Run from src/api:
+
+python .\scripts\test_coin_token.py
+
+============================================================
+15. FEEDBACK TOKEN TEST SCRIPT
+============================================================
+
+File:
+src/api/scripts/test_feedback_coin_token.py
+
+------------------------------------------------------------
+
+from coin_auth.token import generate_m2m_token
+
+from app.core.config import settings
+
+
+result = generate_m2m_token(
+    settings.TOKEN_AUTH_URL,
+    settings.TOKEN_CLIENT_ID,
+    settings.TOKEN_CLIENT_SECRET,
+    settings.FEEDBACK_TOKEN_SCOPE,
+    settings.TOKEN_VERIFY_SSL,
+)
+
+token = result["access_token"]
+
+print("Feedback COIN token generated successfully")
+print("Token length:", len(token))
+
+------------------------------------------------------------
+
+Only this field changes:
+
+settings.FEEDBACK_TOKEN_SCOPE
+
+============================================================
+16. EXISTING CALLING CODE
+============================================================
+
+Backend/executor code should continue using:
+
+from app.clients.token_client import token_client
+
+token = await token_client.get_token()
+
+Feedback service code should continue using:
+
+from app.clients.token_client import feedback_token_client
+
+token = await feedback_token_client.get_token()
+
+No other calling-code changes should be required.
+
+============================================================
+17. TEST FILE
+============================================================
+
+File:
+src/api/tests/test_token_client.py
+
+Suggested tests:
+
+------------------------------------------------------------
+
+import pytest
+
+from app.clients import token_client as token_module
+
+
+@pytest.mark.asyncio
+async def test_backend_token_uses_backend_scope(monkeypatch):
+    captured = {}
+
+    def fake_generate(url, client_id, client_secret, scope, verify):
+        captured["url"] = url
+        captured["client_id"] = client_id
+        captured["client_secret"] = client_secret
+        captured["scope"] = scope
+        captured["verify"] = verify
+
+        return {
+            "access_token": "backend-test-token",
+            "expires_in": 300,
+        }
+
+    monkeypatch.setattr(
+        token_module,
+        "generate_m2m_token",
+        fake_generate,
+    )
+
+    monkeypatch.setattr(
+        token_module.settings,
+        "TOKEN_AUTH_URL",
+        "https://coin.example/token",
+    )
+
+    monkeypatch.setattr(
+        token_module.settings,
+        "TOKEN_CLIENT_ID",
+        "same-client-id",
+    )
+
+    monkeypatch.setattr(
+        token_module.settings,
+        "TOKEN_CLIENT_SECRET",
+        "same-secret",
+    )
+
+    monkeypatch.setattr(
+        token_module.settings,
+        "TOKEN_SCOPE",
+        "backend-scope",
+    )
+
+    client = token_module.TokenClient(
+        scope=token_module.settings.TOKEN_SCOPE,
+        client_name="backend",
+    )
+
+    token = await client.get_token()
+
+    assert token == "backend-test-token"
+    assert captured["client_id"] == "same-client-id"
+    assert captured["client_secret"] == "same-secret"
+    assert captured["scope"] == "backend-scope"
+
+
+@pytest.mark.asyncio
+async def test_feedback_token_uses_same_credentials_but_different_scope(monkeypatch):
+    captured = {}
+
+    def fake_generate(url, client_id, client_secret, scope, verify):
+        captured["url"] = url
+        captured["client_id"] = client_id
+        captured["client_secret"] = client_secret
+        captured["scope"] = scope
+        captured["verify"] = verify
+
+        return {
+            "access_token": "feedback-test-token",
+            "expires_in": 300,
+        }
+
+    monkeypatch.setattr(
+        token_module,
+        "generate_m2m_token",
+        fake_generate,
+    )
+
+    monkeypatch.setattr(
+        token_module.settings,
+        "TOKEN_AUTH_URL",
+        "https://coin.example/token",
+    )
+
+    monkeypatch.setattr(
+        token_module.settings,
+        "TOKEN_CLIENT_ID",
+        "same-client-id",
+    )
+
+    monkeypatch.setattr(
+        token_module.settings,
+        "TOKEN_CLIENT_SECRET",
+        "same-secret",
+    )
+
+    monkeypatch.setattr(
+        token_module.settings,
+        "FEEDBACK_TOKEN_SCOPE",
+        "feedback-scope",
+    )
+
+    client = token_module.TokenClient(
+        scope=token_module.settings.FEEDBACK_TOKEN_SCOPE,
+        client_name="feedback",
+    )
+
+    token = await client.get_token()
+
+    assert token == "feedback-test-token"
+    assert captured["client_id"] == "same-client-id"
+    assert captured["client_secret"] == "same-secret"
+    assert captured["scope"] == "feedback-scope"
+
+------------------------------------------------------------
+
+Run:
+
+pytest tests/test_token_client.py -v
+
+Then all tests:
+
+pytest -v
+
+============================================================
+18. REQUIREMENTS
+============================================================
+
+Check installed package:
+
+pip show coin-auth
+
+or:
+
+pip freeze | findstr coin
+
+Make sure requirements.txt contains the exact installed version.
+
+Example only:
+
+coin-auth==<YOUR_CURRENT_VERSION>
+
+Do not guess or upgrade unless required.
+
+============================================================
+19. FINAL FILE CHANGE LIST
+============================================================
+
+Files to MODIFY:
+
+src/api/app/core/config.py
+src/api/app/clients/token_client.py
+src/api/scripts/entry-point.sh
+
+helm/templates/ops-assist-api/deployment.yaml
+
+helm/values.yaml
+helm/development-values.yaml
+helm/uat-values.yaml
+helm/uat-sandbox-values.yaml
+
+Optional local-only:
+src/api/.dev.env
+src/api/.uat.env
+
+Tests:
+src/api/tests/test_token_client.py
+
+Files to REMOVE/RENAME if they are temporary test scripts:
+
+src/api/app/api/token.py
+src/api/app/api/token_Dev.py
+
+============================================================
+20. EXPECTED POD LOGS
+============================================================
+
+Backend token:
+
+Generating COIN M2M token
+token_client=backend
+client_secret_present=True
+
+COIN token fetched successfully
+token_client=backend
+
+Feedback token:
+
+Generating COIN M2M token
+token_client=feedback
+client_secret_present=True
+
+COIN token fetched successfully
+token_client=feedback
+
+Backend and feedback scope values should be different.
+
+You should no longer see the old wrapper call such as:
+
+POST https://coin-uat.../token/... 401 Unauthorized
+
+because token generation now uses generate_m2m_token() directly.
+
+============================================================
+21. FINAL CONFIG SUMMARY
+============================================================
+
+Helm:
+
+token:
+  authUrl: SAME_FOR_BACKEND_AND_FEEDBACK
+  clientId: SAME_FOR_BACKEND_AND_FEEDBACK
+  scope: BACKEND_SCOPE
+  feedbackScope: FEEDBACK_SCOPE
+
+Vault:
+
+TOKEN_CLIENT_SECRET
+
+Runtime backend:
+
+generate_m2m_token(
+    TOKEN_AUTH_URL,
+    TOKEN_CLIENT_ID,
+    TOKEN_CLIENT_SECRET,
+    TOKEN_SCOPE,
+    TOKEN_VERIFY_SSL,
+)
+
+Runtime feedback:
+
+generate_m2m_token(
+    TOKEN_AUTH_URL,
+    TOKEN_CLIENT_ID,
+    TOKEN_CLIENT_SECRET,
+    FEEDBACK_TOKEN_SCOPE,
+    TOKEN_VERIFY_SSL,
+)
+
+That is the complete intended implementation.
