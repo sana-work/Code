@@ -1,0 +1,320 @@
+import time
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from app.clients.token_client import TokenClient
+from app.core.exceptions import TokenFetchError
+
+
+# ---------------------------------------------------------------------------
+# Common helper
+# ---------------------------------------------------------------------------
+
+def _make_client() -> TokenClient:
+    """
+    Create a TokenClient for unit tests.
+
+    client_name="test" is intentionally kept.
+    It is only used for logging/debugging and is NOT sent to COIN.
+    """
+    return TokenClient(
+        scope="test-scope",
+        client_name="test",
+    )
+
+
+# ---------------------------------------------------------------------------
+# CACHE TEST
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_get_token_uses_cache_without_fetch():
+    client = _make_client()
+
+    client._token = "cached-token"
+    client._expires_at = time.time() + 120
+
+    with patch.object(
+        client,
+        "_fetch_token",
+        new_callable=AsyncMock,
+    ) as mock_fetch:
+
+        token = await client.get_token()
+
+    assert token == "cached-token"
+    mock_fetch.assert_not_awaited()
+
+
+# ---------------------------------------------------------------------------
+# SUCCESSFUL TOKEN GENERATION
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_fetch_token_success():
+    client = _make_client()
+
+    generated_token = {
+        "access_token": "generated-access-token",
+        "expires_in": 300,
+    }
+
+    with (
+        patch(
+            "app.clients.token_client.generate_m2m_token",
+            return_value=generated_token,
+        ) as mock_generate,
+        patch("app.clients.token_client.settings") as mock_settings,
+    ):
+        mock_settings.TOKEN_AUTH_URL = "https://token"
+        mock_settings.TOKEN_CLIENT_ID = "test-client-id"
+        mock_settings.TOKEN_CLIENT_SECRET = "test-secret"
+        mock_settings.TOKEN_VERIFY_SSL = False
+        mock_settings.TOKEN_TIMEOUT_SECONDS = 300
+
+        token = await client._fetch_token()
+
+    assert token == "generated-access-token"
+    assert client._token == "generated-access-token"
+    assert client._expires_at > time.time()
+
+    mock_generate.assert_called_once_with(
+        "https://token",
+        "test-client-id",
+        "test-secret",
+        "test-scope",
+        False,
+    )
+
+
+# ---------------------------------------------------------------------------
+# TOKEN SCOPE IS TAKEN FROM CLIENT INSTANCE
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_fetch_token_uses_client_scope():
+    client = TokenClient(
+        scope="my-special-scope",
+        client_name="test",
+    )
+
+    generated_token = {
+        "access_token": "scope-token",
+        "expires_in": 300,
+    }
+
+    with (
+        patch(
+            "app.clients.token_client.generate_m2m_token",
+            return_value=generated_token,
+        ) as mock_generate,
+        patch("app.clients.token_client.settings") as mock_settings,
+    ):
+        mock_settings.TOKEN_AUTH_URL = "https://token"
+        mock_settings.TOKEN_CLIENT_ID = "client-id"
+        mock_settings.TOKEN_CLIENT_SECRET = "secret"
+        mock_settings.TOKEN_VERIFY_SSL = False
+        mock_settings.TOKEN_TIMEOUT_SECONDS = 300
+
+        token = await client._fetch_token()
+
+    assert token == "scope-token"
+
+    mock_generate.assert_called_once_with(
+        "https://token",
+        "client-id",
+        "secret",
+        "my-special-scope",
+        False,
+    )
+
+
+# ---------------------------------------------------------------------------
+# CLIENT NAME DOES NOT AFFECT TOKEN REQUEST
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_client_name_is_only_metadata():
+    client = TokenClient(
+        scope="test-scope",
+        client_name="test",
+    )
+
+    generated_token = {
+        "access_token": "abc",
+        "expires_in": 300,
+    }
+
+    with (
+        patch(
+            "app.clients.token_client.generate_m2m_token",
+            return_value=generated_token,
+        ) as mock_generate,
+        patch("app.clients.token_client.settings") as mock_settings,
+    ):
+        mock_settings.TOKEN_AUTH_URL = "https://token"
+        mock_settings.TOKEN_CLIENT_ID = "client-id"
+        mock_settings.TOKEN_CLIENT_SECRET = "secret"
+        mock_settings.TOKEN_VERIFY_SSL = False
+        mock_settings.TOKEN_TIMEOUT_SECONDS = 300
+
+        await client._fetch_token()
+
+    assert client.client_name == "test"
+
+    # client_name must NOT be passed to COIN
+    mock_generate.assert_called_once_with(
+        "https://token",
+        "client-id",
+        "secret",
+        "test-scope",
+        False,
+    )
+
+
+# ---------------------------------------------------------------------------
+# MISSING ACCESS TOKEN
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_fetch_token_raises_when_access_token_missing():
+    client = _make_client()
+
+    generated_token = {
+        "expires_in": 300,
+    }
+
+    with (
+        patch(
+            "app.clients.token_client.generate_m2m_token",
+            return_value=generated_token,
+        ),
+        patch("app.clients.token_client.settings") as mock_settings,
+        patch(
+            "app.utils.retry.asyncio.sleep",
+            new_callable=AsyncMock,
+        ),
+    ):
+        mock_settings.TOKEN_AUTH_URL = "https://token"
+        mock_settings.TOKEN_CLIENT_ID = "client-id"
+        mock_settings.TOKEN_CLIENT_SECRET = "secret"
+        mock_settings.TOKEN_VERIFY_SSL = False
+        mock_settings.TOKEN_TIMEOUT_SECONDS = 300
+
+        with pytest.raises(TokenFetchError):
+            await client._fetch_token()
+
+
+# ---------------------------------------------------------------------------
+# COIN LIBRARY FAILURE
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_fetch_token_raises_when_coin_generation_fails():
+    client = _make_client()
+
+    with (
+        patch(
+            "app.clients.token_client.generate_m2m_token",
+            side_effect=RuntimeError("COIN authentication failed"),
+        ),
+        patch("app.clients.token_client.settings") as mock_settings,
+        patch(
+            "app.utils.retry.asyncio.sleep",
+            new_callable=AsyncMock,
+        ),
+    ):
+        mock_settings.TOKEN_AUTH_URL = "https://token"
+        mock_settings.TOKEN_CLIENT_ID = "client-id"
+        mock_settings.TOKEN_CLIENT_SECRET = "secret"
+        mock_settings.TOKEN_VERIFY_SSL = False
+        mock_settings.TOKEN_TIMEOUT_SECONDS = 300
+
+        with pytest.raises(TokenFetchError):
+            await client._fetch_token()
+
+
+# ---------------------------------------------------------------------------
+# EXPIRED TOKEN SHOULD FETCH A NEW TOKEN
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_get_token_fetches_when_cached_token_expired():
+    client = _make_client()
+
+    client._token = "old-token"
+    client._expires_at = time.time() - 10
+
+    with patch.object(
+        client,
+        "_fetch_token",
+        new_callable=AsyncMock,
+        return_value="new-token",
+    ) as mock_fetch:
+
+        token = await client.get_token()
+
+    assert token == "new-token"
+    mock_fetch.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# NO CACHED TOKEN SHOULD FETCH
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_get_token_fetches_when_token_missing():
+    client = _make_client()
+
+    client._token = None
+    client._expires_at = 0.0
+
+    with patch.object(
+        client,
+        "_fetch_token",
+        new_callable=AsyncMock,
+        return_value="new-token",
+    ) as mock_fetch:
+
+        token = await client.get_token()
+
+    assert token == "new-token"
+    mock_fetch.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# DIFFERENT CLIENTS CAN USE DIFFERENT SCOPES
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_multiple_clients_can_use_different_scopes():
+    backend_client = TokenClient(
+        scope="backend-scope",
+        client_name="backend",
+    )
+
+    feedback_client = TokenClient(
+        scope="feedback-scope",
+        client_name="feedback",
+    )
+
+    assert backend_client.scope == "backend-scope"
+    assert backend_client.client_name == "backend"
+
+    assert feedback_client.scope == "feedback-scope"
+    assert feedback_client.client_name == "feedback"
+
+
+# ---------------------------------------------------------------------------
+# CLIENT NAME TEST
+# ---------------------------------------------------------------------------
+
+def test_client_name_is_kept():
+    client = TokenClient(
+        scope="test-scope",
+        client_name="test",
+    )
+
+    assert client.scope == "test-scope"
+    assert client.client_name == "test"
