@@ -25,13 +25,14 @@ The target design makes these decisions explicit:
 1. There is one MCP tool for each provider portable ID: two AS tools and three TM tools.
 2. The five tools run on one MCP server and share the same implementation code.
 3. Agents select tools by business purpose and never receive portable IDs, provider URLs, or provider column names.
-4. PostgreSQL contains service and column metadata in only two tables.
-5. A tool's existing registered `tool_name` is the lookup key for its PostgreSQL service row. No additional service identifier is introduced.
-6. Portable IDs are stored in PostgreSQL and are not hardcoded in tool wrappers.
-7. Provider base URLs, authentication, certificates, and runtime settings remain deployment configuration, not service metadata.
-8. Specialists return structured factual results. The Formatter Agent owns all final response formatting.
-9. The existing final JSON structure remains unchanged.
-10. Agent storage and agent-runtime internals are outside this document. The tools repository contains MCP and provider code, not agent definitions.
+4. PostgreSQL contains service and column metadata in only two tables and remains the metadata source of truth.
+5. Each MCP replica loads and validates all five service definitions once at startup, then serves requests from an immutable in-memory registry. There are no PostgreSQL calls in the request path.
+6. A tool's existing registered `tool_name` is the lookup key for its metadata row. No additional service identifier is introduced.
+7. Portable IDs are stored in PostgreSQL and are not hardcoded in tool wrappers.
+8. Provider base URLs, authentication, certificates, and runtime settings remain deployment configuration, not service metadata.
+9. Specialists return structured factual results. The Formatter Agent owns all final response formatting.
+10. The existing final JSON structure remains unchanged.
+11. Agent storage and agent-runtime internals are outside this document. The tools repository contains MCP and provider code, not agent definitions.
 
 ## 2. Current architecture problems
 
@@ -247,8 +248,10 @@ If the five target tools can be delivered immediately, implement the target arch
 | AS Specialist Sub-Agent | AS intent, AS tool selection, missing AS inputs, aggregation of AS tool results | TM tools, provider mechanics, final formatting |
 | TM Specialist Sub-Agent | TM intent, TM tool selection, missing TM inputs, aggregation of TM tool results | AS tools, provider mechanics, final formatting |
 | Five MCP tools | Stable business-facing contracts, one per service | Cross-domain routing or final response composition |
-| Shared MCP Tool Runtime | Metadata lookup, alias resolution, validation, query building, provider calls, retry, normalization | Business intent classification or user-facing prose |
-| PostgreSQL Metadata | Five service mappings and their complete column dictionaries | Secrets, base URLs, agent prompts, agent behavior |
+| Startup Metadata Loader | Read both metadata tables, assemble one complete snapshot, validate all five bindings, publish readiness | Serving live tool requests or partial metadata |
+| Immutable In-Memory Registry | Constant-time lookup by registered `tool_name` during tool execution | Database writes, periodic refresh, provider calls |
+| Shared MCP Tool Runtime | Registry lookup, alias resolution, validation, query building, provider calls, retry, normalization | Business intent classification or user-facing prose |
+| PostgreSQL Metadata | Source of truth for five service mappings and their complete column dictionaries | Request-path lookup, secrets, base URLs, agent prompts, agent behavior |
 | Formatter Agent | Final table/attribute/status construction in the existing JSON schema | Data retrieval, tool calls, provider inference |
 | Final JSON validator | Enforce the final schema and verify table/row/value integrity before return | Business interpretation or formatting decisions |
 
@@ -286,6 +289,19 @@ Formatter Agent decides:
 
 Agents never receive or produce portable IDs, provider URLs, tokens, raw filter expressions, or stack traces.
 
+PostgreSQL is part of the metadata control plane, not the request execution path:
+
+```text
+MCP startup:
+  PostgreSQL -> load both tables -> build and validate complete snapshot
+             -> publish immutable in-memory registry -> readiness succeeds
+
+Every tool request:
+  wrapper -> in-memory registry lookup -> shared executor -> provider API
+
+PostgreSQL calls per tool request: 0
+```
+
 ### 3.3 Identifier model
 
 Only these identifiers are required:
@@ -293,7 +309,7 @@ Only these identifiers are required:
 | Identifier | Location | Purpose | May change without code deployment? |
 | --- | --- | --- | --- |
 | `tool_name` | MCP registration and `octobot_service` | Stable public tool contract and metadata lookup key | No; renaming is a contract change |
-| `portable_id` | `octobot_service` only | Provider service UUID | Yes; update metadata and refresh cache |
+| `portable_id` | `octobot_service` only | Provider service UUID | Yes; publish metadata and roll the MCP replicas |
 | `service_id` | PostgreSQL only | Parent key for dictionary rows | Yes; never leaves metadata layer |
 | `source_name` | PostgreSQL only | Technical name imported from the workbook | Yes, subject to source governance |
 
@@ -347,7 +363,9 @@ flowchart TD
   TM2 --> RT
   TM3 --> RT
 
-  RT <--> DB[(PostgreSQL service metadata)]
+  DB[(PostgreSQL: two metadata tables)] -->|startup only| ML[Metadata Loader and Validator]
+  ML -->|complete validated snapshot| REG[Immutable In-Memory Registry]
+  REG -->|constant-time lookup| RT
   RT <--> API[Provider APIs]
 
   RT -->|normalized tool results| AS
@@ -360,7 +378,7 @@ flowchart TD
   O --> U
 ```
 
-The important return path is `tool runtime -> specialist -> formatter`. The formatter never receives raw provider data directly and never calls a tool.
+The database arrow ends at startup initialization. It does not enter the live request path. The important return path is `tool runtime -> specialist -> formatter`. The formatter never receives raw provider data directly and never calls a tool.
 
 ## 5. End-to-end runtime flow
 
@@ -488,9 +506,9 @@ The UUID is not in the wrapper. `expected_domain` is a defensive assertion: a da
 For every tool call, the Shared MCP Tool Runtime performs this exact sequence:
 
 1. Validate the request envelope and pagination bounds.
-2. Load the service row by `tool_name` from the metadata cache.
+2. Resolve the service definition by `tool_name` from the immutable in-memory registry.
 3. Verify that the row's `business_domain` equals the wrapper's `expected_domain`.
-4. Load the complete column dictionary for the service.
+4. Use the complete column dictionary already attached to that in-memory service definition.
 5. Resolve every entity, filter field, and requested field to exactly one allowed dictionary column.
 6. Reject unknown or ambiguous aliases before any provider call.
 7. Validate required-filter rules and operator compatibility.
@@ -910,7 +928,7 @@ CREATE TABLE octobot_service_column (
 );
 ```
 
-No additional indexes are required initially. The primary keys and unique constraints already index `tool_name`, `portable_id`, and `(service_id, column_order)`, and all aliases are resolved from the small in-memory metadata cache.
+No additional indexes are required initially. The primary keys and unique constraints already index `tool_name`, `portable_id`, and `(service_id, column_order)`, and all aliases are resolved from the small in-memory registry.
 
 ### 8.4 Source and meaning of service fields
 
@@ -976,9 +994,9 @@ Blank booleans are normalized to `FALSE`. Blank text and numeric cells become `N
 
 `business_name` and `aliases` are architecture-added column metadata. The importer generates a camelCase candidate from `English Column Name`, applies any approved overrides from a small version-controlled alias manifest, and rejects collisions. When the English name is blank or does not produce a valid unique business name, an explicit manifest override is mandatory; the importer must not expose the provider column automatically. That manifest belongs in the tools repository and is published together with the workbooks.
 
-### 8.5 Metadata lookup
+### 8.5 Startup metadata load and request-time lookup
 
-The wrapper calls the repository with its registered name:
+The metadata loader runs these queries once while an MCP replica starts. It first loads each service by its registered name:
 
 ```sql
 SELECT
@@ -992,7 +1010,7 @@ FROM octobot_service
 WHERE tool_name = $1;
 ```
 
-The repository then loads all dictionary rows:
+It then loads all dictionary rows for each service:
 
 ```sql
 SELECT
@@ -1030,6 +1048,14 @@ ORDER BY column_order;
 
 Loading all rows is intentional. Loading only required/default rows would make optional filters and explicitly requested outputs impossible to validate.
 
+After validating all five definitions, the loader publishes one immutable registry keyed by `tool_name`. A live tool call performs only an in-process lookup:
+
+```python
+service_definition = metadata_registry.require(tool_name)
+```
+
+The value already contains the service row, portable ID, approved aliases, and complete dictionary. The repository is not called during tool execution. This gives constant-time metadata access while keeping PostgreSQL as the authoritative source.
+
 ### 8.6 Metadata import and publication
 
 Use a repeatable import command in the tools repository:
@@ -1044,16 +1070,17 @@ read five workbooks
   -> detect duplicate columns, orders, and aliases
   -> write all five services and dictionaries in one database transaction
   -> run metadata validation report
-  -> refresh the MCP metadata cache
+  -> publish an approved metadata version
+  -> roll the MCP replicas so each loads that version at startup
 ```
 
 Do not partially publish one service's row without its dictionary. If any service fails validation, roll back the transaction.
 
 Within that transaction, upsert each service row by `tool_name`, update `updated_at`, and replace that service's complete child dictionary set. Replacing the full child set prevents columns removed from a workbook from remaining as stale metadata. Preserve service IDs by upserting the parent before deleting and reinserting its children.
 
-### 8.7 Cache behavior
+### 8.7 Immutable registry lifecycle
 
-The MCP server should load all five service definitions at startup because the dataset is small.
+The MCP server loads all five service definitions at startup because the dataset is small. A replica is not ready until the complete snapshot has passed every validation rule.
 
 Readiness must fail when:
 
@@ -1064,9 +1091,32 @@ Readiness must fail when:
 - a service has no selectable output columns
 - the wrapper's expected domain differs from metadata
 
-After startup, use a configurable short TTL or explicit refresh operation. Build and validate a complete new snapshot, then swap it atomically so a request never sees a service row with an old or missing dictionary. In-flight requests may finish with the previous immutable snapshot. On refresh failure, retain the last known good cache and emit an alert. On initial startup with no valid cache, fail readiness rather than serving partially configured tools.
+The registry remains unchanged for the lifetime of the process. The base design has no TTL, background database polling, or partial live refresh. This prevents different requests on one replica from observing different metadata versions and removes database availability from normal request handling.
 
-Changing a portable ID requires only a metadata update and cache refresh/restart. It does not require changing the wrapper.
+To change a portable ID or dictionary, publish all five definitions transactionally, validate the publication, and perform a rolling MCP restart. New replicas load the new complete version before becoming ready; existing replicas drain while continuing to use their previous complete version. A failed startup load keeps that new replica out of service and does not affect healthy replicas.
+
+The implementation shape is deliberately small:
+
+```python
+async def initialize_metadata_registry(repository: ServiceRepository) -> MetadataRegistry:
+    services = await repository.load_all_services_with_columns()
+    snapshot = MetadataRegistry.build(services)
+    snapshot.validate_expected_tools(EXPECTED_TOOL_BINDINGS)
+    log_metadata_fingerprint(snapshot.fingerprint)
+    return snapshot.freeze()
+
+
+async def execute_service_query(tool_name: str, expected_domain: str, request):
+    service = metadata_registry.require(tool_name)
+    service.assert_domain(expected_domain)
+    return await shared_service_executor.execute(service, request)
+```
+
+`metadata_registry` is created before the server reports ready and is never reassigned during that process lifetime. Repository methods are therefore absent from `execute_service_query` and all lower request-path functions.
+
+This is intentionally simpler than live refresh. If operational evidence later proves that restart-based publication is too slow, a future design may add a complete-snapshot atomic swap. It must never refresh individual service rows or dictionaries independently.
+
+Changing a portable ID therefore requires no wrapper or agent change, only a metadata publication and rolling MCP restart.
 
 ### 8.8 Example service row
 
@@ -1486,7 +1536,7 @@ Track at least:
 tool calls by toolName and status
 provider latency by toolName
 retry count by reason
-metadata cache load/refresh failures
+metadata startup-load and validation failures
 invalid and ambiguous field requests
 formatter schema-validation failures
 partial response count
@@ -1542,7 +1592,7 @@ octobot_mcp/
     response_normalizer.py
   metadata/
     service_repository.py
-    metadata_cache.py
+    metadata_registry.py
     workbook_importer.py
   providers/
     apigee_client.py
@@ -1567,7 +1617,7 @@ Agent definitions remain in the existing agent platform/configuration location. 
 
 1. PostgreSQL migration creates the two metadata tables.
 2. The validated importer publishes all five services and dictionaries transactionally.
-3. Deployment configuration supplies PostgreSQL connectivity, provider base/auth URLs, credentials, certificates, timeouts, retry limits, and cache TTL.
+3. Deployment configuration supplies PostgreSQL connectivity, provider base/auth URLs, credentials, certificates, timeouts, and retry limits.
 4. The MCP server starts, loads metadata, validates all five registered bindings, and becomes ready only after successful validation.
 5. The agent configuration exposes two AS tools only to AS and three TM tools only to TM.
 6. Root and formatter have no provider tools.
@@ -1603,7 +1653,8 @@ There is no environment-specific portable-ID table. If that architecture constra
 - pagination caps
 - timeout and retry matrix
 - safe error redaction
-- cache startup, refresh, last-known-good, and readiness behavior
+- startup load, immutable registry, snapshot-fingerprint logging, and readiness-failure behavior
+- proof that normal tool execution performs no PostgreSQL query
 
 ### 13.3 Tool contract tests
 
@@ -1660,13 +1711,14 @@ Exit criterion: no unknown value is required for schema creation, tool binding, 
 
 Exit criterion: five valid service rows exist and every one has a complete, unambiguous dictionary.
 
-### Phase 2: implement shared MCP contracts and metadata cache
+### Phase 2: implement shared MCP contracts and immutable metadata registry
 
 1. Define `ServiceQueryRequest`, `FilterCondition`, `ServiceQueryResult`, `ToolTable`, and `ToolError` models.
-2. Implement repository lookup by `tool_name` and complete dictionary load by `service_id`.
-3. Implement startup validation and readiness failure.
-4. Implement TTL/explicit refresh with last-known-good behavior.
-5. Add tests for portable-ID updates without wrapper changes.
+2. Implement startup repository loading by `tool_name` and complete dictionary loading by `service_id`.
+3. Build one immutable registry containing all five complete service definitions.
+4. Implement startup validation, snapshot-fingerprint logging, and readiness failure.
+5. Add tests proving there is no database access after readiness.
+6. Add tests for portable-ID updates without wrapper changes after a rolling restart.
 
 Exit criterion: shared code can resolve and validate all five service definitions without calling a provider.
 
@@ -1721,7 +1773,7 @@ Exit criterion: formatter output is schema-valid, contains all successful data o
 1. Run end-to-end tests against a non-production provider environment.
 2. Compare target-tool results with the current generic flow for approved test queries.
 3. Verify logs, metrics, correlation IDs, timeouts, retries, and redaction.
-4. Deploy metadata first, then the MCP server, then agent/formatter configuration.
+4. Publish and validate metadata first, roll the MCP replicas so they load one approved version, then deploy agent/formatter configuration.
 5. Enable target tools behind a feature flag or controlled user cohort.
 6. Monitor errors, no-data rates, alias failures, retries, and partial responses.
 7. Roll back by disabling the target route, not by deleting metadata.
@@ -1742,16 +1794,21 @@ TM Specialist Sub-Agent
   Sees only three TM tools and returns unchanged normalized TM service results.
 
 Five Service-Specific MCP Tools
-  Each stable registered tool name resolves one PostgreSQL service row.
+  Each stable registered tool name resolves one in-memory service definition.
   No wrapper contains a portable ID.
 
 Shared MCP Tool Runtime
-  Loads metadata, validates business fields, builds provider requests, calls
+  Uses the startup-loaded registry, validates business fields, builds provider requests, calls
   providers, retries safely, and returns one common result contract.
 
 PostgreSQL
+  Is the metadata source of truth and is read only during MCP startup.
   Contains five service rows and their column dictionaries in two tables.
   Portable IDs are globally valid across environments.
+
+Immutable In-Memory Registry
+  Holds one validated metadata version for the lifetime of each MCP process.
+  Normal tool requests make zero PostgreSQL calls.
 
 Formatter Agent
   Receives routing and specialist responses, performs all final formatting,
@@ -1761,4 +1818,4 @@ Tools Repository
   Contains MCP, metadata, and provider code. It does not contain agents.
 ```
 
-This target removes provider identifiers and query mechanics from agent reasoning, preserves one specialized tool per service, keeps metadata small, supports multiple services and partial failures, and has one clear owner for every transformation from user query to final JSON.
+This target removes provider identifiers and query mechanics from agent reasoning, preserves one specialized tool per service, keeps metadata small, makes metadata lookup an in-memory operation, supports multiple services and partial failures, and has one clear owner for every transformation from user query to final JSON.
