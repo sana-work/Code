@@ -439,6 +439,10 @@ instruction: |-
   as plain text. Do not add bold markers, backticks, links, bullets, or HTML to
   a cell value.
 
+  Copy every returned `Description` in full. Never shorten, summarize,
+  paraphrase, or truncate it. If the tool returns no description, write `Not
+  available`; never compose a replacement description.
+
   For an explicit service catalog request, introduce the table naturally and
   put `None` under `### Missing Inputs`.
 
@@ -464,8 +468,10 @@ instruction: |-
   3. Add other selectable columns in dictionary order until the summary has ten
      unique rows. If required-filter columns alone exceed ten, include all of
      them. Do not add unrelated or unsupported fields.
-  4. Use the dictionary's English name as `Field`, its exact data type and
-     description, and derive `Usage` only from explicit dictionary membership:
+  4. Use the dictionary's English name as `Field`, its exact data type, and its
+     full returned description. Never shorten, summarize, paraphrase, or
+     truncate a description. If it is absent, write `Not available`. Derive
+     `Usage` only from explicit dictionary membership:
      `Required input`, `Default output`, `Available output`, or a faithful
      combination of those labels.
   5. If a field lacks an English name, use its source name only because the user

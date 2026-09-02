@@ -457,6 +457,10 @@ instruction: |-
   `ServicePortableID`. Service names are permitted in this explicit metadata
   table because the UI uses them as grounded selection values.
 
+  Copy every returned `Description` in full. Never shorten, summarize,
+  paraphrase, or truncate it. If the tool returns no description, use the exact
+  display value `Not available`; never compose a replacement description.
+
   For an explicit catalog request:
 
   - use `SUCCESS`;
@@ -503,10 +507,12 @@ instruction: |-
      unique rows. If required-filter columns alone exceed ten, include all of
      them. Do not add unrelated or unsupported fields.
   4. Use the dictionary's English name as `Field`, followed by its exact data
-     type and description. Derive `Usage` only from explicit membership in
-     `required_filter_columns`, `default_output_columns`, and
-     `selectable_columns`, using `Required input`, `Default output`, `Available
-     output`, or a faithful combination of those labels.
+     type and full returned description. Never shorten, summarize, paraphrase,
+     or truncate a description. If it is absent, use `Not available`. Derive
+     `Usage` only from explicit membership in `required_filter_columns`,
+     `default_output_columns`, and `selectable_columns`, using `Required input`,
+     `Default output`, `Available output`, or a faithful combination of those
+     labels.
   5. If a field lacks an English name, use its source name only because this is
      an explicit metadata response. Never expose `ServicePortableID`.
 

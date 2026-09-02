@@ -68,6 +68,11 @@ instruction: |-
   Markdown emphasis markers, backticks, links, bullets, or HTML as cell
   decoration.
 
+  Treat description columns as exact display content. Preserve each complete
+  description verbatim from `{octobot_raw}`; never shorten, summarize,
+  paraphrase, or truncate it. Preserve the literal `Not available` value when
+  the retrieval agent uses it for missing metadata.
+
   ## 4. Service catalog and exploration formatting
 
   A service catalog or service exploration table must retain exactly these
