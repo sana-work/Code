@@ -438,11 +438,16 @@ In `_validate_request_schema()`, replace the shared set used for select
 validation with:
 
 ```python
+# Selectable and filterable columns have different rules.
 selectable_lower = frozenset(
-    column.lower()
-    for column in schema.selectable_columns
+    column.lower() for column in schema.selectable_columns
 )
 selectable_columns = sorted(schema.selectable_columns)
+
+filterable_lower = frozenset(
+    column.lower() for column in schema.allowed_columns
+)
+filterable_columns = sorted(schema.allowed_columns)
 
 invalid_select = sorted({
     column
@@ -463,6 +468,37 @@ if invalid_select:
                 schema.selectable_columns,
             ),
             "selectable_columns": selectable_columns,
+        },
+    )
+
+filter_fields = {
+    field
+    for field in (
+        self._extract_filter_field(expression)
+        for expression in request.filters
+    )
+    if field
+}
+
+invalid_filter_fields = sorted({
+    field
+    for field in filter_fields
+    if field not in filterable_lower
+})
+
+if invalid_filter_fields:
+    raise InvalidParamsError(
+        "Invalid filter columns for service",
+        {
+            "error_code": "INVALID_FILTER_COLUMNS",
+            "service_name": schema.service_name,
+            "invalid_filter_columns": invalid_filter_fields,
+            "suggested_columns": self._suggest_columns(
+                invalid_filter_fields,
+                schema,
+                schema.allowed_columns,
+            ),
+            "allowed_columns": filterable_columns,
         },
     )
 ```
