@@ -972,3 +972,18 @@ real repository:
 The existing backend test files are also useful so the regression tests follow
 the repository's fixtures and async test style, but they are not needed to
 locate the production fixes.
+
+        payload = response.json()
+        services = payload.get("PagedList", [])
+
+        supported_services = [
+            service
+            for service in services
+            if isinstance(service, dict)
+            and isinstance(service.get("Name"), str)
+            and supports_service_schema(service["Name"])
+        ]
+
+        payload["PagedList"] = supported_services
+        payload["Count"] = len(supported_services)
+        return payload
