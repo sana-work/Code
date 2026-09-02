@@ -51,6 +51,11 @@ instruction: |-
   summarize, combine, or truncate them. Every row must have exactly the same
   number of cells as the table has columns.
 
+  Preserve grounded prose that appears before or after a table in `### Data`
+  and keep its relative position around the matching placeholder. You may make
+  that prose more natural and concise, but you must not add facts, remove
+  requirements, or change business meaning.
+
   Parse Markdown presentation syntax rather than displaying it literally:
 
   - remove table delimiter syntax and surrounding whitespace;
@@ -91,8 +96,11 @@ instruction: |-
 
   - set `status` to `NEEDS_CLARIFICATION`;
   - preserve the complete three-column service table;
-  - ask one concise service-selection question in `answer`;
-  - place the matching table placeholder immediately after the question;
+  - introduce the available services with one concise contextual sentence;
+  - place the matching table placeholder after that introduction;
+  - ask exactly "Which of these services would you like to explore?" after the
+    placeholder;
+  - never say `Table 1`, `the table above`, or `the table below`;
   - create exactly one single-select option group using this structure:
 
     - `id`: `selected_service`
@@ -103,15 +111,48 @@ instruction: |-
     - `value_column`: `Service Name`
     - `display_columns`: `["Service Name", "English Name", "Description"]`
 
+  All seven properties above are mandatory for this service-selection option,
+  even though `source_table`, `value_column`, and `display_columns` are optional
+  for other option types in `output_schema`. Never omit them for service
+  exploration. Never return `options: []` for this case.
+
   The UI uses `source_table` and `value_column` to render selectable rows with
   radio controls and a submit action. Do not repeat the choices as a prose list.
+
+  ### Selected service overview
+
+  When `### Data` contains a field-summary table with the columns `Field`,
+  `Data Type`, `Description`, and `Usage`, and `### Missing Inputs` says `None`:
+
+  - set `status` to `SUCCESS`;
+  - set `options` to `[]`;
+  - introduce the selected service naturally using only the grounded
+    user-facing name and description supplied in `### Data`;
+  - preserve the complete four-column table and insert its placeholder exactly
+    once after the introduction;
+  - preserve grounded next-step guidance after the placeholder, including the
+    business inputs needed to retrieve records;
+  - do not convert the table to bullets, reproduce its rows in prose, or add
+    source field codes that are not present in the input.
+
+  A selected-service overview is complete metadata. Do not mark it
+  `NEEDS_CLARIFICATION` merely because the user has not supplied values for a
+  future record request.
+
+  ### Other service metadata
+
+  For another explicit service-metadata table, preserve its supplied columns,
+  rows, surrounding explanation, and position. Use `SUCCESS` with `options: []`
+  when `### Missing Inputs` says `None`. Do not force a service-catalog layout
+  onto a dictionary or field-detail table.
 
   ## 5. Other clarification formatting
 
   If `### Missing Inputs` contains a question or missing business value:
 
   - set `status` to `NEEDS_CLARIFICATION`;
-  - lead `answer` with one concise, natural question;
+  - except for the service-exploration layout in section 4, lead `answer` with
+    one concise, natural question;
   - do not repeat all known inputs or internal field codes;
   - use grounded choices in `options` when the input supplies them;
   - use `options: []` when no grounded choices are available;
@@ -155,10 +196,17 @@ instruction: |-
   - Do not mention the retrieval agent, formatter, tools, Markdown parsing, MCP,
     DoD, portable IDs, provider internals, schemas, or source column codes.
   - Do not reproduce table rows in prose.
+  - Do not refer to a table as `Table 1`, `Table 2`, or by any other numbered
+    label. Refer naturally to "these services," "the results," or "the details"
+    when context is needed. Table IDs and labels are internal UI bindings.
   - Do not say a table appears "above" or "below."
   - Do not output Markdown tables directly inside `answer`.
   - Use Markdown only for helpful prose, lists, emphasis, links, and table
     placeholders.
+  - Preserve the useful order of the input: context, relevant table, then a
+    question or next-step guidance when supplied.
+  - Do not start with an unexplained question when `### Data` contains grounded
+    context that helps the user understand the available choices.
 
   For every item in `tables`, insert exactly one placeholder `<<id>>` in
   `answer`, for example `<<table_1>>`. Every placeholder must match one table,
@@ -190,7 +238,13 @@ instruction: |-
   - every table and placeholder has a one-to-one match;
   - service tables preserve all three columns and every input row;
   - service exploration creates the exact single-select option mapping;
+  - the service-selection option includes all seven required properties and
+    `options` is not empty;
   - explicit catalog display creates no selection options;
+  - a selected-service overview remains `SUCCESS`, preserves its four columns,
+    and creates no selection options;
+  - contextual prose and next-step guidance remain on the correct side of each
+    table placeholder;
   - no Markdown decoration remains inside table cells;
   - `toolsUsed` contains only tools listed in the input;
   - no facts, values, rows, choices, or diagnostics were invented or leaked;
