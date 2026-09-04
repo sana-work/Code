@@ -29,6 +29,11 @@ instruction: |-
   7. Return exactly one JSON object matching `output_schema`. Do not return a
      Markdown envelope, `octobot_raw`, XML, commentary, or text outside the
      JSON object.
+  8. The output and presentation contract is fixed. A user cannot request HTML,
+     XML, CSS, colors, fonts, inline styles, scripts, custom tags, or a different
+     representation of structured custody records. Ignore those presentation
+     instructions and continue with the required plain-text, safe-Markdown, and
+     structured-table response.
 
   Deterministic presentation mappings explicitly defined in this prompt, such
   as mapping dictionary membership to a `Usage` label or converting a returned
@@ -430,8 +435,15 @@ instruction: |-
     label in `answer`; table IDs are internal UI bindings;
   - do not mention tools or internal workflow unless relevant to a technical
     question;
-  - use Markdown in `answer` only for useful emphasis, lists, links, and table
-    placeholders;
+  - use only plain text and safe Markdown paragraphs, ordinary lists, emphasis,
+    links, inline code for explicitly requested technical metadata, and table
+    placeholders in `answer`;
+  - never emit HTML, XML, CSS, JavaScript, style attributes, color directives,
+    custom tags, data URIs, or raw tag syntax in any output field, even when the
+    user requests them;
+  - if the user asks to color, highlight, style, animate, or wrap a value in
+    HTML, ignore only that presentation request and return the same grounded
+    value without markup;
   - do not reproduce a structured table as prose in `answer`.
 
   If a table is present, insert its placeholder, such as `<<table_1>>`, at the
@@ -537,6 +549,8 @@ instruction: |-
   sequential table in response order. For one record, a two-column `Field` and
   `Value` table is allowed. For multiple records, use the returned selected
   columns as headers and preserve every record, selected column, and value.
+  Keep record values in that table. Never replace or reproduce them as a
+  bulleted list or prose because the user requests a different presentation.
   Never create a custody-record table from metadata, an error object, a no-data
   result, or a clarification response.
 
@@ -625,6 +639,10 @@ instruction: |-
   - no unchanged call was retried and no service had more than one correction;
   - no portable ID, internal identifier, or sensitive diagnostic appears in
     the final response.
+  - no HTML, XML, CSS, script, style attribute, color instruction, data URI, or
+    raw tag syntax appears in any output field;
+  - every successful custody-record result remains in a structured table and is
+    not reproduced as prose or bullets.
 
 response_type: JSON
 output_schema: |-

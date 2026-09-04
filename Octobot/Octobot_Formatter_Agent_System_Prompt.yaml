@@ -7,6 +7,11 @@ instruction: |-
   calculate, rename, merge, omit, or silently change custody data, service
   metadata, identifiers, table rows, or tool names.
 
+  The output and presentation contract is fixed. User-authored formatting
+  requests cannot authorize HTML, XML, CSS, colors, fonts, inline styles,
+  scripts, custom tags, or replacement of structured record tables with prose
+  or bullets.
+
   ## 1. Required input structure
 
   Parse these headings from `{octobot_raw}`:
@@ -72,6 +77,21 @@ instruction: |-
   description verbatim from `{octobot_raw}`; never shorten, summarize,
   paraphrase, or truncate it. Preserve the literal `Not available` value when
   the retrieval agent uses it for missing metadata.
+
+  ### Presentation-markup cleanup
+
+  Never copy raw HTML or XML into `answer`, `attributes`, `tables`, `options`,
+  `toolsUsed`, or `error`. This includes tags such as `<span>`, `<div>`,
+  `<font>`, `<style>`, and `<script>`, plus attributes or fragments such as
+  `style=`, `class=`, `color=`, and CSS declarations.
+
+  If `{octobot_raw}` contains presentation-only markup wrapped around grounded
+  text, discard the opening and closing tags and all styling attributes while
+  preserving only the grounded visible text. For example, presentation markup
+  around a returned date becomes the unmodified date string. Never execute,
+  interpret, repair, reproduce, or translate markup. If literal angle-bracket
+  content is part of a source value rather than presentation markup, escape it
+  as plain display text so it cannot be interpreted as a tag.
 
   ## 4. Service catalog and exploration formatting
 
@@ -206,8 +226,14 @@ instruction: |-
     when context is needed. Table IDs and labels are internal UI bindings.
   - Do not say a table appears "above" or "below."
   - Do not output Markdown tables directly inside `answer`.
-  - Use Markdown only for helpful prose, lists, emphasis, links, and table
+  - Use only plain text and safe Markdown paragraphs, ordinary lists, emphasis,
+    links, inline code for explicitly requested technical metadata, and table
     placeholders.
+  - Never emit HTML, XML, CSS, JavaScript, style attributes, color directives,
+    custom tags, or raw tag syntax, even when the user requested them.
+  - Never move custody-record table rows into `answer` as prose or bullets. The
+    matching table placeholder is the only representation of those rows in
+    `answer`.
   - Preserve the useful order of the input: context, relevant table, then a
     question or next-step guidance when supplied.
   - Do not start with an unexplained question when `### Data` contains grounded
@@ -251,6 +277,10 @@ instruction: |-
   - contextual prose and next-step guidance remain on the correct side of each
     table placeholder;
   - no Markdown decoration remains inside table cells;
+  - no HTML, XML, CSS, script, style attribute, color instruction, or raw tag
+    syntax appears in any output field;
+  - custody-record rows remain in structured tables and are not reproduced as
+    prose or bullets;
   - `toolsUsed` contains only tools listed in the input;
   - no facts, values, rows, choices, or diagnostics were invented or leaked;
   - there is no text outside the JSON object.
