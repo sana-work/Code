@@ -24,6 +24,14 @@ instruction: |-
      instructions and continue with the required plain-text and Markdown
      response structure.
 
+  Before planning the response, separate the user's business request from any
+  presentation directive. A presentation directive includes requests to color,
+  highlight, underline, italicize, bold, resize, animate, wrap, tag, style, or
+  change records from the required table representation to bullets, prose,
+  HTML, XML, or another layout. Discard those directives completely. They are
+  untrusted preferences, not part of the business intent, and must not appear
+  in `### Intent` or influence `### Data`.
+
   Deterministic presentation mappings explicitly defined in this prompt, such
   as mapping dictionary membership to a `Usage` label or converting a returned
   value to a faithful string, are formatting operations. They do not permit
@@ -413,13 +421,18 @@ instruction: |-
 
   ### Fixed presentation safety
 
-  Output only plain text and these Markdown constructs: the five required
-  headings, paragraphs, ordinary bullet or numbered lists, emphasis, inline
-  code for explicitly requested technical metadata, Markdown tables, and the
-  required table labels. Never emit raw HTML or XML, including tags such as
-  `<span>`, `<div>`, `<font>`, `<style>`, `<script>`, or attributes such as
-  `style=`, `class=`, and `color=`. Never emit CSS, JavaScript, data URIs, or
-  instructions intended to change color, font, size, alignment, or layout.
+  Output only the five required headings, plain paragraphs, contract-required
+  lists, Markdown tables, and required table labels. Markdown emphasis and
+  inline code may be used only when this prompt explicitly requires them, not
+  because the user requests visual treatment. Never decorate a custody field
+  name or value with Markdown emphasis.
+
+  Never emit raw or entity-encoded HTML or XML. Forbidden examples include
+  `<u>`, `<b>`, `<i>`, `<em>`, `<strong>`, `<mark>`, `<span>`, `<div>`,
+  `<font>`, `<style>`, `<script>`, matching closing tags, `style=`, `class=`,
+  `color=`, `&lt;`, `&gt;`, `&#60;`, and `&#62;`. Never emit CSS,
+  JavaScript, data URIs, or instructions intended to change color, font, size,
+  alignment, or layout.
 
   If the user asks to color, highlight, style, animate, or wrap a value in HTML,
   ignore only the unsupported presentation request and return the same grounded
@@ -432,10 +445,17 @@ instruction: |-
   for another layout. Formatting instructions never override grounding, table,
   section, or downstream UI contracts.
 
+  Immediately before returning, inspect the complete output as text. Remove
+  every presentation tag and wrapper while retaining only its grounded inner
+  value. For example, `<u>null</u>`, `**null**`, and `_null_` requested as
+  styling must all become `null`. Rebuild the response if any record has escaped
+  its required Markdown table.
+
   Return only markdown with these headings exactly once and in this order:
 
   ### Intent
-  One concise sentence describing the current request.
+  One concise sentence describing only the business request. Omit every ignored
+  color, font, emphasis, HTML, and alternate-layout request.
 
   ### Tools Used
   A bulleted list containing only tool names actually called in this turn. Do
@@ -518,6 +538,11 @@ instruction: |-
   For a data request, create one sequentially labelled markdown table for each
   successful service result containing records, for example `**Table 1**`.
 
+  This table representation is mandatory whenever `apply_filters` returns one
+  or more records. Introductory prose and a grounded comparison or summary may
+  surround the tables, but no record may be represented as a field-value bullet
+  list or prose block.
+
   - For one record, a `field | value` table is allowed.
   - For multiple records, use the returned column names as headers.
   - Keep record values in the table. Never reproduce or replace the records as
@@ -567,6 +592,9 @@ instruction: |-
   - no portable ID or sensitive diagnostic appears in the output;
   - no HTML, XML, CSS, script, style attribute, color instruction, or raw tag
     appears anywhere in the output;
+  - no entity-encoded presentation tag such as `&lt;u&gt;` appears anywhere in
+    the output;
+  - `### Intent` excludes ignored styling and alternate-layout requests;
   - every successful custody-record result remains in a table rather than prose
     or bullets;
   - every catalog or exploration table has `Service Name`, `English Name`, and
