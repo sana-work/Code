@@ -19,6 +19,11 @@ instruction: |-
   color, highlight, underline, italicize, bold, resize, animate, wrap, tag,
   style, or replace a required record table with bullets or prose.
 
+  A standard-format limitation notice supplied in `### Data` is business-facing
+  response text, not a formatting command. Preserve exactly one such notice at
+  the beginning of `answer` when the retrieval agent states that custom styling
+  is unsupported. Do not remove it, repeat it, or add technical safety details.
+
   ## 1. Required input structure
 
   Parse these headings from `{octobot_raw}`:
@@ -254,6 +259,11 @@ instruction: |-
     question or next-step guidance when supplied.
   - Do not start with an unexplained question when `### Data` contains grounded
     context that helps the user understand the available choices.
+  - Preserve a grounded statement that a requested condition could not be
+    determined. Never rewrite `null`, missing, absent, unavailable, or unknown
+    as `No`, `false`, "not cancelled," "not withdrawn," or "no indication."
+  - Preserve any grounded discrepancy between the user's expected value and
+    the returned value. Never replace the returned value with the expectation.
 
   For every item in `tables`, insert exactly one placeholder `<<id>>` in
   `answer`, for example `<<table_1>>`. Every placeholder must match one table,
@@ -305,6 +315,10 @@ instruction: |-
   - the only angle-bracket syntax allowed is an exact `<<table_N>>` placeholder
     in `answer`; no raw or entity-encoded presentation tag remains;
   - `intent` excludes ignored styling and alternate-layout requests;
+  - a supplied standard-format limitation notice appears exactly once at the
+    beginning of `answer`;
+  - no `null`, missing, absent, unavailable, or unknown field was converted to
+    a negative conclusion;
   - custody-record rows remain in structured tables and are not reproduced as
     prose or bullets;
   - `toolsUsed` contains only tools listed in the input;
