@@ -1,59 +1,84 @@
-Apply a narrow correction to the current working tree. Do not redo or revert the completed AS cleanup.
+Perform one final, narrowly scoped cleanup of the current working tree. Preserve all completed behavior and avoid introducing new abstractions.
 
-The mappings in `asset_services_output_fields.py` are already reviewed and approved. They are the authoritative, checked-in source of truth. No additional field-contract document, provisional status, business-owner review, or approval workflow is required.
+## Objective
 
-Remove the unnecessary review layer:
+Keep a clean AS-first implementation with generic shared code reusable for Transaction Management later. Only the two Asset Services tools are implemented now.
 
-1. Keep these required implementation elements unchanged:
-   - `asset_services_output_fields.py`
-   - `EVENTS_ENTITLEMENTS_OUTPUT_FIELDS`
-   - `CASH_ENTITLEMENTS_OUTPUT_FIELDS`
-   - `ServiceToolContract` and `FieldContract`
-   - startup validation of mapped provider columns
-   - exact output-enum and provider-leakage tests
-   - Events `safe_account` filter-only behavior
-   - Cash `safe_account` selectable-output behavior
-   - the four approved Safe Account aliases
-   - the 100-record agent limit
-   - comma-filter rejection
-   - the two-tool inventory
-   - all completed SampleDomain, HealthTools, dev-client, lint, and test cleanup
+The output mappings currently in code are already reviewed and approved. No additional field-contract document or human-review workflow is required.
 
-2. Remove metadata added only for the unnecessary review workflow:
-   - `PROVISIONAL_PENDING_BUSINESS_REVIEW`
-   - `REVIEW_STATUS`
-   - `MAPPING_SOURCE`
-   - similar production-approval flags or constants
+## Required changes
 
-3. Delete these duplicate artifacts:
-   - `AS_Field_Contract.md`
-   - `generate_as_field_contract_doc.py`
-   - `test_as_field_contract_doc.py`
-   - exports or configuration used only by those artifacts
+1. Consolidate the approved output mappings:
+   - Move `EVENTS_ENTITLEMENTS_OUTPUT_FIELDS` and `CASH_ENTITLEMENTS_OUTPUT_FIELDS` unchanged from `asset_services_output_fields.py` into `contracts/asset_services.py`.
+   - Keep the mappings next to their corresponding AS tool contracts.
+   - Do not rename, regenerate, reinterpret, or derive any mapping from `english_name`.
+   - Build `EventsOutputField` and `CashOutputField` from the approved mapping keys.
+   - Ensure each `ServiceToolContract` directly owns its output mapping.
+   - Preserve startup validation that every mapped provider column is selectable.
+   - Preserve provider-column-to-business-key response normalization.
+   - Delete `asset_services_output_fields.py` after updating all imports.
 
-4. Remove all documentation and report statements claiming:
-   - mappings are provisional,
-   - mappings require additional human review,
-   - field wording is awaiting business-owner approval,
-   - mapping approval is a production-release blocker.
+2. Remove the unnecessary mapping-review workflow:
+   - Delete `AS_Field_Contract.md`.
+   - Delete `generate_as_field_contract_doc.py`.
+   - Delete `test_as_field_contract_doc.py`.
+   - Remove `PROVISIONAL_PENDING_BUSINESS_REVIEW`, `REVIEW_STATUS`, `MAPPING_SOURCE`, and related metadata.
+   - Remove documentation claiming the mappings are provisional or require further approval.
+   - Do not create a replacement mapping document or generator.
 
-5. Update references that currently direct readers to `AS_Field_Contract.md`.
-   Refer directly to the reviewed mappings in `asset_services_output_fields.py` or the generated MCP tool schema. Do not create another document duplicating the mappings.
+3. Preserve the correct Safe Account contract:
+   - Approved aliases are exactly `safe account`, `safe account number`, `security account`, and `security account id`.
+   - Do not include `safekeeping_number`.
+   - Preserve identifier strings exactly, including leading zeroes.
+   - Events uses `safe_account` as a required filter but cannot return it because its provider column is filter-only.
+   - Cash may return `safe_account` because its corresponding provider column is selectable.
+   - Never fabricate `safe_account` in Events records.
 
-6. Keep a concise code comment or docstring explaining only the real schema distinction:
-   - Events accepts `safe_account` as a required filter but cannot return it because the provider column is filter-only.
-   - Cash can return `safe_account` because its corresponding provider column is selectable.
+4. Preserve all completed runtime protections:
+   - Exactly two registered MCP tools:
+     - `query_as_events_entitlements`
+     - `query_as_cash_entitlements`
+   - Agent-facing maximum result limit remains 100.
+   - The 400000 provider transport ceiling remains internal and is never exposed as the tool limit.
+   - Invalid limits and offsets are rejected, never clamped.
+   - Only equality filters are supported.
+   - Comma-containing single-value filters are rejected until provider list/OR grammar is verified.
+   - Filter values cannot alter operators, columns, or query parameters.
+   - Provider errors remain normalized and allowlisted.
+   - Provider columns, portable IDs, credentials, URLs, and internal details never appear in agent-visible results.
 
-7. Verify that no unnecessary review artifacts remain:
+5. Preserve completed repository cleanup:
+   - Do not restore SampleDomain, HealthTools, dummy tools, generic discovery tools, or removed Apigee-named internal implementations.
+   - Preserve the `/ready` endpoint.
+   - Preserve the updated AS `dev_client.py`.
+   - Keep external `APIGEE_`, Helm, and Vault names only at the documented deployment compatibility boundary.
+   - Do not add Transaction Management tools yet.
+   - Do not disable pytest cache globally in `pyproject.toml`.
 
-   `rg -n "PROVISIONAL_PENDING_BUSINESS_REVIEW|AS_Field_Contract|REVIEW_STATUS|MAPPING_SOURCE|required human review|business owner approval" .`
+6. Update imports, `__all__` exports, tests, README, and `Octobot_MCP_API_Function_Flow.md` only where necessary to reflect this consolidation.
+   - Remove references to deleted files and review requirements.
+   - State that the code mappings in `contracts/asset_services.py` are authoritative.
+   - Do not duplicate the full mapping table in documentation.
 
-8. Run:
-   - `python -m pytest tests/ -q -p no:cacheprovider`
-   - `python test_runner.py`
-   - `ruff check octobot_mcp tests scripts`
-   - the exact two-tool inventory test
+## Verification
 
-The test count may decrease when the obsolete generated-document test is deleted. Explain that expected change; do not recreate a replacement test merely to preserve the count.
+Run and report the exit code for:
 
-The final report must state that the reviewed code mappings are authoritative and that no additional mapping review is required. The only remaining external validation is the Root Agent → AS Specialist → Formatter end-to-end run.
+- `python -m pytest tests/ -q -p no:cacheprovider`
+- `python test_runner.py`
+- `ruff check octobot_mcp tests scripts`
+- the exact MCP tool-inventory test
+
+Also verify there are no remaining references to:
+
+- `asset_services_output_fields`
+- `AS_Field_Contract`
+- `generate_as_field_contract_doc`
+- `PROVISIONAL_PENDING_BUSINESS_REVIEW`
+- `REVIEW_STATUS`
+- `MAPPING_SOURCE`
+- `safekeeping_number`
+
+The test count may decrease because the obsolete generated-document test is deleted. Explain this expected reduction rather than recreating an unnecessary test.
+
+Return a concise factual report listing moved and deleted files, verification results, exact registered tool names, and any genuine unresolved issue. Do not list mapping review as unresolved. After this cleanup, the only remaining external validation is the Root Agent → AS Specialist → Formatter end-to-end run.
