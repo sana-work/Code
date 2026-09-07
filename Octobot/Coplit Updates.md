@@ -1,50 +1,46 @@
-Continue the final cleanup. Do not claim full completion until every item below is satisfied.
+Perform the last repository-cleanup pass. Do not redesign the completed AS implementation.
 
-Decisions for the initial Asset Services release:
+1. Remove `safekeeping_number` from the Safe Account aliases unless an authoritative business source explicitly approves it. Retain only:
+   - `safe account`
+   - `safe account number`
+   - `security account`
+   - `security account id`
 
-- MCP input and output field keys use `snake_case`.
-- The provider column `SfAcntNm` maps to the agent-facing key `safe_account` in both tools.
-- The agent-facing maximum result size is 100 records per call. Pagination remains available through `offset`.
-- `400000` remains only an internal, explicitly unverified provider transport ceiling.
-- Only equality filters are supported.
-- Reject commas in single-value filters with `INVALID_PARAMS` until the real provider grammar is verified.
-- External `APIGEE_`/Helm/Vault names may remain only inside the documented compatibility boundary.
+2. Preserve the verified schema behavior:
+   - Events uses `safe_account` only as a required filter because `SfAcntNm` is not selectable.
+   - Never fabricate `safe_account` in Events records.
+   - Cash may return `safe_account` because its provider schema makes the column selectable.
+   - Document this difference in the generated field-contract document and tests.
 
-Required changes:
+3. Treat all newly hand-authored output mappings as `PROVISIONAL_PENDING_BUSINESS_REVIEW`.
+   - Do not call them approved merely because tests pass.
+   - Add source and review-status columns to `AS_Field_Contract.md`.
+   - Runtime exposure may remain for internal E2E testing, but documentation must state that production release requires business-owner approval.
+   - Keep ambiguous and placeholder fields excluded.
 
-1. Remove runtime generation of agent-facing output names from `english_name`.
-2. Create an explicit, immutable, reviewed business-name-to-provider-column mapping for each AS tool.
-3. Validate every mapping against the service registry at startup.
-4. Never use provider column names or abbreviations as collision suffixes.
-5. For duplicate or ambiguous English names, define a meaningful explicit business key. If no authoritative name is available, do not expose that field yet.
-6. Use `safe_account` consistently for `SfAcntNm`; do not emit `safekeeping_number`.
-7. Remove the `MAXIMUM_LIMIT` compatibility alias if no external caller uses it.
-8. Enforce the 100-record agent limit in the generated tool schema and runtime. Keep the provider transport limit separate.
-9. Delete all unused `SampleDomainService`, `SampleDomainTools`, related exports, fixtures, and tests. Preserve a deployment health endpoint only if it is independently required.
-10. Update `Octobot_MCP_API_Function_Flow.md` to document:
-    - the current two-tool AS release,
-    - snake_case MCP contracts,
-    - the actual module layout,
-    - the generic shared runtime,
-    - TM as a future extension,
-    - the external Root/AS/Formatter prompt pipeline.
-11. Generate a complete checked-in AS field-contract artifact containing every exposed input and output:
-    - business key,
-    - provider column,
-    - source,
-    - required/optional status,
-    - aliases,
-    - validation,
-    - default-output status.
-12. Print the two pytest warnings and fix them. A narrowly scoped warning suppression is allowed only when the warning is proven to originate from an external dependency and includes a comment explaining why.
-13. Add tests proving:
-    - exactly two MCP tools are registered,
-    - output enums contain only explicit approved business keys,
-    - no generated key contains a provider abbreviation,
-    - both tools return `safe_account`,
-    - limits above 100 are rejected rather than clamped,
-    - comma-containing filters are rejected,
-    - equality-filter values cannot alter the column or query parameters,
-    - no SampleDomain imports or registrations remain.
+4. Remove the unused `HealthTools`/`health_check` MCP implementation, related models, exports, fixtures, and tests unless a real production import or registration proves it is required. Preserve any independent HTTP/Kubernetes readiness endpoint.
 
-Run the full tests and lint checks. Return exact results, warnings, remaining legacy-name matches, exact tool-schema snapshots, and the complete list of unresolved external decisions.
+5. Update `dev_client.py` to call the two current AS tools with safe example inputs, or delete it if it has no maintained purpose. It must not reference `hello`, `octobot_dummy`, `health_check`, or removed tools.
+
+6. Remove `-p no:cacheprovider` from shared `pyproject.toml`. Keep the valid `asyncio_default_fixture_loop_scope = "function"` setting. For this machine only, run pytest with `-p no:cacheprovider` on the command line if its directory permissions still prevent cache creation.
+
+7. Inspect the actual CI pipeline:
+   - If CI runs repository-wide Ruff, mechanically fix all remaining W292 and I001 findings and rerun Ruff until exit code 0.
+   - If CI intentionally uses a changed-files lint baseline, document the exact baseline command and prove it exits 0.
+   - Do not report a nonzero Ruff command as a passing lint result.
+
+8. Run:
+   - the complete pytest suite,
+   - the exact CI entrypoint,
+   - the applicable Ruff gate,
+   - exact MCP tool-inventory verification,
+   - generated AS field-contract consistency verification.
+
+Return a factual report separating:
+- completed code requirements,
+- tests and their exit codes,
+- production-release blockers,
+- external deployment compatibility names,
+- the required human review of the AS output-field mapping.
+
+Do not claim production readiness until the business-name mapping is reviewed and the external Root → AS Specialist → Formatter E2E flow passes.
