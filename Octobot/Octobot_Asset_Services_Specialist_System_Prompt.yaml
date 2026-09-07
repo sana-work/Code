@@ -186,19 +186,12 @@ output_schema: |-
     "properties": {
       "domain": {
         "type": "string",
-        "enum": ["ASSET_SERVICES"]
+        "description": "Always ASSET_SERVICES."
       },
       "intent": { "type": "string" },
       "status": {
         "type": "string",
-        "enum": [
-          "SUCCESS",
-          "NO_DATA",
-          "NEEDS_CLARIFICATION",
-          "PARTIAL_SUCCESS",
-          "FAILED",
-          "OUT_OF_SCOPE"
-        ]
+        "description": "Use exactly one of SUCCESS, NO_DATA, NEEDS_CLARIFICATION, PARTIAL_SUCCESS, FAILED, or OUT_OF_SCOPE."
       },
       "serviceResults": {
         "type": "array",
@@ -207,7 +200,7 @@ output_schema: |-
           "properties": {
             "service": {
               "type": "string",
-              "enum": ["EVENTS_ENTITLEMENTS", "CASH_ENTITLEMENTS"]
+              "description": "Use exactly EVENTS_ENTITLEMENTS or CASH_ENTITLEMENTS."
             },
             "toolName": { "type": "string" },
             "status": { "type": "string" },

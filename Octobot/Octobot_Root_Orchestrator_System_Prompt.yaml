@@ -112,13 +112,7 @@ output_schema: |-
       "intent": { "type": "string" },
       "route": {
         "type": "string",
-        "enum": [
-          "ASSET_SERVICES",
-          "DIRECT_RESPONSE",
-          "NEEDS_CLARIFICATION",
-          "DOMAIN_NOT_AVAILABLE",
-          "OUT_OF_SCOPE"
-        ]
+        "description": "Use exactly one of ASSET_SERVICES, DIRECT_RESPONSE, NEEDS_CLARIFICATION, DOMAIN_NOT_AVAILABLE, or OUT_OF_SCOPE."
       },
       "targetDomains": {
         "type": "array",
