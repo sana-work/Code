@@ -1,0 +1,282 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" viewBox="0 0 1920 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Octobot Target Architecture</title>
+  <desc id="desc">Three structured bands show online request and data retrieval, code-defined tool contracts and startup registration, and final response composition. The Root Agent routes to Asset Services or Transaction Management Specialist Sub-Agents. Each specialist accesses only its own service-specific tools. Every tool exposes explicit required and optional business parameters while provider identifiers and mappings remain internal to Python code. Five tools share one MCP runtime. Structured specialist responses are formatted and validated before returning to the User.</desc>
+  <defs>
+    <filter id="shadow" x="-15%" y="-20%" width="130%" height="145%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#182338" flood-opacity="0.09"/>
+    </filter>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#087f72"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563a7"/>
+    </marker>
+    <style>
+      .font { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .bandTitle { font-size: 14px; font-weight: 760; fill: #27364a; }
+      .nodeTitle { font-size: 17px; font-weight: 760; fill: #142033; }
+      .nodeBody { font-size: 12.5px; font-weight: 500; fill: #536176; }
+      .small { font-size: 10.5px; font-weight: 650; fill: #657286; }
+      .toolTitle { font-size: 12.5px; font-weight: 720; fill: #1b2a3d; }
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 9.2px; font-weight: 600; fill: #435168; }
+      .flow { fill: none; stroke: #64748b; stroke-width: 2.2; marker-end: url(#arrowGray); }
+      .exchange { fill: none; stroke: #64748b; stroke-width: 2.2; marker-start: url(#arrowGray); marker-end: url(#arrowGray); }
+      .result { fill: none; stroke: #087f72; stroke-width: 2.5; marker-end: url(#arrowTeal); }
+      .startup { fill: none; stroke: #2563a7; stroke-width: 2.4; stroke-dasharray: 8 6; marker-end: url(#arrowBlue); }
+    </style>
+  </defs>
+
+  <rect width="1920" height="1200" fill="#f5f7fa"/>
+  <rect x="0" y="0" width="1920" height="118" fill="#ffffff"/>
+  <line x1="0" y1="117" x2="1920" y2="117" stroke="#dce2ea"/>
+
+  <g class="font">
+    <text x="52" y="53" font-size="30" font-weight="780" fill="#142033">Octobot Target Architecture</text>
+    <text x="52" y="85" font-size="15" font-weight="500" fill="#657286">Explicit tool parameters, code-owned service contracts, and unchanged final response composition</text>
+
+    <g transform="translate(1430 35)">
+      <rect width="105" height="42" rx="7" fill="#edf8f5" stroke="#abdcd3"/>
+      <text x="52.5" y="17" text-anchor="middle" font-size="10.5" font-weight="750" fill="#087f72">TOOLS</text>
+      <text x="52.5" y="34" text-anchor="middle" font-size="15" font-weight="780" fill="#075e55">5</text>
+    </g>
+    <g transform="translate(1548 35)">
+      <rect width="105" height="42" rx="7" fill="#eef4fb" stroke="#b7cee9"/>
+      <text x="52.5" y="17" text-anchor="middle" font-size="10.5" font-weight="750" fill="#2563a7">METADATA DB</text>
+      <text x="52.5" y="34" text-anchor="middle" font-size="15" font-weight="780" fill="#1e4f87">0</text>
+    </g>
+    <g transform="translate(1666 35)">
+      <rect width="202" height="42" rx="7" fill="#fff7e8" stroke="#eed09a"/>
+      <text x="101" y="17" text-anchor="middle" font-size="10.5" font-weight="750" fill="#9a5b13">TOOL CONTRACT SOURCE</text>
+      <text x="101" y="34" text-anchor="middle" font-size="15" font-weight="780" fill="#7e490d">PYTHON CODE</text>
+    </g>
+
+    <!-- Band 1 -->
+    <rect x="40" y="145" width="1840" height="470" rx="8" fill="#ffffff" stroke="#c9d2df"/>
+    <rect x="40" y="145" width="1840" height="46" rx="8" fill="#edf1f6"/>
+    <path d="M 40 183 L 40 153 Q 40 145 48 145 L 1872 145 Q 1880 145 1880 153 L 1880 183 Z" fill="#edf1f6"/>
+    <circle cx="67" cy="168" r="14" fill="#536176"/>
+    <text x="67" y="173" text-anchor="middle" font-size="13" font-weight="780" fill="#ffffff">1</text>
+    <text class="bandTitle" x="92" y="173">ONLINE REQUEST AND DATA RETRIEVAL</text>
+    <text class="small" x="1852" y="172" text-anchor="end">ONE DOMAIN OR BOTH DOMAINS MAY RUN</text>
+
+    <!-- MCP boundary -->
+    <rect x="875" y="205" width="800" height="390" rx="8" fill="#fafbfd" stroke="#aebaca" stroke-dasharray="7 5"/>
+    <rect x="892" y="195" width="286" height="22" rx="6" fill="#e8edf3"/>
+    <text x="1035" y="210" text-anchor="middle" font-size="10.5" font-weight="760" fill="#435168">TOOLS REPOSITORY / SINGLE MCP SERVER</text>
+
+    <!-- Band 1 connectors -->
+    <path class="flow" d="M 230 355 L 285 355"/>
+    <path class="flow" d="M 505 332 C 535 332, 538 290, 570 290"/>
+    <path class="flow" d="M 505 382 C 535 382, 538 470, 570 470"/>
+    <path class="exchange" d="M 840 290 L 900 290"/>
+    <path class="exchange" d="M 840 470 L 900 470"/>
+    <path class="exchange" d="M 1300 290 C 1335 290, 1335 350, 1370 350"/>
+    <path class="exchange" d="M 1300 485 C 1335 485, 1335 435, 1370 435"/>
+    <path class="exchange" d="M 1650 395 L 1710 395"/>
+
+    <text class="small" x="244" y="343">REQUEST</text>
+    <text class="small" x="522" y="318">AS</text>
+    <text class="small" x="522" y="440">TM</text>
+    <!-- User -->
+    <g filter="url(#shadow)">
+      <rect x="70" y="310" width="160" height="90" rx="8" fill="#fbfcfe" stroke="#cbd5e1"/>
+      <circle cx="109" cy="355" r="19" fill="#e8eef6"/>
+      <circle cx="109" cy="348" r="7" fill="#536176"/>
+      <path d="M 98 366 C 102 358, 116 358, 120 366" fill="none" stroke="#536176" stroke-width="3" stroke-linecap="round"/>
+      <text class="nodeTitle" x="140" y="361">User</text>
+    </g>
+
+    <!-- Root -->
+    <g filter="url(#shadow)">
+      <rect x="285" y="295" width="220" height="120" rx="8" fill="#f1f5fa" stroke="#aebccc"/>
+      <rect x="285" y="295" width="7" height="120" rx="3" fill="#536176"/>
+      <text class="nodeTitle" x="315" y="333">Root Agent</text>
+      <text class="nodeBody" x="315" y="359">Routes AS, TM, both,</text>
+      <text class="nodeBody" x="315" y="381">clarification, or out of scope</text>
+      <rect x="315" y="393" width="142" height="17" rx="5" fill="#e2e8f0"/>
+      <text x="386" y="405" text-anchor="middle" font-size="9.5" font-weight="720" fill="#536176">NO PROVIDER TOOLS</text>
+    </g>
+
+    <!-- Specialists -->
+    <g filter="url(#shadow)">
+      <rect x="570" y="240" width="270" height="100" rx="8" fill="#edf8f5" stroke="#9dd3c9"/>
+      <rect x="570" y="240" width="7" height="100" rx="3" fill="#087f72"/>
+      <text class="nodeTitle" x="600" y="274">Asset Services</text>
+      <text class="nodeBody" x="600" y="298">Specialist Sub-Agent</text>
+      <rect x="600" y="310" width="112" height="18" rx="5" fill="#d8f0ea"/>
+      <text x="656" y="323" text-anchor="middle" font-size="9.5" font-weight="740" fill="#087f72">AS TOOLS ONLY</text>
+    </g>
+    <g filter="url(#shadow)">
+      <rect x="570" y="420" width="270" height="100" rx="8" fill="#eef4fb" stroke="#aac7e4"/>
+      <rect x="570" y="420" width="7" height="100" rx="3" fill="#2563a7"/>
+      <text class="nodeTitle" x="600" y="454">Transaction Management</text>
+      <text class="nodeBody" x="600" y="478">Specialist Sub-Agent</text>
+      <rect x="600" y="490" width="112" height="18" rx="5" fill="#dceaf8"/>
+      <text x="656" y="503" text-anchor="middle" font-size="9.5" font-weight="740" fill="#2563a7">TM TOOLS ONLY</text>
+    </g>
+
+    <!-- AS tools -->
+    <g filter="url(#shadow)">
+      <rect x="900" y="225" width="400" height="135" rx="8" fill="#f8fcfb" stroke="#a8d8cf"/>
+      <rect x="900" y="225" width="400" height="34" rx="8" fill="#e3f4ef"/>
+      <path d="M 900 251 L 900 233 Q 900 225 908 225 L 1292 225 Q 1300 225 1300 233 L 1300 251 Z" fill="#e3f4ef"/>
+      <text x="920" y="247" font-size="11.5" font-weight="760" fill="#087f72">AS SERVICE TOOLS (2) - EXPLICIT PARAMETERS</text>
+      <circle cx="924" cy="280" r="5" fill="#087f72"/>
+      <text class="toolTitle" x="938" y="284">Events Entitlements</text>
+      <text class="mono" x="938" y="296">event_id + safe_account + optional fields</text>
+      <line x1="920" y1="306" x2="1280" y2="306" stroke="#d3e8e3"/>
+      <circle cx="924" cy="329" r="5" fill="#087f72"/>
+      <text class="toolTitle" x="938" y="333">Cash Entitlements</text>
+      <text class="mono" x="938" y="345">cash_account + safe_account + optional fields</text>
+    </g>
+
+    <!-- TM tools -->
+    <g filter="url(#shadow)">
+      <rect x="900" y="390" width="400" height="195" rx="8" fill="#f8fbff" stroke="#afcae5"/>
+      <rect x="900" y="390" width="400" height="34" rx="8" fill="#e5eff9"/>
+      <path d="M 900 416 L 900 398 Q 900 390 908 390 L 1292 390 Q 1300 390 1300 398 L 1300 416 Z" fill="#e5eff9"/>
+      <text x="920" y="412" font-size="11.5" font-weight="760" fill="#2563a7">TM SERVICE TOOLS (3) - EXPLICIT PARAMETERS</text>
+      <circle cx="924" cy="447" r="5" fill="#2563a7"/>
+      <text class="toolTitle" x="938" y="451">EOD Security Transactions</text>
+      <text class="mono" x="938" y="467">required identifiers + typed optional fields</text>
+      <line x1="920" y1="478" x2="1280" y2="478" stroke="#d6e3f0"/>
+      <circle cx="924" cy="500" r="5" fill="#2563a7"/>
+      <text class="toolTitle" x="938" y="504">Current Securities Transactions</text>
+      <text class="mono" x="938" y="520">required identifiers + typed optional fields</text>
+      <line x1="920" y1="531" x2="1280" y2="531" stroke="#d6e3f0"/>
+      <circle cx="924" cy="552" r="5" fill="#2563a7"/>
+      <text class="toolTitle" x="938" y="556">Current + Settlement Instructions</text>
+      <text class="mono" x="938" y="572">required identifiers + typed optional fields</text>
+    </g>
+
+    <!-- Shared runtime -->
+    <g filter="url(#shadow)">
+      <rect x="1370" y="290" width="280" height="210" rx="8" fill="#f7f4fc" stroke="#c7b8dd"/>
+      <rect x="1370" y="290" width="8" height="210" rx="3" fill="#7654a6"/>
+      <text class="nodeTitle" x="1402" y="326">Shared MCP Runtime</text>
+      <rect x="1402" y="340" width="170" height="18" rx="5" fill="#e9e0f4"/>
+      <text x="1487" y="353" text-anchor="middle" font-size="9.5" font-weight="740" fill="#7654a6">ONE IMPLEMENTATION</text>
+      <text class="nodeBody" x="1402" y="383">Receives code-defined tool contract</text>
+      <text class="nodeBody" x="1402" y="407">Type and business-rule validation</text>
+      <text class="nodeBody" x="1402" y="431">Provider field mapping + query build</text>
+      <text class="nodeBody" x="1402" y="455">Adapter, auth, timeout, retry</text>
+      <text class="nodeBody" x="1402" y="479">Normalized result and safe errors</text>
+    </g>
+
+    <!-- Provider -->
+    <g filter="url(#shadow)">
+      <rect x="1710" y="340" width="160" height="110" rx="8" fill="#fff9ee" stroke="#e5c98d"/>
+      <ellipse cx="1742" cy="372" rx="16" ry="6" fill="#f4dfb5" stroke="#a66b22"/>
+      <path d="M 1726 372 L 1726 398 C 1726 406, 1758 406, 1758 398 L 1758 372" fill="#fff1d5" stroke="#a66b22"/>
+      <ellipse cx="1742" cy="398" rx="16" ry="6" fill="#fff1d5" stroke="#a66b22"/>
+      <text class="nodeTitle" x="1768" y="379">Provider</text>
+      <text class="nodeTitle" x="1768" y="400">APIs</text>
+      <text class="nodeBody" x="1730" y="428">AS and TM services</text>
+    </g>
+
+    <!-- Band 2 -->
+    <rect x="40" y="650" width="1840" height="215" rx="8" fill="#ffffff" stroke="#b9c7d9"/>
+    <rect x="40" y="650" width="1840" height="44" rx="8" fill="#eaf2fb"/>
+    <path d="M 40 686 L 40 658 Q 40 650 48 650 L 1872 650 Q 1880 650 1880 658 L 1880 686 Z" fill="#eaf2fb"/>
+    <circle cx="67" cy="672" r="14" fill="#2563a7"/>
+    <text x="67" y="677" text-anchor="middle" font-size="13" font-weight="780" fill="#ffffff">2</text>
+    <text class="bandTitle" x="92" y="677">CODE-DEFINED TOOL CONTRACTS AND STARTUP REGISTRATION</text>
+    <text class="small" x="1852" y="676" text-anchor="end">CHANGE BY REVIEWED CODE RELEASE; NO METADATA DATABASE</text>
+
+    <path class="startup" d="M 570 770 L 700 770"/>
+    <path class="startup" d="M 1000 770 L 1130 770"/>
+    <path class="startup" d="M 1390 710 L 1390 500"/>
+    <text x="635" y="756" text-anchor="middle" font-size="10" font-weight="730" fill="#2563a7">IMPORT</text>
+    <text x="1065" y="756" text-anchor="middle" font-size="10" font-weight="730" fill="#2563a7">REGISTER + VALIDATE</text>
+    <text x="1404" y="634" font-size="10" font-weight="730" fill="#2563a7">CODE CONTRACTS</text>
+
+    <g filter="url(#shadow)">
+      <rect x="270" y="715" width="300" height="110" rx="8" fill="#eef4fb" stroke="#aac7e4"/>
+      <rect x="292" y="737" width="34" height="43" rx="4" fill="#e1edf8" stroke="#2563a7"/>
+      <path d="M 301 748 L 317 748 M 301 757 L 317 757 M 301 766 L 313 766" stroke="#2563a7" stroke-width="2" stroke-linecap="round"/>
+      <text class="nodeTitle" x="345" y="749">Python Tool Modules</text>
+      <text class="nodeBody" x="345" y="773">Typed function parameters</text>
+      <text class="nodeBody" x="345" y="795">Internal service definitions</text>
+      <text class="small" x="345" y="815">CODE IS THE SOURCE OF TRUTH</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="700" y="715" width="300" height="110" rx="8" fill="#f4f7fb" stroke="#b7c5d7"/>
+      <rect x="700" y="715" width="7" height="110" rx="3" fill="#2563a7"/>
+      <text class="nodeTitle" x="730" y="750">MCP Registration + Validation</text>
+      <text class="nodeBody" x="730" y="776">Registers five explicit tool schemas</text>
+      <text class="nodeBody" x="730" y="799">Invalid code contract fails startup</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="1130" y="710" width="330" height="120" rx="8" fill="#edf8f5" stroke="#91cfc3"/>
+      <rect x="1130" y="710" width="8" height="120" rx="3" fill="#087f72"/>
+      <text class="nodeTitle" x="1162" y="746">Code-Defined Tool Contracts</text>
+      <text class="nodeBody" x="1162" y="773">Parameters + types + required rules</text>
+      <text class="nodeBody" x="1162" y="796">Portable IDs + provider mappings internal</text>
+      <rect x="1162" y="807" width="176" height="17" rx="5" fill="#d8f0ea"/>
+      <text x="1250" y="819" text-anchor="middle" font-size="9.5" font-weight="740" fill="#087f72">NO EXTERNAL METADATA READS</text>
+    </g>
+
+    <rect x="1530" y="723" width="290" height="94" rx="8" fill="#fff9ee" stroke="#e5c98d"/>
+    <text x="1555" y="751" font-size="11.5" font-weight="760" fill="#8b5615">CONTRACT CHANGE</text>
+    <text class="nodeBody" x="1555" y="775">1. Code review + automated tests</text>
+    <text class="nodeBody" x="1555" y="798">2. Deploy and roll MCP replicas</text>
+
+    <!-- Band 3 -->
+    <rect x="40" y="900" width="1840" height="245" rx="8" fill="#ffffff" stroke="#bfd1cc"/>
+    <rect x="40" y="900" width="1840" height="44" rx="8" fill="#e9f5f1"/>
+    <path d="M 40 936 L 40 908 Q 40 900 48 900 L 1872 900 Q 1880 900 1880 908 L 1880 936 Z" fill="#e9f5f1"/>
+    <circle cx="67" cy="922" r="14" fill="#087f72"/>
+    <text x="67" y="927" text-anchor="middle" font-size="13" font-weight="780" fill="#ffffff">3</text>
+    <text class="bandTitle" x="92" y="927">RESPONSE COMPOSITION</text>
+    <text class="small" x="1852" y="926" text-anchor="end">FORMATTER HAS NO TOOLS; FINAL JSON SCHEMA IS UNCHANGED</text>
+
+    <path class="result" d="M 500 1025 L 650 1025"/>
+    <path class="result" d="M 950 1025 L 1100 1025"/>
+    <path class="result" d="M 1400 1025 L 1570 1025"/>
+
+    <g filter="url(#shadow)">
+      <rect x="160" y="965" width="340" height="120" rx="8" fill="#f4faf8" stroke="#a8d8cf"/>
+      <text class="nodeTitle" x="190" y="998">Structured Specialist Responses</text>
+      <rect x="190" y="1012" width="55" height="19" rx="5" fill="#d8f0ea"/>
+      <text x="217" y="1026" text-anchor="middle" font-size="9.5" font-weight="740" fill="#087f72">AS</text>
+      <rect x="253" y="1012" width="55" height="19" rx="5" fill="#dceaf8"/>
+      <text x="280" y="1026" text-anchor="middle" font-size="9.5" font-weight="740" fill="#2563a7">TM</text>
+      <text class="nodeBody" x="190" y="1052">intent + serviceResults[] + missingInputs</text>
+      <text class="small" x="190" y="1075">NORMALIZED FACTS, NO FINAL FORMATTING</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="650" y="965" width="300" height="120" rx="8" fill="#fff7e8" stroke="#e5c98d"/>
+      <rect x="650" y="965" width="7" height="120" rx="3" fill="#b26b17"/>
+      <text class="nodeTitle" x="680" y="1001">Formatter Agent</text>
+      <text class="nodeBody" x="680" y="1028">Builds tables and attributes</text>
+      <text class="nodeBody" x="680" y="1051">Derives toolsUsed and final status</text>
+      <text class="nodeBody" x="680" y="1074">Preserves partial successful results</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="1100" y="965" width="300" height="120" rx="8" fill="#f4f7fb" stroke="#b7c5d7"/>
+      <rect x="1100" y="965" width="7" height="120" rx="3" fill="#6b7280"/>
+      <text class="nodeTitle" x="1130" y="1001">Final JSON Validator</text>
+      <text class="nodeBody" x="1130" y="1028">Validates production JSON Schema</text>
+      <text class="nodeBody" x="1130" y="1051">Checks tables, rows, and value integrity</text>
+      <text class="nodeBody" x="1130" y="1074">Rejects malformed formatter output</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="1570" y="980" width="220" height="90" rx="8" fill="#edf8f5" stroke="#9dd3c9"/>
+      <circle cx="1610" cy="1025" r="19" fill="#d8f0ea"/>
+      <circle cx="1610" cy="1018" r="7" fill="#087f72"/>
+      <path d="M 1599 1036 C 1603 1028, 1617 1028, 1621 1036" fill="none" stroke="#087f72" stroke-width="3" stroke-linecap="round"/>
+      <text class="nodeTitle" x="1640" y="1018">User</text>
+      <text class="nodeBody" x="1640" y="1042">Existing final JSON</text>
+    </g>
+
+    <text x="960" y="1123" text-anchor="middle" font-size="11" font-weight="680" fill="#657286">Tools normalize data  |  Specialist Sub-Agents aggregate service results  |  Formatter formats once  |  Validator enforces the contract</text>
+  </g>
+</svg>
