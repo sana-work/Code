@@ -1,46 +1,59 @@
-Perform the last repository-cleanup pass. Do not redesign the completed AS implementation.
+Apply a narrow correction to the current working tree. Do not redo or revert the completed AS cleanup.
 
-1. Remove `safekeeping_number` from the Safe Account aliases unless an authoritative business source explicitly approves it. Retain only:
-   - `safe account`
-   - `safe account number`
-   - `security account`
-   - `security account id`
+The mappings in `asset_services_output_fields.py` are already reviewed and approved. They are the authoritative, checked-in source of truth. No additional field-contract document, provisional status, business-owner review, or approval workflow is required.
 
-2. Preserve the verified schema behavior:
-   - Events uses `safe_account` only as a required filter because `SfAcntNm` is not selectable.
-   - Never fabricate `safe_account` in Events records.
-   - Cash may return `safe_account` because its provider schema makes the column selectable.
-   - Document this difference in the generated field-contract document and tests.
+Remove the unnecessary review layer:
 
-3. Treat all newly hand-authored output mappings as `PROVISIONAL_PENDING_BUSINESS_REVIEW`.
-   - Do not call them approved merely because tests pass.
-   - Add source and review-status columns to `AS_Field_Contract.md`.
-   - Runtime exposure may remain for internal E2E testing, but documentation must state that production release requires business-owner approval.
-   - Keep ambiguous and placeholder fields excluded.
+1. Keep these required implementation elements unchanged:
+   - `asset_services_output_fields.py`
+   - `EVENTS_ENTITLEMENTS_OUTPUT_FIELDS`
+   - `CASH_ENTITLEMENTS_OUTPUT_FIELDS`
+   - `ServiceToolContract` and `FieldContract`
+   - startup validation of mapped provider columns
+   - exact output-enum and provider-leakage tests
+   - Events `safe_account` filter-only behavior
+   - Cash `safe_account` selectable-output behavior
+   - the four approved Safe Account aliases
+   - the 100-record agent limit
+   - comma-filter rejection
+   - the two-tool inventory
+   - all completed SampleDomain, HealthTools, dev-client, lint, and test cleanup
 
-4. Remove the unused `HealthTools`/`health_check` MCP implementation, related models, exports, fixtures, and tests unless a real production import or registration proves it is required. Preserve any independent HTTP/Kubernetes readiness endpoint.
+2. Remove metadata added only for the unnecessary review workflow:
+   - `PROVISIONAL_PENDING_BUSINESS_REVIEW`
+   - `REVIEW_STATUS`
+   - `MAPPING_SOURCE`
+   - similar production-approval flags or constants
 
-5. Update `dev_client.py` to call the two current AS tools with safe example inputs, or delete it if it has no maintained purpose. It must not reference `hello`, `octobot_dummy`, `health_check`, or removed tools.
+3. Delete these duplicate artifacts:
+   - `AS_Field_Contract.md`
+   - `generate_as_field_contract_doc.py`
+   - `test_as_field_contract_doc.py`
+   - exports or configuration used only by those artifacts
 
-6. Remove `-p no:cacheprovider` from shared `pyproject.toml`. Keep the valid `asyncio_default_fixture_loop_scope = "function"` setting. For this machine only, run pytest with `-p no:cacheprovider` on the command line if its directory permissions still prevent cache creation.
+4. Remove all documentation and report statements claiming:
+   - mappings are provisional,
+   - mappings require additional human review,
+   - field wording is awaiting business-owner approval,
+   - mapping approval is a production-release blocker.
 
-7. Inspect the actual CI pipeline:
-   - If CI runs repository-wide Ruff, mechanically fix all remaining W292 and I001 findings and rerun Ruff until exit code 0.
-   - If CI intentionally uses a changed-files lint baseline, document the exact baseline command and prove it exits 0.
-   - Do not report a nonzero Ruff command as a passing lint result.
+5. Update references that currently direct readers to `AS_Field_Contract.md`.
+   Refer directly to the reviewed mappings in `asset_services_output_fields.py` or the generated MCP tool schema. Do not create another document duplicating the mappings.
+
+6. Keep a concise code comment or docstring explaining only the real schema distinction:
+   - Events accepts `safe_account` as a required filter but cannot return it because the provider column is filter-only.
+   - Cash can return `safe_account` because its corresponding provider column is selectable.
+
+7. Verify that no unnecessary review artifacts remain:
+
+   `rg -n "PROVISIONAL_PENDING_BUSINESS_REVIEW|AS_Field_Contract|REVIEW_STATUS|MAPPING_SOURCE|required human review|business owner approval" .`
 
 8. Run:
-   - the complete pytest suite,
-   - the exact CI entrypoint,
-   - the applicable Ruff gate,
-   - exact MCP tool-inventory verification,
-   - generated AS field-contract consistency verification.
+   - `python -m pytest tests/ -q -p no:cacheprovider`
+   - `python test_runner.py`
+   - `ruff check octobot_mcp tests scripts`
+   - the exact two-tool inventory test
 
-Return a factual report separating:
-- completed code requirements,
-- tests and their exit codes,
-- production-release blockers,
-- external deployment compatibility names,
-- the required human review of the AS output-field mapping.
+The test count may decrease when the obsolete generated-document test is deleted. Explain that expected change; do not recreate a replacement test merely to preserve the count.
 
-Do not claim production readiness until the business-name mapping is reviewed and the external Root → AS Specialist → Formatter E2E flow passes.
+The final report must state that the reviewed code mappings are authoritative and that no additional mapping review is required. The only remaining external validation is the Root Agent → AS Specialist → Formatter end-to-end run.
