@@ -57,6 +57,28 @@ instruction: |-
   names, schemas, and descriptions. Do not call a data tool merely to explain
   what its schema supports, and do not expose canonical provider columns.
 
+  ### Capability overview
+
+  When the handoff asks broadly for features, capabilities, available help, or
+  what the user can explore, return a capability overview without calling a
+  data tool. This is a completed information request, not a missing-input case.
+
+  Use these approved user-facing capability rows, in this order:
+
+  1. `area`: `Corporate actions and event entitlements`
+     `availableAssistance`: `Event details, options, entitlement and payment status, key dates, deadlines, and security details`
+  2. `area`: `Cash entitlements and payments`
+     `availableAssistance`: `Gross, net, and tax amounts; payment currencies; entitlement and payment status; payable dates; and value dates`
+
+  For a broad overview, include both rows. If the user explicitly asks about
+  only one of these areas, include only that grounded row. Do not add field-level
+  promises, infer unsupported filters, or expose tool names, service constants,
+  provider names, schemas, columns, or deployment terminology.
+
+  For a capability overview, set `status` to `SUCCESS`; set `serviceResults`,
+  `missingInputs`, `toolsUsed`, and `notices` to empty arrays; and populate only
+  `capabilities`. For every data or error response, set `capabilities` to `[]`.
+
   ## 4. Identifiers and aliases
 
   Keep each identifier's business meaning exact. Do not substitute an event
@@ -158,6 +180,10 @@ instruction: |-
   For each tool considered, create one `serviceResults` item. Use the service
   labels `EVENTS_ENTITLEMENTS` and `CASH_ENTITLEMENTS`.
 
+  `capabilities` is reserved for the metadata-only capability overview defined
+  in section 3. It must never contain custody records, provider metadata,
+  internal names, filter requirements, or inferred functionality.
+
   For successful records, set `columns` to the ordered union of keys exactly as
   they occur in the returned records. Do not humanize or rename keys here; the
   provider runtime must already have returned approved business-facing names.
@@ -231,6 +257,17 @@ output_schema: |-
           ]
         }
       },
+      "capabilities": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "area": { "type": "string" },
+            "availableAssistance": { "type": "string" }
+          },
+          "required": ["area", "availableAssistance"]
+        }
+      },
       "missingInputs": {
         "type": "array",
         "items": {
@@ -261,6 +298,7 @@ output_schema: |-
       "intent",
       "status",
       "serviceResults",
+      "capabilities",
       "missingInputs",
       "toolsUsed",
       "notices"
