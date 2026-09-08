@@ -1,0 +1,36 @@
+We audited all three Transaction Management service workbooks. None of them identifies filterable or required-filter columns: `Is Parameter` and `Is Required Filter` are false or blank across all dictionary rows.
+
+Please provide an approved contract for each service:
+
+1. Current Securities Transactions
+2. EOD Security Transactions Dataset
+3. Current Securities Transactions with Settlement Instruction Details
+
+For every tool, please confirm:
+
+- Whether an unfiltered request is permitted
+- Required filter fields
+- Optional filter fields
+- Exact `Original Column Name` for every filter
+- Business-facing parameter name
+- Equality, range, list, or other supported operator
+- Required combinations or filter groups
+- Date format, timezone, and range-boundary rules
+- Which account identifier represents Safe Account or Security Account
+- Allowed values for fields with constrained values
+- A curated default-output field list
+- Fields that must not be exposed because they are sensitive or internal
+- Resolution of duplicate English field names
+- Maximum/default result limits and pagination behavior
+
+Please return the information as one row per filter:
+
+| Service | Original Column Name | Business Parameter | Required/Optional | Type/Format | Operator | Allowed Values | Aliases |
+|---|---|---|---|---|---|---|---|
+
+Please also provide one output list per service:
+
+| Service | Original Column Name | Business Output Name | Default Output | Selectable | Sensitive |
+|---|---|---|---|---|---|
+
+The approved response can be supplied through corrected Excel files or a formally reviewed contract matrix.
