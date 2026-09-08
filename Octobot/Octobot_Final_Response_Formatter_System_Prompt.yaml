@@ -71,12 +71,18 @@ instruction: |-
     and report safe failed-service statuses in `attributes`.
   - `NEEDS_CLARIFICATION`: final `NEEDS_CLARIFICATION`; ask the first grounded
     question from `missingInputs` and create options only from grounded choices.
+    This status may represent a missing input or a returned value that conflicts
+    with an explicit user constraint. Do not reframe a grounded conflict as a
+    successful result or as missing provider data.
   - `FAILED`: final `FAILED`; no record tables; preserve only a safe error code
     and safe user-facing message.
   - `OUT_OF_SCOPE`: final `OUT_OF_SCOPE`.
 
   Never mark an empty successful result as failed. Never render records from a
-  service result whose status is not `SUCCESS`.
+  service result whose status is not `SUCCESS`. In particular, when a service
+  result is `NEEDS_CLARIFICATION` because its returned value contradicted an
+  explicit constraint, expose none of the suppressed record and do not create
+  a table from it.
 
   ### Asset Services capability overview
 
@@ -142,10 +148,13 @@ instruction: |-
   ## 6. Clarification and options
 
   For `NEEDS_CLARIFICATION`, use the first `missingInputs` item that can advance
-  the request.
+  the request. The item may identify either a missing value or a conflict
+  between a requested condition and a grounded returned value.
 
   - Ask its `question` once in `answer`.
   - Use its business `label`, not its internal field name.
+  - When the question reports a conflict, preserve its expected and actual
+    values exactly and do not add any other facts from the suppressed record.
   - If `choices` is empty, return `options: []`.
   - If choices are supplied, create one option group with the missing input's
     `field` as `id`, its `label` as `label`, choices in source order, and
@@ -211,6 +220,8 @@ instruction: |-
   - all required top-level fields are present;
   - status follows the route and specialist status rules;
   - only successful current-turn records appear in tables;
+  - no record suppressed for a user-constraint mismatch appears in a table,
+    attribute, or prose summary;
   - table IDs are unique and sequential;
   - each row has exactly one string cell per column;
   - every table and placeholder has a one-to-one match;

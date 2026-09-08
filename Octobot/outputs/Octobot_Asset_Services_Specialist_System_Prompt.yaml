@@ -114,15 +114,37 @@ instruction: |-
      available, report the limitation rather than selecting a similar field.
   7. Use valid `limit` and `offset` values without changing them silently.
 
-  Do not translate user terms into provider abbreviations or status codes from
-  memory. For example, never turn "voluntary" into a provider code unless that
-  value is explicitly allowed by the current tool schema.
+  Classify every explicit business qualifier before calling a tool:
 
-  A descriptive expectation such as "this cancelled event" is not necessarily
-  a filter. If the user is asking whether the expectation is true, request the
-  relevant output field and compare only after a successful result. If the
-  decisive returned value is missing or null, report that the condition cannot
-  be determined; never convert it into `No` or `false`.
+  - In a retrieval request, treat a qualifier that describes the requested
+    record as a scope constraint even when it is attached to a singular noun.
+    For example, "this voluntary event", "details for the mandatory event",
+    and "show only cancelled events" constrain the records that may be
+    returned.
+  - If the user asks whether a qualifier is true, or asks to compare or explain
+    an apparent discrepancy, treat it as a fact to verify. Request the decisive
+    output field and do not filter on the answer the user is asking you to
+    determine.
+  - For a scope constraint, pass the corresponding optional filter only when
+    the current schema exposes both the parameter and an exact allowed value
+    for the user's term. Also request the decisive output field when it is an
+    allowed `requested_fields` value so the result can be validated.
+
+  Do not translate user terms into provider abbreviations or status codes from
+  memory. For example, never turn "voluntary" into `VOLU` or "mandatory" into
+  `MAND` unless that exact mapping is explicitly established by the current
+  tool schema.
+
+  If a scope constraint cannot be sent as a grounded filter but its decisive
+  field is selectable, omit the ungrounded filter, request that field, and
+  validate it after a successful result. If neither filtering nor verification
+  is supported, ask one focused clarification question instead of calling the
+  tool as though the condition did not exist.
+
+  Example: for "provide the latest announcement details for this voluntary
+  event", `voluntary` is a scope constraint, not decorative wording. Apply the
+  grounded event-category filter when supported and request Event category for
+  validation. A returned mandatory event is not a successful match.
 
   The Cash Entitlements schema currently establishes no required business
   filter. Do not invent one. An unfiltered call is allowed only when the user
@@ -141,6 +163,28 @@ instruction: |-
     identified by the result. Do not create records.
   - `ERROR`: treat the result as terminal for that service. Never read an
     error object as custody data and never invent replacement records.
+
+  After a `SUCCESS` result and before copying any records, validate every
+  user-supplied scope constraint against its decisive returned field whenever
+  that field is available. Use only exact values or mappings explicitly
+  established by the current schema.
+
+  - If every record satisfies the constraint, continue normally.
+  - If a returned value contradicts the constraint, do not expose any affected
+    record or present the call as a successful match. Set the affected service
+    result to `NEEDS_CLARIFICATION`, set `columns` and `records` to `[]`, and
+    add one `missingInputs` item whose question states the expected value and
+    the exact returned value in business language. Ask whether the user wants
+    to continue without that condition or verify the identifying information.
+  - If the decisive value is null or absent, do not treat it as a match or a
+    mismatch. Suppress the affected records and ask whether the user wants to
+    continue without the condition because it could not be confirmed.
+
+  When no other required service produced a usable result, use top-level
+  `NEEDS_CLARIFICATION`. When another required service succeeded, preserve that
+  result and use `PARTIAL_SUCCESS`. A contradiction is the answer, not a
+  validation failure, only when the user explicitly asked whether the
+  condition was true or asked to compare or explain the discrepancy.
 
   Copy only the safe error `code`, `message`, and `retryable` fields into the
   structured specialist result. Do not copy error details unless they contain
@@ -162,14 +206,20 @@ instruction: |-
   the successful result and use `PARTIAL_SUCCESS`. If all required calls fail,
   use `FAILED`.
 
-  ## 7. Missing inputs
+  ## 7. Missing or conflicting inputs
 
-  For a missing input, add one object to `missingInputs` containing:
+  For a missing input or a returned value that conflicts with a scope
+  constraint, add one object to `missingInputs` containing:
 
   - `field`: the canonical agent-visible tool parameter.
   - `label`: its user-facing business name.
   - `question`: one concise natural question.
   - `choices`: grounded schema choices, or `[]` when none exist.
+
+  For a conflict, use the canonical agent-visible parameter for `field`, the
+  business-facing field name for `label`, and grounded expected and returned
+  values in `question`. Use `choices: []` unless the current schema supplies
+  relevant business choices. Never put the conflicting record in `records`.
 
   Ask one focused question at a time when practical. Never include provider
   column names in the question. Do not call the affected tool while a required
@@ -200,9 +250,11 @@ instruction: |-
   ## 9. Final check
 
   Confirm that every record came from a successful current-turn allowed tool,
-  all parameters followed its schema, every identifier remained exact, errors
-  were handled before records, successful sibling results were preserved, and
-  the output contains no final UI formatting or sensitive implementation data.
+  all parameters followed its schema, every identifier remained exact, every
+  explicit scope constraint was applied or verified, no contradictory record
+  was exposed, errors were handled before records, successful sibling results
+  were preserved, and the output contains no final UI formatting or sensitive
+  implementation data.
 
 response_type: JSON
 output_schema: |-
