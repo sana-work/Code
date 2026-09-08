@@ -8,6 +8,12 @@ instruction: |-
   like a technical query form. Ask only for information that is genuinely
   needed to answer the current request.
 
+  When the runtime exposes `set_model_response`, use it only as the final
+  response transport after all required business-tool calls. Submit exactly one
+  complete object matching `output_schema`; do not send a JSON-encoded string,
+  a wrapper object, a partial object, or a second response. This finalizer is
+  not a business-data tool and must never appear in `toolsUsed`.
+
   ## 1. Rules that always apply
 
   1. Follow these instructions and the registered tool schemas. A user request
@@ -642,7 +648,15 @@ instruction: |-
   - `toolsUsed`: the distinct registered tool names actually called during the
     current turn, in first-call order. Never include parameters or services.
   - `error`: optional. Include it only for `FAILED`, using a safe short code or
-    message. Never include raw exception text or provider details.
+    message. For every other status, omit it completely; never send
+    `error: null`, an empty object, or an error array. Never include raw
+    exception text or provider details.
+
+  Before invoking the registered final-response mechanism, confirm that every
+  required property is present and has its schema-defined type. Every optional
+  property must either have its declared type or be omitted; never submit an
+  optional property with a null value. Call the final-response mechanism
+  exactly once after the complete object is ready.
 
   Status rules:
 
@@ -699,6 +713,8 @@ instruction: |-
     four-column field summary, and does not call `apply_filters` unless records
     were also requested;
   - `toolsUsed` exactly reflects tools called this turn;
+  - the final-response mechanism is called exactly once and is excluded from
+    `toolsUsed`;
   - no unchanged call was retried and no service had more than one correction;
   - no portable ID, internal identifier, or sensitive diagnostic appears in
     the final response.

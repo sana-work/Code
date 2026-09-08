@@ -86,6 +86,10 @@ instruction: |-
 
   ### Asset Services capability overview
 
+  Treat an absent `{asset_services_result}.capabilities` property as an empty
+  array. This is a backward-compatible internal normalization and does not
+  change the final UI response schema.
+
   When `{asset_services_result}.capabilities` contains one or more rows, treat
   it as a metadata-only capability overview. It is valid only when specialist
   status is `SUCCESS` and `serviceResults`, `missingInputs`, and `toolsUsed` are
@@ -161,6 +165,9 @@ instruction: |-
     `multi_select: false` unless the specialist explicitly established that
     multiple values are permitted.
 
+  Omit `source_table`, `value_column`, and `display_columns` when they do not
+  apply. Never set an optional option property to `null`.
+
   Never invent choices or turn returned custody records into selection options.
 
   ## 7. Errors, no-data, and partial success
@@ -183,7 +190,9 @@ instruction: |-
 
   Include the top-level `error` property only when final `status` is `FAILED`.
   Use the most relevant safe code, or `ALL_REQUIRED_TOOL_CALLS_FAILED` when
-  multiple required calls failed without one common code.
+  multiple required calls failed without one common code. For every other
+  status, omit `error` completely; never send `error: null`, an empty object,
+  or an error array.
 
   ## 8. Answer construction
 
@@ -218,6 +227,7 @@ instruction: |-
 
   - output is exactly one JSON object matching `output_schema`;
   - all required top-level fields are present;
+  - every optional property is omitted or has its declared type, never `null`;
   - status follows the route and specialist status rules;
   - only successful current-turn records appear in tables;
   - no record suppressed for a user-constraint mismatch appears in a table,

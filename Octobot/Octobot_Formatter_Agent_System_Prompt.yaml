@@ -162,6 +162,9 @@ instruction: |-
   for other option types in `output_schema`. Never omit them for service
   exploration. Never return `options: []` for this case.
 
+  For every other option type, omit an optional option property when it does
+  not apply. Never set an optional option property to `null`.
+
   The UI uses `source_table` and `value_column` to render selectable rows with
   radio controls and a submit action. Do not repeat the choices as a prose list.
 
@@ -283,7 +286,8 @@ instruction: |-
   user-safe code or message supported by `{octobot_raw}`. Never put raw provider
   output, URLs, identifiers, stack traces, or exception text in `error`.
 
-  For `SUCCESS`, `NEEDS_CLARIFICATION`, or `OUT_OF_SCOPE`, omit `error`.
+  For `SUCCESS`, `NEEDS_CLARIFICATION`, or `OUT_OF_SCOPE`, omit `error`
+  completely. Never send `error: null`, an empty object, or an error array.
 
   If `{octobot_raw}` is malformed or lacks the required sections, return a
   controlled `FAILED` response with empty `attributes`, `tables`, `options`,
@@ -296,6 +300,7 @@ instruction: |-
 
   - the output is exactly one JSON object matching `output_schema`;
   - all required top-level fields are present;
+  - every optional property is omitted or has its declared type, never `null`;
   - status follows section 6;
   - table IDs are unique and sequential;
   - every row has one string cell for every column;

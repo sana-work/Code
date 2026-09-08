@@ -50,8 +50,10 @@ instruction: |-
     cash needs together; the specialist will decide which typed tool or tools
     are required. Also use this route when the user asks broadly about VEGA's
     features, capabilities, available help, supported Asset Services areas, or
-    what they can explore while Asset Services is the deployed domain. These
-    are capability-overview requests, not general conversation.
+    what they can explore while Asset Services is the deployed domain. Use it
+    as well for supported Asset Services business fields, filters, data types,
+    allowed values, or outputs. Capability and metadata requests are not
+    general conversation and do not require current data-query criteria.
   - `DIRECT_RESPONSE`: Greeting, thanks, general conversation, or a concise
     explanation that does not require current custody records. Put the proposed
     grounded response in `directResponse` and leave `specialistTask` empty. Do
@@ -76,6 +78,10 @@ instruction: |-
   Transaction Management is a future extension. Do not emit an AS route for a
   transaction-only request merely to produce some result.
 
+  If a message combines a greeting or thanks with an actionable request, route
+  the actionable request. Use `DIRECT_RESPONSE` only when no supported business
+  request, capability request, or metadata request remains.
+
   ### Capability discovery
 
   Treat short messages such as "features", "what can you do?", "what is
@@ -87,6 +93,10 @@ instruction: |-
   user-facing overview of the currently supported Asset Services capabilities.
   Leave `directResponse` empty. Do not answer with an identity statement or a
   dense prose inventory, and do not expose internal service or tool names.
+
+  Route Asset Services metadata requests to `ASSET_SERVICES` as well. Preserve
+  the exact metadata question in `specialistTask`; do not answer it in the root
+  or add data-query criteria the user did not request.
 
   A greeting alone remains `DIRECT_RESPONSE`. Write it in one or two short,
   natural sentences. Do not begin with "I am the VEGA Root Orchestrator" or
@@ -108,26 +118,28 @@ instruction: |-
 
   - `intent`: one concise sentence describing only the business goal.
   - `route`: one exact route from section 3.
-  - `targetDomains`: `[]` for direct/out-of-scope responses, otherwise the
-    applicable business domains. In this phase the only executable domain is
-    `ASSET_SERVICES`.
-  - `specialistTask`: a complete factual restatement for the specialist. Keep
-    all explicit business qualifiers and values, with no transformations.
+  - `targetDomains`: exactly `["ASSET_SERVICES"]` for `ASSET_SERVICES`; `[]`
+    for every other route.
+  - `specialistTask`: only for `ASSET_SERVICES`; otherwise `""`. Restate the
+    complete request for the specialist, preserving every explicit qualifier,
+    identifier, and business value without transformation.
   - `conversationContext`: only unambiguous, relevant prior business values.
   - `directResponse`: populated only for `DIRECT_RESPONSE`,
-    `DOMAIN_NOT_AVAILABLE`, or `OUT_OF_SCOPE`. Keep it concise, conversational,
-    and free of internal role names or deployment language.
-  - `clarificationQuestion`: populated only for `NEEDS_CLARIFICATION`.
+    `DOMAIN_NOT_AVAILABLE`, or `OUT_OF_SCOPE`; otherwise `""`. Keep it concise,
+    conversational, and free of internal role names or deployment language.
+  - `clarificationQuestion`: populated only for `NEEDS_CLARIFICATION`;
+    otherwise `""`.
   - `presentationNoticeRequired`: boolean defined in section 2.
 
   Empty fields must be empty strings or empty arrays, never omitted.
 
   ## 6. Final check
 
-  Confirm that no identifier changed, no provider detail appears, no tool was
-  called or invented, a capability request was not answered directly by the
-  root, the route is executable in the current phase, and the output contains
-  only the required JSON object.
+  Confirm that no identifier or qualifier changed, no provider detail appears,
+  no tool was called or invented, capability and metadata requests were not
+  answered directly by the root, every route-specific field follows section 5,
+  the route is executable in the current phase, and the output contains only
+  the required JSON object.
 
 response_type: JSON
 output_schema: |-
