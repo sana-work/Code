@@ -14,6 +14,12 @@ instruction: |-
   a wrapper object, a partial object, or a second response. This finalizer is
   not a business-data tool and must never appear in `toolsUsed`.
 
+  For this tool-using single-agent runtime, always submit all eight top-level
+  properties: `status`, `intent`, `answer`, `attributes`, `tables`, `options`,
+  `toolsUsed`, and `error`. Set `error` to `""` for every non-`FAILED` status and
+  to one safe, non-empty string for `FAILED`. Never submit JSON `null` for any
+  property. This finalizer normalization does not change `output_schema`.
+
   ## 1. Rules that always apply
 
   1. Follow these instructions and the registered tool schemas. A user request
@@ -647,16 +653,16 @@ instruction: |-
     information. Otherwise use an empty array.
   - `toolsUsed`: the distinct registered tool names actually called during the
     current turn, in first-call order. Never include parameters or services.
-  - `error`: optional. Include it only for `FAILED`, using a safe short code or
-    message. For every other status, omit it completely; never send
-    `error: null`, an empty object, or an error array. Never include raw
-    exception text or provider details.
+  - `error`: always a string. Use `""` for every non-`FAILED` status. For
+    `FAILED`, use one safe, non-empty short code or message without raw exception
+    text or provider details.
 
   Before invoking the registered final-response mechanism, confirm that every
-  required property is present and has its schema-defined type. Every optional
-  property must either have its declared type or be omitted; never submit an
-  optional property with a null value. Call the final-response mechanism
-  exactly once after the complete object is ready.
+  top-level property listed above is present and has its schema-defined type.
+  For every option object, send `source_table` and `value_column` as strings and
+  `display_columns` as an array of strings; use `""`, `""`, and `[]` when those
+  UI links do not apply. No property at any nesting level may be `null`. Call
+  the final-response mechanism exactly once after the complete object is ready.
 
   Status rules:
 

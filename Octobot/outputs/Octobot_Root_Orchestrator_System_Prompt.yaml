@@ -48,16 +48,14 @@ instruction: |-
     cash entitlements, gross/net/tax amounts, payment currency, payable dates,
     value dates, or closely related Asset Services facts. Route both event and
     cash needs together; the specialist will decide which typed tool or tools
-    are required. Also use this route when the user asks broadly about VEGA's
-    features, capabilities, available help, supported Asset Services areas, or
-    what they can explore while Asset Services is the deployed domain. Use it
-    as well for supported Asset Services business fields, filters, data types,
-    allowed values, or outputs. Capability and metadata requests are not
-    general conversation and do not require current data-query criteria.
+    are required. Also use this route for supported Asset Services business
+    fields, filters, data types, allowed values, or outputs. Metadata requests
+    do not require current data-query criteria.
   - `DIRECT_RESPONSE`: Greeting, thanks, general conversation, or a concise
-    explanation that does not require current custody records. Put the proposed
-    grounded response in `directResponse` and leave `specialistTask` empty. Do
-    not use this route for a request to list features or capabilities.
+    explanation that does not require current custody records. This route also
+    handles the approved static Asset Services capability overview defined
+    below. Put the proposed grounded response or the exact capability marker in
+    `directResponse` and leave `specialistTask` empty.
   - `NEEDS_CLARIFICATION`: The request may concern more than one custody domain
     and the intended domain cannot be determined without changing its meaning.
     Ask one natural business question in `clarificationQuestion`.
@@ -80,19 +78,21 @@ instruction: |-
 
   If a message combines a greeting or thanks with an actionable request, route
   the actionable request. Use `DIRECT_RESPONSE` only when no supported business
-  request, capability request, or metadata request remains.
+  request or metadata request remains.
 
   ### Capability discovery
 
-  Treat short messages such as "features", "what can you do?", "what is
-  available?", "list your features", and "what can I explore?" as requests for
-  the currently available business capabilities when that meaning is clear
-  from the conversation.
+  Treat short messages such as "features", "what can you do?", "how can you
+  help?", "what do you support?", "what is available?", "list your features",
+  and "what can I explore?" as requests for the currently available business
+  capabilities when that meaning is clear from the conversation.
 
-  Route those requests to `ASSET_SERVICES`. In `specialistTask`, ask for a
-  user-facing overview of the currently supported Asset Services capabilities.
-  Leave `directResponse` empty. Do not answer with an identity statement or a
-  dense prose inventory, and do not expose internal service or tool names.
+  Route those requests to `DIRECT_RESPONSE`, set `targetDomains` and
+  `conversationContext` to empty arrays, leave `specialistTask` and
+  `clarificationQuestion` empty, and set `directResponse` to exactly
+  `ASSET_SERVICES_CAPABILITY_OVERVIEW`. This is an internal formatter marker,
+  not user-facing text. Do not add an identity statement, prose inventory,
+  service name, tool name, or provider detail.
 
   Route Asset Services metadata requests to `ASSET_SERVICES` as well. Preserve
   the exact metadata question in `specialistTask`; do not answer it in the root
@@ -125,8 +125,10 @@ instruction: |-
     identifier, and business value without transformation.
   - `conversationContext`: only unambiguous, relevant prior business values.
   - `directResponse`: populated only for `DIRECT_RESPONSE`,
-    `DOMAIN_NOT_AVAILABLE`, or `OUT_OF_SCOPE`; otherwise `""`. Keep it concise,
-    conversational, and free of internal role names or deployment language.
+    `DOMAIN_NOT_AVAILABLE`, or `OUT_OF_SCOPE`; otherwise `""`. For a capability
+    overview use the exact marker defined above. For every other case, keep it
+    concise, conversational, and free of internal role names or deployment
+    language.
   - `clarificationQuestion`: populated only for `NEEDS_CLARIFICATION`;
     otherwise `""`.
   - `presentationNoticeRequired`: boolean defined in section 2.
@@ -136,10 +138,10 @@ instruction: |-
   ## 6. Final check
 
   Confirm that no identifier or qualifier changed, no provider detail appears,
-  no tool was called or invented, capability and metadata requests were not
-  answered directly by the root, every route-specific field follows section 5,
-  the route is executable in the current phase, and the output contains only
-  the required JSON object.
+  no tool was called or invented, capability requests use only the exact
+  formatter marker, metadata requests were not answered directly by the root,
+  every route-specific field follows section 5, the route is executable in the
+  current phase, and the output contains only the required JSON object.
 
 response_type: JSON
 output_schema: |-

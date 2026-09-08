@@ -45,7 +45,9 @@ instruction: |-
 
   Use `{root_handoff}.intent` as `intent`, excluding presentation directives.
 
-  - `DIRECT_RESPONSE`: use the grounded `directResponse`; set `SUCCESS`; use
+  - `DIRECT_RESPONSE`: when `directResponse` is exactly
+    `ASSET_SERVICES_CAPABILITY_OVERVIEW`, apply the capability-overview rules
+    below. Otherwise use the grounded `directResponse`, set `SUCCESS`, and use
     empty arrays for tables, attributes, options, and toolsUsed.
   - `NEEDS_CLARIFICATION`: lead with the exact grounded
     `clarificationQuestion`; set `NEEDS_CLARIFICATION`; do not create a record
@@ -54,8 +56,38 @@ instruction: |-
     set `OUT_OF_SCOPE`; do not imply that an unavailable specialist ran.
   - `OUT_OF_SCOPE`: use the grounded scope explanation and set `OUT_OF_SCOPE`.
   - `ASSET_SERVICES`: require a valid `{asset_services_result}` whose domain is
-    `ASSET_SERVICES`. For a capability overview, apply the dedicated rules in
-    section 4. Otherwise apply sections 4 through 8.
+    `ASSET_SERVICES`. Apply sections 4 through 8.
+
+  ### Asset Services capability overview
+
+  The marker `ASSET_SERVICES_CAPABILITY_OVERVIEW` is valid only for a
+  `DIRECT_RESPONSE` route. It is internal and must never appear in the final
+  answer. For that marker:
+
+  - set final `status` to `SUCCESS`;
+  - set `attributes`, `options`, and `toolsUsed` to empty arrays;
+  - set `tables` to exactly this array:
+
+    `[{
+      "id": "table_1",
+      "columns": ["Area", "Available assistance"],
+      "rows": [
+        {"cells": ["Corporate actions and event entitlements", "Event details, options, entitlement and payment status, key dates, deadlines, and security details"]},
+        {"cells": ["Cash entitlements and payments", "Gross, net, and tax amounts; payment currencies; entitlement and payment status; payable dates; and value dates"]}
+      ]
+    }]`
+
+  - use this natural answer, with the placeholder on its own line:
+
+    `Here's what I can help with in Asset Services today:`
+
+    `<<table_1>>`
+
+    `Which area would you like to explore?`
+
+  Do not expose or derive internal service names, tool names, schemas, provider
+  details, or duplicate backend implementations. The request is complete, so
+  do not mark it `NEEDS_CLARIFICATION`.
 
   If the required structured input is missing, malformed, or contradicts the
   selected route, return controlled status `FAILED`, empty arrays, and
@@ -83,38 +115,6 @@ instruction: |-
   result is `NEEDS_CLARIFICATION` because its returned value contradicted an
   explicit constraint, expose none of the suppressed record and do not create
   a table from it.
-
-  ### Asset Services capability overview
-
-  Treat an absent `{asset_services_result}.capabilities` property as an empty
-  array. This is a backward-compatible internal normalization and does not
-  change the final UI response schema.
-
-  When `{asset_services_result}.capabilities` contains one or more rows, treat
-  it as a metadata-only capability overview. It is valid only when specialist
-  status is `SUCCESS` and `serviceResults`, `missingInputs`, and `toolsUsed` are
-  empty. Otherwise return `FAILED` with `INVALID_FORMATTER_INPUT`.
-
-  For a valid overview:
-
-  - set final `status` to `SUCCESS`;
-  - set `attributes`, `options`, and `toolsUsed` to empty arrays;
-  - create exactly one table with `id` `table_1`;
-  - use columns `Area` and `Available assistance`, in that order;
-  - create one row per capability in source order, copying `area` and
-    `availableAssistance` exactly;
-  - use this natural answer, with the placeholder on its own line:
-
-    `Here's what I can help with in Asset Services today:`
-
-    `<<table_1>>`
-
-    `Which area would you like to explore?`
-
-  Do not expose or derive internal service names, tool names, schemas, provider
-  details, or duplicate backend implementations. Do not mark this response
-  `NEEDS_CLARIFICATION`; the user's capability request has been answered and
-  the final question is an optional conversational next step.
 
   ## 5. Record tables
 
