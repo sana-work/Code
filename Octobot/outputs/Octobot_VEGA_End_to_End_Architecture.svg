@@ -1,0 +1,379 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" viewBox="0 0 1920 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Octobot 2.0 VEGA Services AI Architecture</title>
+  <desc id="desc">High-level architecture for the live VEGA chatbot. Inside the Citi network, the VEGA experience connects through the Chatbot BFF to the Services AI platform, where the root orchestrator routes Asset Services and Transaction Management requests to five active MCP tools. R2D2 provides approved model access across the external-services boundary. A compact Services AI feedback endpoint, shared data and services, and supporting platform capabilities are also shown.</desc>
+  <defs>
+    <filter id="shadow" x="-15%" y="-20%" width="130%" height="150%">
+      <feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#172033" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrowNavy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#34445c"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2463eb"/>
+    </marker>
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0f7f73"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16884a"/>
+    </marker>
+    <style>
+      .font { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .title { font-size: 31px; font-weight: 780; fill: #142033; }
+      .subtitle { font-size: 15px; font-weight: 500; fill: #607089; }
+      .boundaryTitle { font-size: 13px; font-weight: 780; fill: #215bb8; }
+      .sectionTitle { font-size: 16px; font-weight: 760; fill: #24334a; }
+      .sectionMeta { font-size: 10px; font-weight: 720; fill: #6a7890; }
+      .nodeTitle { font-size: 17px; font-weight: 760; fill: #142033; }
+      .nodeBody { font-size: 12px; font-weight: 500; fill: #526176; }
+      .small { font-size: 10.5px; font-weight: 690; fill: #65748b; }
+      .tiny { font-size: 9px; font-weight: 720; fill: #65748b; }
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 9.7px; font-weight: 620; fill: #405069; }
+      .flow { fill: none; stroke: #34445c; stroke-width: 2.6; marker-end: url(#arrowNavy); }
+      .blueFlow { fill: none; stroke: #2463eb; stroke-width: 2.4; marker-end: url(#arrowBlue); }
+      .tealFlow { fill: none; stroke: #0f7f73; stroke-width: 2.5; marker-end: url(#arrowTeal); }
+      .feedbackFlow { fill: none; stroke: #16884a; stroke-width: 2.5; marker-end: url(#arrowGreen); }
+      .supportFlow { fill: none; stroke: #73839a; stroke-width: 2; stroke-dasharray: 7 6; marker-end: url(#arrowNavy); }
+    </style>
+  </defs>
+
+  <rect width="1920" height="1200" fill="#f5f7fa"/>
+  <rect x="0" y="0" width="1920" height="110" fill="#ffffff"/>
+  <line x1="0" y1="109" x2="1920" y2="109" stroke="#d9e0ea"/>
+
+  <g class="font">
+    <text class="title" x="50" y="48">Octobot 2.0 / VEGA Services AI Architecture</text>
+    <text class="subtitle" x="50" y="78">Live AS + TM operations chatbot, governed agent execution, approved model access, and platform services</text>
+
+    <g transform="translate(1320 27)">
+      <rect width="125" height="44" rx="7" fill="#e7f0ff" stroke="#9fc0f7"/>
+      <text x="62.5" y="18" text-anchor="middle" font-size="9.5" font-weight="750" fill="#215bb8">EXPERIENCE</text>
+      <text x="62.5" y="35" text-anchor="middle" font-size="12.5" font-weight="770" fill="#1d4f9f">LIVE VEGA</text>
+    </g>
+    <g transform="translate(1458 27)">
+      <rect width="145" height="44" rx="7" fill="#e9f7f3" stroke="#9bd7c9"/>
+      <text x="72.5" y="18" text-anchor="middle" font-size="9.5" font-weight="750" fill="#0f7f73">CURRENT</text>
+      <text x="72.5" y="35" text-anchor="middle" font-size="12.5" font-weight="770" fill="#0b675e">AS + TM ACTIVE</text>
+    </g>
+    <g transform="translate(1616 27)">
+      <rect width="125" height="44" rx="7" fill="#fff5e8" stroke="#e8c996"/>
+      <text x="62.5" y="18" text-anchor="middle" font-size="9.5" font-weight="750" fill="#9a5b13">DOMAIN ACCESS</text>
+      <text x="62.5" y="35" text-anchor="middle" font-size="12.5" font-weight="770" fill="#87500f">5 MCP TOOLS</text>
+    </g>
+    <g transform="translate(1754 27)">
+      <rect width="116" height="44" rx="7" fill="#edf8ef" stroke="#a6d9b7"/>
+      <text x="58" y="18" text-anchor="middle" font-size="9.5" font-weight="750" fill="#16884a">SERVICES AI</text>
+      <text x="58" y="35" text-anchor="middle" font-size="12.5" font-weight="770" fill="#126c3e">FEEDBACK</text>
+    </g>
+
+    <!-- Network and external-service boundaries -->
+    <rect x="35" y="130" width="1485" height="845" rx="10" fill="#f9fbff" stroke="#6f9deb" stroke-width="1.8" stroke-dasharray="8 6"/>
+    <rect x="55" y="121" width="142" height="25" rx="6" fill="#ffffff" stroke="#6f9deb"/>
+    <text class="boundaryTitle" x="126" y="139" text-anchor="middle">CITI NETWORK</text>
+
+    <rect x="1540" y="130" width="345" height="845" rx="10" fill="#fcfaff" stroke="#9b78c7" stroke-width="1.8" stroke-dasharray="8 6"/>
+    <rect x="1560" y="121" width="250" height="25" rx="6" fill="#ffffff" stroke="#9b78c7"/>
+    <text x="1685" y="139" text-anchor="middle" font-size="13" font-weight="780" fill="#654293">EXTERNAL SERVICE BOUNDARIES</text>
+
+    <!-- Chat experience -->
+    <rect x="60" y="170" width="650" height="365" rx="9" fill="#ffffff" stroke="#a9bddc"/>
+    <rect x="60" y="170" width="650" height="40" rx="9" fill="#eef3fa"/>
+    <path d="M 60 202 L 60 179 Q 60 170 69 170 L 701 170 Q 710 170 710 179 L 710 202 Z" fill="#eef3fa"/>
+    <text class="sectionTitle" x="85" y="196">LIVE CHAT EXPERIENCE</text>
+    <text class="sectionMeta" x="685" y="196" text-anchor="end">USER ACCESS, CONTEXT AND STREAMING</text>
+
+    <g filter="url(#shadow)">
+      <rect x="82" y="276" width="120" height="112" rx="8" fill="#fbfcfe" stroke="#b9c4d3"/>
+      <circle cx="142" cy="307" r="18" fill="#e5ebf3"/>
+      <circle cx="142" cy="301" r="6.5" fill="#536176"/>
+      <path d="M 132 318 C 136 311, 148 311, 152 318" fill="none" stroke="#536176" stroke-width="3" stroke-linecap="round"/>
+      <text x="142" y="350" text-anchor="middle" font-size="15" font-weight="750" fill="#142033">Operations User</text>
+      <text class="small" x="142" y="373" text-anchor="middle">Custody request</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="242" y="235" width="210" height="194" rx="8" fill="#f3f7ff" stroke="#9fc0f7"/>
+      <rect x="242" y="235" width="7" height="194" rx="3" fill="#2463eb"/>
+      <text class="nodeTitle" x="271" y="272">Live VEGA Chatbot UI</text>
+      <text class="nodeBody" x="271" y="301">Conversation and sessions</text>
+      <text class="nodeBody" x="271" y="325">Execution procedure and status</text>
+      <text class="nodeBody" x="271" y="349">Plain text, attributes and tables</text>
+      <line x1="271" y1="366" x2="424" y2="366" stroke="#d5e2f5"/>
+      <rect x="271" y="380" width="66" height="25" rx="6" fill="#e7f0ff" stroke="#b8cff2"/>
+      <text x="304" y="397" text-anchor="middle" font-size="9.5" font-weight="720" fill="#215bb8">HELPFUL</text>
+      <rect x="344" y="380" width="80" height="25" rx="6" fill="#ffffff" stroke="#b8cff2"/>
+      <text x="384" y="397" text-anchor="middle" font-size="9.5" font-weight="720" fill="#526176">NOT HELPFUL</text>
+      <text class="tiny" x="271" y="420">EXISTING UI RESPONSE CONTRACT</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="492" y="225" width="195" height="214" rx="8" fill="#f6f8fb" stroke="#aebaca"/>
+      <rect x="492" y="225" width="7" height="214" rx="3" fill="#536176"/>
+      <text x="520" y="260" font-size="16" font-weight="760" fill="#142033">Chatbot BFF</text>
+      <text x="520" y="280" font-size="12" font-weight="650" fill="#607089">Python / FastAPI</text>
+      <text class="nodeBody" x="520" y="311">COIN authentication</text>
+      <text class="nodeBody" x="520" y="335">EEMS entitlement scope</text>
+      <text class="nodeBody" x="520" y="359">Context and PII controls</text>
+      <text class="nodeBody" x="520" y="383">Session and history</text>
+      <text class="nodeBody" x="520" y="407">REST / SSE streaming</text>
+      <text class="tiny" x="520" y="429">SECURE EXPERIENCE GATEWAY</text>
+    </g>
+
+    <path class="flow" d="M 202 332 L 242 332"/>
+    <path class="flow" d="M 452 332 L 492 332"/>
+
+    <!-- Services AI platform -->
+    <rect x="735" y="170" width="760" height="385" rx="9" fill="#f4f8ff" stroke="#4c82d7" stroke-width="1.8"/>
+    <rect x="735" y="170" width="760" height="42" rx="9" fill="#173f8f"/>
+    <path d="M 735 204 L 735 179 Q 735 170 744 170 L 1486 170 Q 1495 170 1495 179 L 1495 204 Z" fill="#173f8f"/>
+    <text x="1115" y="197" text-anchor="middle" font-size="16" font-weight="780" fill="#ffffff">SERVICES AI PLATFORM</text>
+
+    <g filter="url(#shadow)">
+      <rect x="765" y="235" width="330" height="224" rx="8" fill="#ffffff" stroke="#8fb7f2"/>
+      <rect x="765" y="235" width="7" height="224" rx="3" fill="#2463eb"/>
+      <text class="nodeTitle" x="796" y="269">VEGA Agent Runtime</text>
+      <text class="nodeBody" x="796" y="295">Intent, routing and execution planning</text>
+      <g transform="translate(796 315)">
+        <rect width="126" height="31" rx="6" fill="#dceaff" stroke="#aac6ee"/>
+        <text x="63" y="20" text-anchor="middle" font-size="10" font-weight="730" fill="#215bb8">ROOT ORCHESTRATOR</text>
+      </g>
+      <g transform="translate(932 315)">
+        <rect width="132" height="31" rx="6" fill="#fff0dd" stroke="#eccb9e"/>
+        <text x="66" y="20" text-anchor="middle" font-size="10" font-weight="730" fill="#9a5b13">FINAL FORMATTER</text>
+      </g>
+      <g transform="translate(796 356)">
+        <rect width="126" height="31" rx="6" fill="#dff4ef" stroke="#a8d9ce"/>
+        <text x="63" y="20" text-anchor="middle" font-size="10" font-weight="730" fill="#0f7f73">AS SPECIALIST</text>
+      </g>
+      <g transform="translate(932 356)">
+        <rect width="132" height="31" rx="6" fill="#f4eafd" stroke="#c9b7df"/>
+        <text x="66" y="20" text-anchor="middle" font-size="10" font-weight="730" fill="#654293">TM SPECIALIST</text>
+      </g>
+      <text class="nodeBody" x="796" y="417">Independent AS / TM execution; BOTH supported</text>
+      <text class="tiny" x="796" y="444">STRUCTURED RESULTS + FINAL SCHEMA VALIDATION</text>
+    </g>
+
+    <g filter="url(#shadow)">
+      <rect x="1125" y="225" width="340" height="250" rx="8" fill="#effaf7" stroke="#91d1c4"/>
+      <rect x="1125" y="225" width="7" height="250" rx="3" fill="#0f7f73"/>
+      <text class="nodeTitle" x="1155" y="259">Domain MCP Server</text>
+      <text x="1436" y="258" text-anchor="end" font-size="10" font-weight="760" fill="#0f7f73">5 ACTIVE TOOLS</text>
+      <text class="small" x="1155" y="284">ASSET SERVICES</text>
+      <text class="mono" x="1155" y="306">query_as_events_entitlements</text>
+      <text class="mono" x="1155" y="327">query_as_cash_entitlements</text>
+      <line x1="1155" y1="341" x2="1435" y2="341" stroke="#cce8e2"/>
+      <text class="small" x="1155" y="361">TRANSACTION MANAGEMENT</text>
+      <text class="mono" x="1155" y="383">query_tm_eod_transactions</text>
+      <text class="mono" x="1155" y="404">query_tm_current_transactions</text>
+      <text class="mono" x="1155" y="425">query_tm_settlement_instructions</text>
+      <line x1="1155" y1="438" x2="1435" y2="438" stroke="#cce8e2"/>
+      <text class="tiny" x="1155" y="458">TYPED VALIDATION, FIELD MAPPING, AUTH AND SAFE ERRORS</text>
+    </g>
+
+    <path class="flow" d="M 687 332 L 765 332"/>
+    <text class="tiny" x="703" y="319">SECURE REQUEST</text>
+    <path class="flow" d="M 1095 350 L 1125 350"/>
+    <path class="flow" d="M 1465 350 L 1570 350"/>
+    <text class="tiny" x="1480" y="337">HTTPS / APIM</text>
+    <path class="blueFlow" stroke-dasharray="8 6" d="M 795 465 L 795 515 L 348 515 L 348 438"/>
+    <rect x="528" y="501" width="178" height="25" rx="6" fill="#ffffff" stroke="#b9cbed"/>
+    <text x="617" y="518" text-anchor="middle" font-size="9.5" font-weight="720" fill="#215bb8">FINAL JSON + SSE STREAM</text>
+
+    <!-- Compact feedback and model access -->
+    <g filter="url(#shadow)">
+      <rect x="765" y="484" width="235" height="52" rx="7" fill="#f2fbf5" stroke="#9fd2ae"/>
+      <rect x="765" y="484" width="6" height="52" rx="3" fill="#16884a"/>
+      <text x="787" y="507" font-size="12.5" font-weight="750" fill="#126c3e">User Feedback Service</text>
+      <text class="tiny" x="787" y="526">SERVICES AI ENDPOINT - COIN SCOPE</text>
+    </g>
+    <path class="feedbackFlow" stroke-dasharray="7 6" d="M 418 429 L 418 470 L 748 470 L 748 510 L 765 510"/>
+    <text x="570" y="463" text-anchor="middle" font-size="9" font-weight="720" fill="#16884a">HELPFUL / NOT HELPFUL</text>
+
+    <g filter="url(#shadow)">
+      <rect x="1218" y="493" width="210" height="52" rx="7" fill="#f5f1fb" stroke="#c4b2dd"/>
+      <rect x="1218" y="493" width="6" height="52" rx="3" fill="#7654a6"/>
+      <text x="1240" y="516" font-size="13" font-weight="750" fill="#543982">R2D2 Connector</text>
+      <text class="tiny" x="1240" y="535">COIN-AUTHENTICATED MODEL ACCESS</text>
+    </g>
+    <path class="supportFlow" d="M 1040 459 L 1040 519 L 1218 519"/>
+    <path class="tealFlow" d="M 1428 519 L 1570 519"/>
+
+    <!-- External provider APIs -->
+    <g filter="url(#shadow)">
+      <rect x="1570" y="225" width="285" height="190" rx="9" fill="#fff8eb" stroke="#e5c27c"/>
+      <rect x="1570" y="225" width="285" height="40" rx="9" fill="#fff0d3"/>
+      <path d="M 1570 257 L 1570 234 Q 1570 225 1579 225 L 1846 225 Q 1855 225 1855 234 L 1855 257 Z" fill="#fff0d3"/>
+      <text x="1712" y="251" text-anchor="middle" font-size="15" font-weight="760" fill="#87500f">PROVIDER / DATA APIs</text>
+      <ellipse cx="1615" cy="301" rx="17" ry="6" fill="#f7e3bb" stroke="#a66b22"/>
+      <path d="M 1598 301 L 1598 330 C 1598 338, 1632 338, 1632 330 L 1632 301" fill="#fff0d3" stroke="#a66b22"/>
+      <ellipse cx="1615" cy="330" rx="17" ry="6" fill="#fff0d3" stroke="#a66b22"/>
+      <text x="1650" y="304" font-size="14" font-weight="740" fill="#142033">Vanguard Asset Servicing API</text>
+      <text x="1650" y="331" font-size="14" font-weight="740" fill="#142033">Citi Data on Demand API</text>
+      <text class="small" x="1598" y="369">Authenticated enterprise service access</text>
+      <text class="tiny" x="1598" y="393">AS AND TM PROVIDER DATA</text>
+    </g>
+
+    <!-- External model services -->
+    <g filter="url(#shadow)">
+      <rect x="1570" y="455" width="285" height="190" rx="9" fill="#f8f4fd" stroke="#b69ad6"/>
+      <rect x="1570" y="455" width="285" height="40" rx="9" fill="#ede5f7"/>
+      <path d="M 1570 487 L 1570 464 Q 1570 455 1579 455 L 1846 455 Q 1855 455 1855 464 L 1855 487 Z" fill="#ede5f7"/>
+      <text x="1712" y="481" text-anchor="middle" font-size="15" font-weight="760" fill="#654293">APPROVED MODEL SERVICES</text>
+      <path d="M 1612 538 C 1601 538, 1595 531, 1595 522 C 1595 513, 1602 506, 1611 506 C 1616 494, 1628 487, 1641 490 C 1650 492, 1657 500, 1659 509 C 1671 509, 1679 517, 1679 527 C 1679 536, 1671 542, 1661 542 L 1612 542 Z" fill="#ffffff" stroke="#7654a6" stroke-width="1.6"/>
+      <text x="1694" y="523" font-size="13.5" font-weight="740" fill="#142033">Google Vertex AI</text>
+      <text x="1694" y="546" font-size="12" font-weight="620" fill="#526176">Approved model gateway</text>
+      <text x="1598" y="581" font-size="12" font-weight="650" fill="#526176">Gemini - Llama - Claude - LAHFRA</text>
+      <text class="tiny" x="1598" y="613">MODEL ACCESS ONLY - NO PROVIDER DATA</text>
+    </g>
+
+    <!-- Data and services layer -->
+    <rect x="60" y="585" width="1435" height="185" rx="9" fill="#ffffff" stroke="#9fb8df"/>
+    <rect x="60" y="585" width="1435" height="38" rx="9" fill="#eef4fd"/>
+    <path d="M 60 615 L 60 594 Q 60 585 69 585 L 1486 585 Q 1495 585 1495 594 L 1495 615 Z" fill="#eef4fd"/>
+    <text class="sectionTitle" x="777" y="610" text-anchor="middle" fill="#215bb8">DATA &amp; SERVICES LAYER</text>
+
+    <g transform="translate(82 641)">
+      <rect width="255" height="104" rx="7" fill="#fbfcfe" stroke="#c2cfdf"/>
+      <circle cx="34" cy="36" r="18" fill="#e7ebf1"/>
+      <path d="M 25 32 L 43 32 M 25 38 L 43 38 M 25 44 L 43 44" stroke="#536176" stroke-width="2"/>
+      <text x="64" y="31" font-size="14" font-weight="750" fill="#142033">MongoDB + Redis</text>
+      <text x="64" y="52" font-size="10.5" font-weight="610" fill="#526176">Conversation history</text>
+      <text x="64" y="70" font-size="10.5" font-weight="610" fill="#526176">Session state and cache</text>
+      <text class="tiny" x="20" y="94">CHATBOT PLATFORM STATE</text>
+    </g>
+    <g transform="translate(351 641)">
+      <rect width="255" height="104" rx="7" fill="#fbfcfe" stroke="#c2cfdf"/>
+      <path d="M 23 25 C 23 18, 48 18, 48 25 L 45 62 C 45 69, 26 69, 26 62 Z" fill="#e7f5eb" stroke="#16884a" stroke-width="1.5"/>
+      <path d="M 23 25 C 26 31, 45 31, 48 25" fill="none" stroke="#16884a" stroke-width="1.5"/>
+      <text x="64" y="31" font-size="14" font-weight="750" fill="#142033">Amazon S3</text>
+      <text x="64" y="52" font-size="10.5" font-weight="610" fill="#526176">Knowledge base</text>
+      <text x="64" y="70" font-size="10.5" font-weight="610" fill="#526176">Documents and files</text>
+      <text class="tiny" x="20" y="94">PLATFORM CONTENT STORAGE</text>
+    </g>
+    <g transform="translate(620 641)">
+      <rect width="255" height="104" rx="7" fill="#fbfcfe" stroke="#c2cfdf"/>
+      <ellipse cx="34" cy="27" rx="17" ry="6" fill="#dceaff" stroke="#2463eb"/>
+      <path d="M 17 27 L 17 59 C 17 67, 51 67, 51 59 L 51 27" fill="#eef5ff" stroke="#2463eb"/>
+      <ellipse cx="34" cy="59" rx="17" ry="6" fill="#eef5ff" stroke="#2463eb"/>
+      <text x="64" y="31" font-size="14" font-weight="750" fill="#142033">PostgreSQL</text>
+      <text x="64" y="52" font-size="10.5" font-weight="610" fill="#526176">Operational store</text>
+      <text x="64" y="70" font-size="10.5" font-weight="610" fill="#526176">Platform-managed records</text>
+      <text class="tiny" x="20" y="94">SERVICES AI DATA</text>
+    </g>
+    <g transform="translate(889 641)">
+      <rect width="255" height="104" rx="7" fill="#fbfcfe" stroke="#c2cfdf"/>
+      <circle cx="34" cy="39" r="20" fill="#e7f5eb" stroke="#16884a"/>
+      <path d="M 24 32 C 30 24, 40 24, 45 32 C 40 48, 32 57, 24 32 Z" fill="none" stroke="#16884a" stroke-width="2"/>
+      <text x="64" y="31" font-size="14" font-weight="750" fill="#142033">PGVector</text>
+      <text x="64" y="52" font-size="10.5" font-weight="610" fill="#526176">Vector store</text>
+      <text x="64" y="70" font-size="10.5" font-weight="610" fill="#526176">Retrieval support</text>
+      <text class="tiny" x="20" y="94">PLATFORM CAPABILITY</text>
+    </g>
+    <g transform="translate(1158 641)">
+      <rect width="315" height="104" rx="7" fill="#fbfcfe" stroke="#c2cfdf"/>
+      <rect x="18" y="19" width="34" height="45" rx="4" fill="#fff4e3" stroke="#b87318"/>
+      <path d="M 26 31 L 44 31 M 26 40 L 44 40 M 26 49 L 41 49" stroke="#b87318" stroke-width="2"/>
+      <text x="66" y="31" font-size="14" font-weight="750" fill="#142033">Audit Logs</text>
+      <text x="66" y="52" font-size="10.5" font-weight="610" fill="#526176">Decisions and reasoning</text>
+      <text x="66" y="70" font-size="10.5" font-weight="610" fill="#526176">User actions and traceability</text>
+      <text class="tiny" x="20" y="94">GOVERNANCE RECORD</text>
+    </g>
+
+    <path class="supportFlow" d="M 590 439 L 590 565 L 210 565 L 210 633"/>
+    <path class="supportFlow" d="M 1065 555 L 1065 633"/>
+
+    <!-- Supporting platform -->
+    <rect x="60" y="795" width="1435" height="145" rx="9" fill="#ffffff" stroke="#9fb8df"/>
+    <rect x="60" y="795" width="1435" height="38" rx="9" fill="#f2f5fa"/>
+    <path d="M 60 825 L 60 804 Q 60 795 69 795 L 1486 795 Q 1495 795 1495 804 L 1495 825 Z" fill="#f2f5fa"/>
+    <text class="sectionTitle" x="777" y="820" text-anchor="middle" fill="#215bb8">SUPPORTING PLATFORM</text>
+
+    <g transform="translate(95 852)">
+      <rect width="235" height="62" rx="7" fill="#fbfcfe" stroke="#d0d8e3"/>
+      <rect x="16" y="13" width="36" height="36" rx="6" fill="#eee9ff"/>
+      <path d="M 23 22 L 34 28 L 45 22 L 34 16 Z M 23 25 L 34 31 L 34 44 L 23 38 Z M 45 25 L 34 31 L 34 44 L 45 38 Z" fill="#7255d8"/>
+      <text x="66" y="29" font-size="13.5" font-weight="750" fill="#142033">Terraform</text>
+      <text x="66" y="47" font-size="10.5" font-weight="610" fill="#526176">Infrastructure as code</text>
+    </g>
+    <g transform="translate(345 852)">
+      <rect width="235" height="62" rx="7" fill="#fbfcfe" stroke="#d0d8e3"/>
+      <rect x="16" y="13" width="36" height="36" rx="6" fill="#e7f0ff"/>
+      <path d="M 34 18 L 45 43 L 34 37 L 23 43 Z" fill="#2463eb"/>
+      <text x="66" y="29" font-size="13.5" font-weight="750" fill="#142033">Istio</text>
+      <text x="66" y="47" font-size="10.5" font-weight="610" fill="#526176">Service mesh</text>
+    </g>
+    <g transform="translate(595 852)">
+      <rect width="235" height="62" rx="7" fill="#fbfcfe" stroke="#d0d8e3"/>
+      <rect x="16" y="13" width="36" height="36" rx="6" fill="#fde9e8"/>
+      <path d="M 25 31 A 10 10 0 1 1 29 42" fill="none" stroke="#d9362b" stroke-width="5" stroke-linecap="round"/>
+      <text x="66" y="29" font-size="13.5" font-weight="750" fill="#142033">OpenShift</text>
+      <text x="66" y="47" font-size="10.5" font-weight="610" fill="#526176">Kubernetes runtime</text>
+    </g>
+    <g transform="translate(845 852)">
+      <rect width="235" height="62" rx="7" fill="#fbfcfe" stroke="#d0d8e3"/>
+      <rect x="16" y="13" width="36" height="36" rx="6" fill="#f6e8f2"/>
+      <path d="M 21 18 L 38 18 L 29 31 L 21 31 Z" fill="#e52c89"/>
+      <path d="M 21 33 L 29 33 L 44 44 L 21 44 Z" fill="#152b2e"/>
+      <text x="66" y="29" font-size="13.5" font-weight="750" fill="#142033">Kibana</text>
+      <text x="66" y="47" font-size="10.5" font-weight="610" fill="#526176">Observability</text>
+    </g>
+    <g transform="translate(1095 852)">
+      <rect width="365" height="62" rx="7" fill="#fbfcfe" stroke="#d0d8e3"/>
+      <rect x="16" y="13" width="36" height="36" rx="6" fill="#fff3d6"/>
+      <path d="M 22 19 L 46 19 L 39 42 L 29 42 Z" fill="#e5b400"/>
+      <circle cx="34" cy="28" r="3" fill="#634c00"/>
+      <text x="66" y="29" font-size="13.5" font-weight="750" fill="#142033">HashiCorp Vault</text>
+      <text x="66" y="47" font-size="10.5" font-weight="610" fill="#526176">Secrets and credentials</text>
+    </g>
+
+    <!-- External boundary controls -->
+    <g filter="url(#shadow)">
+      <rect x="1570" y="710" width="285" height="155" rx="9" fill="#ffffff" stroke="#c4b2dd"/>
+      <text x="1598" y="745" font-size="14" font-weight="750" fill="#654293">Boundary controls</text>
+      <text class="nodeBody" x="1598" y="773">R2D2 for model access</text>
+      <text class="nodeBody" x="1598" y="797">APIM for provider data access</text>
+      <text class="nodeBody" x="1598" y="821">COIN identity and TLS</text>
+      <text class="tiny" x="1598" y="848">SEPARATE MODEL AND DATA PATHS</text>
+    </g>
+
+    <!-- Cross-cutting controls -->
+    <rect x="35" y="1000" width="1850" height="125" rx="9" fill="#ffffff" stroke="#c5ceda"/>
+    <text class="sectionTitle" x="62" y="1030">Cross-cutting controls</text>
+    <g transform="translate(250 1015)">
+      <rect width="225" height="42" rx="7" fill="#e7f0ff" stroke="#aac5ed"/>
+      <text x="112.5" y="26" text-anchor="middle" font-size="10.5" font-weight="740" fill="#215bb8">COIN M2M + EEMS</text>
+    </g>
+    <g transform="translate(490 1015)">
+      <rect width="215" height="42" rx="7" fill="#eef2f7" stroke="#bdc7d4"/>
+      <text x="107.5" y="26" text-anchor="middle" font-size="10.5" font-weight="740" fill="#526176">TLS + VAULT SECRETS</text>
+    </g>
+    <g transform="translate(720 1015)">
+      <rect width="255" height="42" rx="7" fill="#e9f7f3" stroke="#a8d9ce"/>
+      <text x="127.5" y="26" text-anchor="middle" font-size="10.5" font-weight="740" fill="#0f7f73">PII REDACTION + GUARDRAILS</text>
+    </g>
+    <g transform="translate(990 1015)">
+      <rect width="235" height="42" rx="7" fill="#fff5e8" stroke="#e8c996"/>
+      <text x="117.5" y="26" text-anchor="middle" font-size="10.5" font-weight="740" fill="#9a5b13">CORRELATION IDs + AUDIT</text>
+    </g>
+    <g transform="translate(1240 1015)">
+      <rect width="245" height="42" rx="7" fill="#f3eef9" stroke="#c9b7df"/>
+      <text x="122.5" y="26" text-anchor="middle" font-size="10.5" font-weight="740" fill="#654293">TIMEOUTS + BOUNDED RETRIES</text>
+    </g>
+    <g transform="translate(1500 1015)">
+      <rect width="350" height="42" rx="7" fill="#edf8ef" stroke="#a6d9b7"/>
+      <text x="175" y="26" text-anchor="middle" font-size="10.5" font-weight="740" fill="#126c3e">FINAL RESPONSE CONTRACT UNCHANGED</text>
+    </g>
+    <line x1="62" y1="1080" x2="1858" y2="1080" stroke="#d7dee8"/>
+    <text class="small" x="62" y="1103">Primary request flow remains separate from model access, platform data, and user feedback.</text>
+
+    <!-- Legend -->
+    <line x1="55" y1="1153" x2="1865" y2="1153" stroke="#d7dee8"/>
+    <path class="flow" d="M 70 1172 L 105 1172"/>
+    <text class="small" x="118" y="1176">Business request flow</text>
+    <path class="supportFlow" d="M 300 1172 L 335 1172"/>
+    <text class="small" x="348" y="1176">Platform support / model flow</text>
+    <path class="feedbackFlow" d="M 585 1172 L 620 1172"/>
+    <text class="small" x="633" y="1176">User feedback flow</text>
+    <text class="small" x="1860" y="1176" text-anchor="end">Prepared 2026-09-10</text>
+  </g>
+</svg>
