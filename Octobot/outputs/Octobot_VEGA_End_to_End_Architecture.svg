@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" viewBox="0 0 1920 1200" role="img" aria-labelledby="title desc">
   <title id="title">Octobot 2.0 VEGA Services AI Architecture</title>
-  <desc id="desc">High-level architecture for the live VEGA chatbot. Inside the Citi network, the VEGA experience connects through the Chatbot BFF to the Services AI platform, where the root orchestrator routes Asset Services and Transaction Management requests to five active MCP tools. R2D2 provides approved model access across the external-services boundary. A compact Services AI feedback endpoint, shared data and services, and supporting platform capabilities are also shown.</desc>
+  <desc id="desc">High-level architecture for the live VEGA chatbot. Inside the Citi network, the VEGA experience consumes agent services provided by the Services AI Team, including orchestration, specialist execution, final formatting, governed MCP tool access, R2D2 model access, shared data services, platform infrastructure, and user feedback. The root orchestrator routes Asset Services and Transaction Management requests to five active MCP tools.</desc>
   <defs>
     <filter id="shadow" x="-15%" y="-20%" width="130%" height="150%">
       <feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#172033" flood-opacity="0.10"/>
@@ -43,7 +43,7 @@
 
   <g class="font">
     <text class="title" x="50" y="48">Octobot 2.0 / VEGA Services AI Architecture</text>
-    <text class="subtitle" x="50" y="78">Live AS + TM operations chatbot, governed agent execution, approved model access, and platform services</text>
+    <text class="subtitle" x="50" y="78">Live AS + TM operations chatbot using agent and platform services provided by the Services AI Team</text>
 
     <g transform="translate(1320 27)">
       <rect width="125" height="44" rx="7" fill="#e7f0ff" stroke="#9fc0f7"/>
@@ -60,10 +60,10 @@
       <text x="62.5" y="18" text-anchor="middle" font-size="9.5" font-weight="750" fill="#9a5b13">DOMAIN ACCESS</text>
       <text x="62.5" y="35" text-anchor="middle" font-size="12.5" font-weight="770" fill="#87500f">5 MCP TOOLS</text>
     </g>
-    <g transform="translate(1754 27)">
+    <g transform="translate(1748 27)">
       <rect width="116" height="44" rx="7" fill="#edf8ef" stroke="#a6d9b7"/>
-      <text x="58" y="18" text-anchor="middle" font-size="9.5" font-weight="750" fill="#16884a">SERVICES AI</text>
-      <text x="58" y="35" text-anchor="middle" font-size="12.5" font-weight="770" fill="#126c3e">FEEDBACK</text>
+      <text x="58" y="18" text-anchor="middle" font-size="8.5" font-weight="750" fill="#16884a">PLATFORM OWNER</text>
+      <text x="58" y="35" text-anchor="middle" font-size="10.5" font-weight="770" fill="#126c3e">SERVICES AI TEAM</text>
     </g>
 
     <!-- Network and external-service boundaries -->
@@ -126,7 +126,9 @@
     <rect x="735" y="170" width="760" height="385" rx="9" fill="#f4f8ff" stroke="#4c82d7" stroke-width="1.8"/>
     <rect x="735" y="170" width="760" height="42" rx="9" fill="#173f8f"/>
     <path d="M 735 204 L 735 179 Q 735 170 744 170 L 1486 170 Q 1495 170 1495 179 L 1495 204 Z" fill="#173f8f"/>
-    <text x="1115" y="197" text-anchor="middle" font-size="16" font-weight="780" fill="#ffffff">SERVICES AI PLATFORM</text>
+    <text x="900" y="197" text-anchor="middle" font-size="16" font-weight="780" fill="#ffffff">SERVICES AI AGENT PLATFORM</text>
+    <rect x="1160" y="180" width="305" height="22" rx="6" fill="#2b5aaa" stroke="#7fa6e4"/>
+    <text x="1312.5" y="195" text-anchor="middle" font-size="9.5" font-weight="750" fill="#ffffff">ALL AGENT SERVICES PROVIDED BY SERVICES AI TEAM</text>
 
     <g filter="url(#shadow)">
       <rect x="765" y="235" width="330" height="224" rx="8" fill="#ffffff" stroke="#8fb7f2"/>
@@ -184,7 +186,7 @@
       <rect x="765" y="484" width="235" height="52" rx="7" fill="#f2fbf5" stroke="#9fd2ae"/>
       <rect x="765" y="484" width="6" height="52" rx="3" fill="#16884a"/>
       <text x="787" y="507" font-size="12.5" font-weight="750" fill="#126c3e">User Feedback Service</text>
-      <text class="tiny" x="787" y="526">SERVICES AI ENDPOINT - COIN SCOPE</text>
+      <text class="tiny" x="787" y="526">SHARED AGENT SERVICE - COIN SCOPE</text>
     </g>
     <path class="feedbackFlow" stroke-dasharray="7 6" d="M 418 429 L 418 470 L 748 470 L 748 510 L 765 510"/>
     <text x="570" y="463" text-anchor="middle" font-size="9" font-weight="720" fill="#16884a">HELPFUL / NOT HELPFUL</text>
@@ -230,7 +232,7 @@
     <rect x="60" y="585" width="1435" height="185" rx="9" fill="#ffffff" stroke="#9fb8df"/>
     <rect x="60" y="585" width="1435" height="38" rx="9" fill="#eef4fd"/>
     <path d="M 60 615 L 60 594 Q 60 585 69 585 L 1486 585 Q 1495 585 1495 594 L 1495 615 Z" fill="#eef4fd"/>
-    <text class="sectionTitle" x="777" y="610" text-anchor="middle" fill="#215bb8">DATA &amp; SERVICES LAYER</text>
+    <text class="sectionTitle" x="777" y="610" text-anchor="middle" fill="#215bb8">SERVICES AI SHARED DATA &amp; SERVICES LAYER</text>
 
     <g transform="translate(82 641)">
       <rect width="255" height="104" rx="7" fill="#fbfcfe" stroke="#c2cfdf"/>
@@ -286,7 +288,7 @@
     <rect x="60" y="795" width="1435" height="145" rx="9" fill="#ffffff" stroke="#9fb8df"/>
     <rect x="60" y="795" width="1435" height="38" rx="9" fill="#f2f5fa"/>
     <path d="M 60 825 L 60 804 Q 60 795 69 795 L 1486 795 Q 1495 795 1495 804 L 1495 825 Z" fill="#f2f5fa"/>
-    <text class="sectionTitle" x="777" y="820" text-anchor="middle" fill="#215bb8">SUPPORTING PLATFORM</text>
+    <text class="sectionTitle" x="777" y="820" text-anchor="middle" fill="#215bb8">SERVICES AI SUPPORTING PLATFORM</text>
 
     <g transform="translate(95 852)">
       <rect width="235" height="62" rx="7" fill="#fbfcfe" stroke="#d0d8e3"/>
@@ -364,7 +366,7 @@
       <text x="175" y="26" text-anchor="middle" font-size="10.5" font-weight="740" fill="#126c3e">FINAL RESPONSE CONTRACT UNCHANGED</text>
     </g>
     <line x1="62" y1="1080" x2="1858" y2="1080" stroke="#d7dee8"/>
-    <text class="small" x="62" y="1103">Primary request flow remains separate from model access, platform data, and user feedback.</text>
+    <text class="small" x="62" y="1103">Services AI Team provides agent orchestration, specialist execution, formatting, model access, shared services, platform infrastructure, and feedback.</text>
 
     <!-- Legend -->
     <line x1="55" y1="1153" x2="1865" y2="1153" stroke="#d7dee8"/>
