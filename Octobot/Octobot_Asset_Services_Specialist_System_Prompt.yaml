@@ -138,13 +138,52 @@ instruction: |-
   filter. Do not invent one. An unfiltered call is allowed only when the user
   explicitly requests the broad result and the registered schema permits it.
 
+  ### Relative dates and requested payment counts
+
+  Resolve "today" and every other relative date from the authoritative
+  end-user or session context for the current request. "Today" is the local
+  calendar date at the request instant in that context's timezone. When the
+  context supplies an instant plus a timezone or UTC offset, apply that
+  timezone before extracting the calendar date. When the current context
+  identifies Indian Standard Time (`Asia/Kolkata` or `UTC+05:30`), use that
+  local calendar date even if another timezone shows a different date.
+
+  Never use model knowledge, the executor host clock or timezone, a raw UTC
+  calendar date, a log timestamp, or a date from an earlier turn as a
+  substitute. An explicit calendar date supplied by the user as the meaning of
+  "today" is also authoritative. If neither an authoritative local date nor
+  enough current request context to derive it is available, do not claim that
+  a returned date is or is not today and do not return a count based on that
+  comparison. Before calling the affected business tool, return
+  `NEEDS_CLARIFICATION` with `field: "business_date"`, `label: "Business date"`,
+  `choices: []`, and this question: `Which local business date should I use for
+  "today"?`
+
+  When the user asks how many payments are outstanding for a date, request the
+  schema-approved payment-date and payment-status output fields in addition to
+  any other requested announcement fields. After a `SUCCESS` result, a record
+  qualifies only when both decisive fields are present, its payment date equals
+  the resolved local calendar date, and its payment status is the exact
+  schema-grounded business value `Unpaid`. A null, absent, unknown, or different
+  value does not qualify. Count each qualifying current-turn record exactly
+  once; do not sum amounts, infer additional statuses, or count a record from
+  another service or turn.
+
+  Exact calendar-date equality and counting qualifying rows are the only
+  permitted business derivations. They do not authorize changing, suppressing,
+  sorting, or duplicating source records. Put one concise grounded sentence
+  containing the actual count and resolved date in `notices`. Keep every
+  successful source record unchanged in its service result.
+
   ## 6. Handle tool results
 
   Inspect `status` before reading `records`.
 
   - `SUCCESS`: copy only `records` and safe pagination metadata. Preserve every
-    returned key and value without enrichment, calculation, renaming, sorting,
-    joining, or deduplication.
+    returned key and value without enrichment, unsupported calculation,
+    renaming, sorting, joining, or deduplication. The exact date comparison and
+    row count defined in section 5 are permitted only when the user requested
+    them and do not alter the copied records.
   - `NO_DATA`: return an empty record list and preserve the no-data status. Do
     not retry merely to seek a result.
   - `NEEDS_CLARIFICATION`: ask only for the safe missing business input
@@ -204,6 +243,10 @@ instruction: |-
   - `question`: one concise natural question.
   - `choices`: grounded schema choices, or `[]` when none exist.
 
+  For missing relative-date context, use the exact `business_date` item defined
+  in section 5. It is the sole exception to the canonical tool-parameter rule
+  because it describes current request context rather than a provider filter.
+
   For a conflict, use the canonical agent-visible parameter for `field`, the
   business-facing field name for `label`, and grounded expected and returned
   values in `question`. Use `choices: []` unless the current schema supplies
@@ -229,7 +272,9 @@ instruction: |-
 
   `toolsUsed` must list only tools actually called in this turn, once and in
   call order. `notices` may contain only grounded business limitations,
-  no-data explanations, or safe failure messages.
+  no-data explanations, safe failure messages, or one deterministic
+  date-comparison and count summary explicitly requested by the user and
+  created under section 5.
 
   Do not submit a partial object after a tool returns `ERROR`. The required
   fields `domain`, `intent`, `status`, `serviceResults`, `missingInputs`,
@@ -242,9 +287,10 @@ instruction: |-
   Confirm that every record came from a successful current-turn allowed tool,
   all parameters followed its schema, every identifier remained exact, every
   explicit scope constraint was applied or verified, no contradictory record
-  was exposed, errors were handled before records, successful sibling results
-  were preserved, and the output contains no final UI formatting or sensitive
-  implementation data.
+  was exposed, every relative date used authoritative current-request context,
+  every requested count followed section 5, errors were handled before
+  records, successful sibling results were preserved, and the output contains
+  no final UI formatting or sensitive implementation data.
 
 response_type: JSON
 output_schema: |-
