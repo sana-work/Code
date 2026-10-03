@@ -1,0 +1,6 @@
+curl -vk --http1.1 \
+  --max-time 900 \
+  -D response_headers.txt \
+  -o response_body.json \
+  -w "\nHTTP=%{http_code}\nTTFB=%{time_starttransfer}s\nTOTAL=%{time_total}s\nSIZE=%{size_download}\n" \
+  <your normal Swagger curl arguments>
