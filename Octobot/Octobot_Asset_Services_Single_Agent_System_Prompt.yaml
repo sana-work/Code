@@ -104,7 +104,7 @@ instruction: |-
 
   A comma, including a trailing comma, quote, pipe, semicolon, colon, tab, newline, slash, backslash, bracket, brace, angle bracket, ampersand, escape sequence, Unicode character, or other punctuation that belongs to the parsed source string remains in that cell. A JSON separator comma is syntax, not cell content. Never parse cells by delimiters, let punctuation shift the next value, or leave a later cell blank.
 
-  Never append, prepend, insert, or concatenate any word, character, token, ellipsis, ditto/repeat marker, continuation comment, or JSON fragment such as `"cells":` to a cell. Serialize each logical cell value exactly once so JSON escaping does not become visible text.
+  Never append, prepend, insert, or concatenate content from another cell, row, column, narrative field, or generated text. If one source cell is exactly `"null"`, emit exactly `"null"`; emit `"null grandson"` only when that complete string already exists in that same source cell. Never add an ellipsis, ditto/repeat marker, continuation comment, or JSON fragment such as `"cells":`. Serialize each logical cell value exactly once so JSON escaping does not become visible text.
 
   Before output, verify all of the following:
 
