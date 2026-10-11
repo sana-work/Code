@@ -1,161 +1,196 @@
-Phase 3 is provisionally accepted. Proceed with Phase 4: production readiness, Orchestrator hardening, migration planning, and controlled rollout.
+Reopen Phase 4 Gate 1. Do not mark Phase 4 complete yet.
 
-Do not enable artifact capture in production until every mandatory gate below is satisfied.
+## Critical fresh-environment schema gap
 
-## 1. Resolve the database migration blocker
+The migration handles an existing `agentic_artifact_store` table, but a brand-new environment may not have that table when the migration runs.
 
-`Base.metadata.create_all()` does not add `idempotency_key` to an existing table.
+The Orchestrator's read-only `ArtifactPGStore`:
 
-Create an idempotent, production-reviewed database change for every tenant schema:
+- Has its own SQLAlchemy model.
+- Does not declare `idempotency_key`.
+- Calls `create_all()`.
+- Can therefore create an incomplete table if Orchestrator starts before Executor.
 
-- Add nullable `idempotency_key`.
-- Add the required unique or partial unique index.
-- Use `IF NOT EXISTS` or the platform's established equivalent.
-- Keep existing rows valid.
-- Document database-first deployment ordering.
-- Confirm old application versions tolerate the expanded schema.
-- Provide verification and rollback queries.
-- Add schema inspection or migration contract tests.
+Executor's later `create_all()` will not add the missing column.
 
-Do not rely on runtime `create_all()` to upgrade an existing table.
+## Required correction
 
-## 2. Close the missing-ID idempotency gap
+Make fresh-schema creation deterministic regardless of service startup order.
 
-The current implementation permits `idempotency_key = None` when invocation or function-call IDs are unavailable.
+Preferred correction:
 
-Trace all Sync, Stream, Async, Hybrid, and Resume paths and report whether both identifiers are guaranteed.
+- Add the nullable `idempotency_key` column and matching unique index declaration to the Orchestrator's read-only ORM model.
+- Match the Executor declaration exactly:
+  - Column name
+  - Type and length
+  - Nullability
+  - Uniqueness
+  - Index name/convention
+- Keep the Orchestrator store read-only at the application level.
+- Retain the database-first migration for existing environments.
 
-- If guaranteed, validate them before capture and add tests for every mode.
-- If not guaranteed, stop and propose a deterministic fallback with collision analysis.
-- Do not silently persist retry-sensitive artifacts without idempotency protection.
-- Missing identifiers must emit a safe metric and follow an explicitly documented failure policy.
+If mirroring this field is unsafe for a verified code reason, stop and propose removing schema creation ownership from the Orchestrator instead. Do not leave two `create_all()` owners with different table definitions.
 
-## 3. Add real integration verification
+## Required schema tests
 
-Unit simulations are necessary but insufficient for the concurrency and transport claims.
+Cover these scenarios:
 
-Using existing project infrastructure where available, test against real Postgres:
+1. Existing table without `idempotency_key` receives the column and index.
+2. Migration rerun is idempotent.
+3. No table exists, migration runs as a no-op, then Executor starts first and creates the complete schema.
+4. No table exists, migration runs as a no-op, then Orchestrator starts first and creates the complete schema.
+5. Either service starts second and observes the same compatible schema.
+6. Old application code continues working against the expanded table.
+7. New application code fails predictably if deployed before the required migration against an old table.
+8. Executor ORM, Orchestrator ORM, migration SQL, and verification SQL agree on the column and index contract.
 
-- Concurrent inserts for the same idempotency key.
-- Same key and checksum resolves to one artifact.
-- Same key and different checksum fails safely.
-- Multi-artifact transaction rollback.
-- Cancellation during a transaction.
-- Fresh-process retrieval and soft expiry.
-- Tenant-schema isolation.
-- Index and constraint behavior after migration.
+Update `db/migrations/README.md` to distinguish:
 
-Verify with a real Kafka environment or staging deployment when available:
+- Existing environment: migration first, then application deployment.
+- Brand-new environment: either service may start first and still create the complete table.
+- Rollback limitations once new application code depends on the column.
 
-- Published step payloads contain compact references only.
-- Raw artifact data never enters Kafka.
-- Async materialization occurs before the final response is delivered.
-- Duplicate message delivery remains idempotent.
-- Broker and consumer restart behavior is safe.
+## Security-sensitive metric tests
 
-If these environments are unavailable, create repeatable integration test commands and mark production enablement blocked. Do not describe mocked tests as live integration proof.
+Add focused assertions for at least:
 
-## 4. Harden every Orchestrator response boundary
+- Authorization denied
+- Idempotency checksum conflict
+- Batch rollback
+- Unresolved materialization reference
+- Materialization lookup failure
 
-Create one clearly owned final-response materialization interface and ensure it covers:
+Assert that metric payloads contain safe identifiers and counts only, with no artifact data, row content, tool payload, or exception message.
 
-- Single-step raw response.
-- Multi-step raw last-step response.
-- Output-generator synthesis response.
-- Async Kafka final-response branch.
-- Hybrid response path.
-- Error and unresolved-reference paths.
+## Final verification
 
-Requirements:
+Re-run:
 
-- `prepare_response()` and all synthesis prompts receive compact data only.
-- Materialization happens after synthesis and before external delivery.
-- Feature flag off performs no artifact lookup.
-- Configuration lookup failures are logged and metered safely.
-- Missing, unauthorized, expired, and failed lookups remain unexpanded and non-disclosing.
-- Future response branches should be difficult to add without passing through the final materialization interface.
+- Migration contract tests
+- Executor full unit suite
+- Orchestrator full unit suite
+- Gated Postgres integration suite to confirm it remains discoverable and correctly skipped without configuration
 
-Add branch and contract tests for every boundary.
+Produce a revised go/no-go table that clearly states:
 
-## 5. Production observability
+- Unit/code readiness
+- Fresh-schema readiness
+- Real Postgres integration: BLOCKED until executed
+- Kafka/staging integration: BLOCKED until executed
+- Security/retention approval: BLOCKED
+- Physical cleanup before GA: BLOCKED
+- Production enablement: NO-GO
+- Narrow internal canary: requires the documented explicit approvals
 
-Add or confirm metrics for:
+Do not enable a production use case, create commits, or begin cleanup or AG-UI work. Stop after the corrected Phase 4 report.
 
-- Capture success and failure.
-- Capture failure reason.
-- Idempotency reuse and checksum conflict.
-- Batch rollback.
-- Materialization success, missing reference, expired reference, and lookup failure.
-- Query success, rejection, truncation, authorization denial, and ambiguity.
-- Configuration fallback.
-- Artifact rows and bytes written.
-- Materialized response size and latency.
-- Soft-expired rows still awaiting physical cleanup.
 
-Metrics and logs must contain safe identifiers only, never artifact data.
+The `agentic_artifact_store` table does not currently exist. Extend the Phase 4 correction with a database-first base migration.
 
-## 6. Security and retention gates
+## Required work
 
-Before production enablement, obtain explicit approval for:
+1. Create:
 
-- Artifact data classification.
-- Tenant and session authorization rules.
-- Database encryption and access.
-- Audit behavior.
-- Default retention period.
-- Maximum artifact size.
-- Incident and deletion procedures.
+`db/migrations/000_create_agentic_artifact_store.sql`
 
-Physical cleanup scheduling remains outside this code phase, but unrestricted rollout is blocked without an operational deletion mechanism.
+2. The migration must:
+- Be safely rerunnable.
+- Create the configured tenant schema if it does not exist.
+- Create `agentic_artifact_store` if it does not exist.
+- Match the Executor and Orchestrator SQLAlchemy models exactly.
+- Include the nullable `idempotency_key VARCHAR(600)` column from the initial creation.
+- Create the unique `ix_agentic_artifact_store_idempotency_key` index.
+- Create indexes required by the ORM for tenant, use case, session, and expiry lookup.
+- Run transactionally and stop on errors.
+- Never drop or replace an existing table.
 
-A small canary may proceed only if:
+Use this PostgreSQL definition, adjusting a column only if direct inspection of both ORM models proves the implementation differs:
 
-- The capture volume is strictly bounded.
-- Soft expiry is enforced.
-- Database growth is monitored.
-- A tested manual cleanup procedure exists.
-- Security and data-retention owners approve the exception.
+```sql
+BEGIN;
 
-## 7. Controlled rollout
+CREATE SCHEMA IF NOT EXISTS :"artifact_schema";
 
-Keep `enable_artifact_capture = False` by default.
+CREATE TABLE IF NOT EXISTS :"artifact_schema".agentic_artifact_store (
+    artifact_id        VARCHAR(64) PRIMARY KEY,
+    tenant_coin        VARCHAR(255) NOT NULL,
+    usecase_id         VARCHAR(255) NOT NULL,
+    session_id         VARCHAR(255) NOT NULL,
+    invocation_id      VARCHAR(255) NOT NULL,
+    runtime_id         VARCHAR(36),
+    tool_call_id       VARCHAR(255) NOT NULL,
+    tool_name          VARCHAR(255) NOT NULL,
 
-Use these stages:
+    name               VARCHAR(255) NOT NULL,
+    kind               VARCHAR(32) NOT NULL,
+    content_type       VARCHAR(128) NOT NULL DEFAULT 'application/json',
+    version            INTEGER NOT NULL DEFAULT 1,
+    display_order      INTEGER NOT NULL DEFAULT 0,
+    row_count          INTEGER,
+    size_bytes         INTEGER NOT NULL,
+    checksum           VARCHAR(64) NOT NULL,
 
-1. Automated and integration validation.
-2. Shadow observation without changing client responses, if safely supported.
-3. One approved internal pilot use case.
-4. Limited canary with monitored volume.
-5. Gradual opt-in expansion.
-6. General availability only after cleanup and operational gates are complete.
+    data               JSON NOT NULL,
+    row_ids            JSON,
+    rendering_policy   VARCHAR(32) NOT NULL DEFAULT 'markdown_table',
+    authz_scope        JSON NOT NULL,
+    source_metadata    JSON,
 
-Define rollback triggers for:
+    idempotency_key    VARCHAR(600),
+    created_at         TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    expires_at         TIMESTAMP WITHOUT TIME ZONE NOT NULL
+);
 
-- Artifact leakage into prompts, sessions, or Kafka.
-- Authorization mismatch.
-- Materialization failure rate.
-- Idempotency conflicts.
-- Database growth.
-- Response latency or size regression.
+CREATE INDEX IF NOT EXISTS ix_agentic_artifact_store_tenant_coin
+    ON :"artifact_schema".agentic_artifact_store (tenant_coin);
 
-Rollback must be possible by disabling the feature flag without requiring an application downgrade.
+CREATE INDEX IF NOT EXISTS ix_agentic_artifact_store_usecase_id
+    ON :"artifact_schema".agentic_artifact_store (usecase_id);
 
-## 8. Final verification
+CREATE INDEX IF NOT EXISTS ix_agentic_artifact_store_session_id
+    ON :"artifact_schema".agentic_artifact_store (session_id);
 
-Run both complete unit suites plus available Postgres and Kafka integration suites.
+CREATE INDEX IF NOT EXISTS ix_agentic_artifact_store_expires_at
+    ON :"artifact_schema".agentic_artifact_store (expires_at);
 
-Report:
+CREATE UNIQUE INDEX IF NOT EXISTS ix_agentic_artifact_store_idempotency_key
+    ON :"artifact_schema".agentic_artifact_store (idempotency_key);
 
-- Exact commands and results.
-- File-by-file changes.
-- Migration and deployment order.
-- Evidence for every response branch.
-- Evidence that internal payloads remain compact.
-- Real versus simulated integration coverage.
-- Security and retention approvals still outstanding.
-- Rollout and rollback runbooks.
-- Any remaining production blocker.
+COMMIT;
+```
 
-Do not implement AG-UI placeholder rendering in Phase 4.
+Document this execution command in `db/migrations/README.md`:
 
-Stop after the Phase 4 report. Do not enable a production use case, create commits, or begin cleanup/AG-UI work without separate approval.
+```bash
+psql "$DATABASE_URL" \
+  -v ON_ERROR_STOP=1 \
+  -v artifact_schema="$DB_SCHEMA" \
+  -f db/migrations/000_create_agentic_artifact_store.sql
+
+psql "$DATABASE_URL" \
+  -v ON_ERROR_STOP=1 \
+  -v artifact_schema="$DB_SCHEMA" \
+  -f db/migrations/001_add_artifact_idempotency_key.sql
+```
+
+The deployment order must be:
+
+1. Run `000_create_agentic_artifact_store.sql`.
+2. Run all later migrations, including `001`.
+3. Run the verification SQL.
+4. Start Orchestration and Executor services.
+
+## Tests
+
+Add contract tests proving:
+
+- The base migration creates every ORM column with compatible types and nullability.
+- `idempotency_key` exists on a fresh installation.
+- The expected unique index exists.
+- Running migration `000` twice is safe.
+- Running `001` after `000` is safe.
+- Both Executor-first and Orchestrator-first startup see the same complete schema.
+- Neither service can create an incomplete version of the table.
+- The verification script fails when a required column or index is missing.
+
+Do not enable artifact capture, change production configuration, create commits, or claim real PostgreSQL verification unless the migration is actually executed against PostgreSQL.
