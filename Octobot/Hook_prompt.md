@@ -1,138 +1,161 @@
-Phase 2 and its hardening pass are accepted. Proceed with Phase 3: Async, Hybrid, Resume, retry/idempotency, and durability hardening.
+Phase 3 is provisionally accepted. Proceed with Phase 4: production readiness, Orchestrator hardening, migration planning, and controlled rollout.
 
-Do not implement physical cleanup scheduling or AG-UI placeholder rendering in this phase.
+Do not enable artifact capture in production until every mandatory gate below is satisfied.
 
-## Phase 3 objectives
+## 1. Resolve the database migration blocker
 
-Prove that artifact capture, compact transport, final materialization, session addressing, and follow-up queries remain correct across process boundaries, interruption/resume, retries, cancellation, and partial failures.
+`Base.metadata.create_all()` does not add `idempotency_key` to an existing table.
 
-## 1. Async and Hybrid execution
+Create an idempotent, production-reviewed database change for every tenant schema:
 
-Trace and test the complete production paths before changing code:
+- Add nullable `idempotency_key`.
+- Add the required unique or partial unique index.
+- Use `IF NOT EXISTS` or the platform's established equivalent.
+- Keep existing rows valid.
+- Document database-first deployment ordering.
+- Confirm old application versions tolerate the expanded schema.
+- Provide verification and rollback queries.
+- Add schema inspection or migration contract tests.
 
-- Executor capture inside the Kafka/background-worker execution.
-- Compact result publication to Kafka.
-- Orchestrator consumption and response synthesis.
-- Final materialization at the established external response boundary.
-- Hybrid request initiation and Kafka-delivered final response.
+Do not rely on runtime `create_all()` to upgrade an existing table.
 
-Requirements:
+## 2. Close the missing-ID idempotency gap
 
-- Kafka messages must contain only `llm_context`, `artifact_refs`, placeholders, and safe metadata.
-- Raw or materialized artifact data must never enter Kafka step payloads, synthesis prompts, or ADK session history.
-- A different process must be able to retrieve the committed artifact using tenant-routed storage.
-- Async and Hybrid final responses must materialize identically to Sync.
-- Feature-flag-off behavior must remain unchanged.
+The current implementation permits `idempotency_key = None` when invocation or function-call IDs are unavailable.
 
-## 2. Resume and process restart
+Trace all Sync, Stream, Async, Hybrid, and Resume paths and report whether both identifiers are guaranteed.
 
-Verify both persistent and serialized in-memory session paths.
+- If guaranteed, validate them before capture and add tests for every mode.
+- If not guaranteed, stop and propose a deterministic fallback with collision analysis.
+- Do not silently persist retry-sensitive artifacts without idempotency protection.
+- Missing identifiers must emit a safe metric and follow an explicitly documented failure policy.
 
-- An artifact captured before interruption remains queryable after resume.
-- `last_displayed_artifacts` survives session serialization and rehydration.
-- Stable row IDs remain unchanged after restart.
-- Resume does not recapture completed tool calls.
-- New tool calls triggered after resume may create new artifacts normally.
-- Expired artifacts return the standard generic not-found result.
-- Materialized client content must not be serialized back into session history.
+## 3. Add real integration verification
 
-Use a newly constructed store/service instance in tests to prove durability rather than relying on an existing in-process singleton or cache.
+Unit simulations are necessary but insufficient for the concurrency and transport claims.
 
-## 3. Idempotency and concurrent retries
+Using existing project infrastructure where available, test against real Postgres:
 
-Use the established key:
+- Concurrent inserts for the same idempotency key.
+- Same key and checksum resolves to one artifact.
+- Same key and different checksum fails safely.
+- Multi-artifact transaction rollback.
+- Cancellation during a transaction.
+- Fresh-process retrieval and soft expiry.
+- Tenant-schema isolation.
+- Index and constraint behavior after migration.
 
-`invocation_id + function_call_id + artifact_sequence`
+Verify with a real Kafka environment or staging deployment when available:
 
-Required behavior:
+- Published step payloads contain compact references only.
+- Raw artifact data never enters Kafka.
+- Async materialization occurs before the final response is delivered.
+- Duplicate message delivery remains idempotent.
+- Broker and consumer restart behavior is safe.
 
-- Retrying the same tool call does not create duplicate artifact rows.
-- A repeated call returns or resolves to the same logical artifact/version deterministically.
-- Different invocation IDs remain independent.
-- Multiple artifacts from one tool call retain deterministic sequence and display order.
-- Concurrent duplicate writes produce one durable logical result without leaking a uniqueness error.
-- Retry after process restart behaves the same as retry in the original process.
+If these environments are unavailable, create repeatable integration test commands and mark production enablement blocked. Do not describe mocked tests as live integration proof.
 
-Do not silently overwrite an artifact with different content under the same idempotency key. Detect the checksum conflict, log it safely, and return a bounded failure.
+## 4. Harden every Orchestrator response boundary
 
-## 4. Transaction and partial-failure behavior
+Create one clearly owned final-response materialization interface and ensure it covers:
 
-When one tool call produces multiple artifacts:
-
-- Persist the capture atomically when supported by the current store pattern.
-- A mid-capture failure must not leave a compact response referring to missing or partially written artifacts.
-- If atomic multi-row persistence cannot be implemented without a broad redesign, clean up successfully written rows before returning the sanitized failure and document the residual risk.
-- No raw tool content may fall through to the model after failure.
-- No handled storage failure may become an unhandled HTTP 500.
-
-Add fault-injection tests for first-write, middle-write, and final-write failures.
-
-## 5. Cancellation and disconnect behavior
-
-Test cancellation or client disconnect after:
-
-- Tool completion but before artifact commit.
-- Artifact commit but before compact response creation.
-- Compact response creation but before final materialization.
-- Final materialization but before delivery.
+- Single-step raw response.
+- Multi-step raw last-step response.
+- Output-generator synthesis response.
+- Async Kafka final-response branch.
+- Hybrid response path.
+- Error and unresolved-reference paths.
 
 Requirements:
 
-- Committed artifacts remain durable.
-- Incomplete transactions are rolled back.
-- Client retry is idempotent.
-- No unbounded duplicate rows are created.
-- No materialized artifact content is written into internal session or transport payloads.
+- `prepare_response()` and all synthesis prompts receive compact data only.
+- Materialization happens after synthesis and before external delivery.
+- Feature flag off performs no artifact lookup.
+- Configuration lookup failures are logged and metered safely.
+- Missing, unauthorized, expired, and failed lookups remain unexpanded and non-disclosing.
+- Future response branches should be difficult to add without passing through the final materialization interface.
 
-## 6. Soft retention behavior
+Add branch and contract tests for every boundary.
 
-Physical cleanup remains out of scope, but soft expiry must work in every mode:
+## 5. Production observability
 
-- Expired artifacts are excluded from direct lookup, name lookup, materialization, and `query_artifact`.
-- Expiry behavior remains generic and non-disclosing.
-- A resume after expiry cannot revive or expose the artifact.
-- Retention configuration is resolved consistently after process restart.
+Add or confirm metrics for:
 
-## 7. Authorization parity
+- Capture success and failure.
+- Capture failure reason.
+- Idempotency reuse and checksum conflict.
+- Batch rollback.
+- Materialization success, missing reference, expired reference, and lookup failure.
+- Query success, rejection, truncation, authorization denial, and ambiguity.
+- Configuration fallback.
+- Artifact rows and bytes written.
+- Materialized response size and latency.
+- Soft-expired rows still awaiting physical cleanup.
 
-For Sync, Stream, Async, Hybrid, and Resume, confirm:
+Metrics and logs must contain safe identifiers only, never artifact data.
 
-- Tenant, use-case, and session ownership are enforced before content is returned.
-- Missing and unauthorized artifacts remain byte-identical externally.
-- Table-name lookup cannot cross an ownership boundary.
-- Logs, metrics, Kafka payloads, and errors never contain artifact data.
+## 6. Security and retention gates
 
-## Required tests
+Before production enablement, obtain explicit approval for:
 
-Add focused tests covering:
+- Artifact data classification.
+- Tenant and session authorization rules.
+- Database encryption and access.
+- Audit behavior.
+- Default retention period.
+- Maximum artifact size.
+- Incident and deletion procedures.
 
-- Async capture and compact Kafka publication.
-- Async final response materialization.
-- Hybrid capture and materialization.
-- Restart using a fresh store instance.
-- Interruption/resume with preserved addressing state.
-- Duplicate retry before and after restart.
-- Concurrent duplicate capture.
-- Same idempotency key with conflicting content.
-- Multi-artifact atomicity and injected write failures.
-- Disconnect/cancellation at each lifecycle point.
-- Expiry before and after resume.
-- Authorization and non-disclosure in every execution mode.
-- Feature flag off in Async, Hybrid, and Resume.
-- Existing Sync and Stream behavior remains unchanged.
+Physical cleanup scheduling remains outside this code phase, but unrestricted rollout is blocked without an operational deletion mechanism.
 
-Prefer existing repository fixtures and execution coordinators. Do not invent a parallel runtime or transport abstraction solely for these tests.
+A small canary may proceed only if:
 
-## Verification report
+- The capture volume is strictly bounded.
+- Soft expiry is enforced.
+- Database growth is monitored.
+- A tested manual cleanup procedure exists.
+- Security and data-retention owners approve the exception.
 
-Run the complete Executor and Orchestrator unit suites and provide:
+## 7. Controlled rollout
 
-- Exact commands.
-- Passed, skipped, and failed counts.
-- Names and evidence for any baseline failures.
-- A file-by-file change summary.
-- Proof that Kafka/session payloads remain compact.
-- Proof that retry and concurrency tests do not create duplicate rows.
-- Any behavior that could not be verified without a real Postgres or Kafka integration environment.
+Keep `enable_artifact_capture = False` by default.
 
-Stop after Phase 3 and request approval before beginning Phase 4 rollout and Orchestrator hardening.
+Use these stages:
+
+1. Automated and integration validation.
+2. Shadow observation without changing client responses, if safely supported.
+3. One approved internal pilot use case.
+4. Limited canary with monitored volume.
+5. Gradual opt-in expansion.
+6. General availability only after cleanup and operational gates are complete.
+
+Define rollback triggers for:
+
+- Artifact leakage into prompts, sessions, or Kafka.
+- Authorization mismatch.
+- Materialization failure rate.
+- Idempotency conflicts.
+- Database growth.
+- Response latency or size regression.
+
+Rollback must be possible by disabling the feature flag without requiring an application downgrade.
+
+## 8. Final verification
+
+Run both complete unit suites plus available Postgres and Kafka integration suites.
+
+Report:
+
+- Exact commands and results.
+- File-by-file changes.
+- Migration and deployment order.
+- Evidence for every response branch.
+- Evidence that internal payloads remain compact.
+- Real versus simulated integration coverage.
+- Security and retention approvals still outstanding.
+- Rollout and rollback runbooks.
+- Any remaining production blocker.
+
+Do not implement AG-UI placeholder rendering in Phase 4.
+
+Stop after the Phase 4 report. Do not enable a production use case, create commits, or begin cleanup/AG-UI work without separate approval.
