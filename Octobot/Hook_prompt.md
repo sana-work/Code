@@ -1,77 +1,138 @@
-Phase 2 is provisionally accepted. Complete the following Phase 2 hardening before starting Phase 3.
+Phase 2 and its hardening pass are accepted. Proceed with Phase 3: Async, Hybrid, Resume, retry/idempotency, and durability hardening.
 
-## 1. Make limiting behavior explicit
+Do not implement physical cleanup scheduling or AG-UI placeholder rendering in this phase.
 
-Do not silently alter query semantics.
+## Phase 3 objectives
 
-- Reject requests exceeding the filter-condition limit. Never silently omit filters.
-- Reject unsupported aggregate names and invalid filter operators.
-- Rows, columns, and response bytes may be truncated only when the response includes explicit metadata:
-  - `truncated`
-  - `truncation_reason`
-  - `returned_rows`
-  - `total_rows`, when known
-  - `has_more`
-  - `limits_applied`
-- Aggregates must run over the full authorized filtered dataset, not a paginated or truncated subset.
-- Add tests proving truncation metadata is deterministic and filters are never silently dropped.
+Prove that artifact capture, compact transport, final materialization, session addressing, and follow-up queries remain correct across process boundaries, interruption/resume, retries, cancellation, and partial failures.
 
-## 2. Enforce or accurately describe the execution budget
+## 1. Async and Hybrid execution
 
-The current execution-time budget is logged-only and must not be described as an enforced security limit.
+Trace and test the complete production paths before changing code:
 
-Inspect the actual query implementation and choose one safe approach:
+- Executor capture inside the Kafka/background-worker execution.
+- Compact result publication to Kafka.
+- Orchestrator consumption and response synthesis.
+- Final materialization at the established external response boundary.
+- Hybrid request initiation and Kafka-delivered final response.
 
-1. Add a real timeout/cancellation mechanism using an existing repository pattern; or
-2. Bound the maximum work before execution using artifact size, row count, filter complexity, and aggregate limits.
+Requirements:
 
-If neither approach can safely stop excessive work, retain the metric but rename and document it as an observability budget, not a hard limit. Treat real timeout enforcement as a production-enablement gate.
+- Kafka messages must contain only `llm_context`, `artifact_refs`, placeholders, and safe metadata.
+- Raw or materialized artifact data must never enter Kafka step payloads, synthesis prompts, or ADK session history.
+- A different process must be able to retrieve the committed artifact using tenant-routed storage.
+- Async and Hybrid final responses must materialize identically to Sync.
+- Feature-flag-off behavior must remain unchanged.
 
-Add tests for the selected behavior.
+## 2. Resume and process restart
 
-## 3. Make query limits configurable
+Verify both persistent and serialized in-memory session paths.
 
-Move the query limits into validated use-case metadata or the closest established configuration mechanism:
+- An artifact captured before interruption remains queryable after resume.
+- `last_displayed_artifacts` survives session serialization and rehydration.
+- Stable row IDs remain unchanged after restart.
+- Resume does not recapture completed tool calls.
+- New tool calls triggered after resume may create new artifacts normally.
+- Expired artifacts return the standard generic not-found result.
+- Materialized client content must not be serialized back into session history.
 
-- Maximum returned rows
-- Maximum requested columns
-- Maximum response bytes
-- Maximum filter conditions
-- Maximum aggregate work
-- Execution-time budget, if enforceable
+Use a newly constructed store/service instance in tests to prove durability rather than relying on an existing in-process singleton or cache.
 
-Keep conservative defaults matching the current constants. Invalid configuration must fail safely and emit a structured warning without exposing artifact data.
+## 3. Idempotency and concurrent retries
 
-## 4. Verify session addressing
+Use the established key:
 
-Add or confirm tests proving:
+`invocation_id + function_call_id + artifact_sequence`
 
-- `last_displayed_artifacts` is capped deterministically.
-- A newer display replaces the previous addressing context as documented.
-- Multiple tables displayed in one turn produce an ambiguity result for an unqualified “row N.”
-- “Row N” resolves through frozen stable row IDs, never the current list or database order.
-- Session state contains references and display metadata only, never artifact content.
-- Interrupted and resumed sessions retain sufficient addressing information.
+Required behavior:
 
-## 5. Preserve authorization and non-disclosure
+- Retrying the same tool call does not create duplicate artifact rows.
+- A repeated call returns or resolves to the same logical artifact/version deterministically.
+- Different invocation IDs remain independent.
+- Multiple artifacts from one tool call retain deterministic sequence and display order.
+- Concurrent duplicate writes produce one durable logical result without leaking a uniqueness error.
+- Retry after process restart behaves the same as retry in the original process.
 
-Reconfirm through black-box tests that:
+Do not silently overwrite an artifact with different content under the same idempotency key. Detect the checksum conflict, log it safely, and return a bounded failure.
 
-- Missing, expired, cross-tenant, cross-use-case, and cross-session IDs return byte-identical generic not-found results.
-- Table-name lookup cannot cross ownership boundaries.
-- Aggregates, filters, and projections cannot bypass ownership checks.
-- Errors and logs contain safe identifiers only, never artifact payloads.
+## 4. Transaction and partial-failure behavior
 
-## 6. Verification report
+When one tool call produces multiple artifacts:
 
-Run both full unit suites and report:
+- Persist the capture atomically when supported by the current store pattern.
+- A mid-capture failure must not leave a compact response referring to missing or partially written artifacts.
+- If atomic multi-row persistence cannot be implemented without a broad redesign, clean up successfully written rows before returning the sanitized failure and document the residual risk.
+- No raw tool content may fall through to the model after failure.
+- No handled storage failure may become an unhandled HTTP 500.
 
-- Exact commands
-- Passed, skipped, and failed counts
-- Names and evidence for baseline failures
-- New hardening tests added
-- Any remaining deviations from the plan
+Add fault-injection tests for first-write, middle-write, and final-write failures.
 
-Do not start Phase 3 if filter clipping remains silent or if an observability-only execution budget is represented as an enforced limit.
+## 5. Cancellation and disconnect behavior
 
-After this hardening passes, stop and request approval for Phase 3: Async, Hybrid, Resume, retry/idempotency, and durability testing. Physical cleanup scheduling and AG-UI placeholder rendering remain out of scope.
+Test cancellation or client disconnect after:
+
+- Tool completion but before artifact commit.
+- Artifact commit but before compact response creation.
+- Compact response creation but before final materialization.
+- Final materialization but before delivery.
+
+Requirements:
+
+- Committed artifacts remain durable.
+- Incomplete transactions are rolled back.
+- Client retry is idempotent.
+- No unbounded duplicate rows are created.
+- No materialized artifact content is written into internal session or transport payloads.
+
+## 6. Soft retention behavior
+
+Physical cleanup remains out of scope, but soft expiry must work in every mode:
+
+- Expired artifacts are excluded from direct lookup, name lookup, materialization, and `query_artifact`.
+- Expiry behavior remains generic and non-disclosing.
+- A resume after expiry cannot revive or expose the artifact.
+- Retention configuration is resolved consistently after process restart.
+
+## 7. Authorization parity
+
+For Sync, Stream, Async, Hybrid, and Resume, confirm:
+
+- Tenant, use-case, and session ownership are enforced before content is returned.
+- Missing and unauthorized artifacts remain byte-identical externally.
+- Table-name lookup cannot cross an ownership boundary.
+- Logs, metrics, Kafka payloads, and errors never contain artifact data.
+
+## Required tests
+
+Add focused tests covering:
+
+- Async capture and compact Kafka publication.
+- Async final response materialization.
+- Hybrid capture and materialization.
+- Restart using a fresh store instance.
+- Interruption/resume with preserved addressing state.
+- Duplicate retry before and after restart.
+- Concurrent duplicate capture.
+- Same idempotency key with conflicting content.
+- Multi-artifact atomicity and injected write failures.
+- Disconnect/cancellation at each lifecycle point.
+- Expiry before and after resume.
+- Authorization and non-disclosure in every execution mode.
+- Feature flag off in Async, Hybrid, and Resume.
+- Existing Sync and Stream behavior remains unchanged.
+
+Prefer existing repository fixtures and execution coordinators. Do not invent a parallel runtime or transport abstraction solely for these tests.
+
+## Verification report
+
+Run the complete Executor and Orchestrator unit suites and provide:
+
+- Exact commands.
+- Passed, skipped, and failed counts.
+- Names and evidence for any baseline failures.
+- A file-by-file change summary.
+- Proof that Kafka/session payloads remain compact.
+- Proof that retry and concurrency tests do not create duplicate rows.
+- Any behavior that could not be verified without a real Postgres or Kafka integration environment.
+
+Stop after Phase 3 and request approval before beginning Phase 4 rollout and Orchestrator hardening.
