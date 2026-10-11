@@ -1,25 +1,70 @@
-Proceed with Phase 1 under these decisions:
+Phase 1 is accepted, subject to the hardening checks below.
 
-1. Cross-repository Phase 1 is approved. Keep artifact capture and compact session history in the Executor. Perform materialization only at the true external boundary in `orchestration/service/execution_response_builder.py::build_execution_response()`, after all LLM synthesis. Cover all three response branches. Nothing passed into `prepare_response()` or another model may contain materialized artifact bytes.
+Do not begin the main Phase 2 implementation until these checks are complete and reported.
 
-2. Use fail-closed behavior for artifact isolation. If capture or durable storage fails, do not pass the raw large result to the model. Return a bounded, sanitized error using the repository’s existing tool-error shape and retry semantics. Do not expose payload data, storage details, or artifact identifiers. The artifact subsystem should not cause an unhandled HTTP 500.
+## Phase 1 hardening
 
-3. Add a dedicated `enable_artifact_capture` opt-in flag, independent of `enable_audit_context_logging`, defaulting to `False`. Implementation and disabled-by-default testing may proceed now. Production enablement requires separate security/data-retention approval.
+1. Capture failure behavior
+   - Confirm no storage, serialization, classification, or callback exception can escape into an unhandled HTTP 500.
+   - Raw protected tool content must never fall through to model context.
+   - Return the existing bounded, sanitized MCP-style error shape.
+   - Automatic retry is not required because ADK cannot reach the retry path from `after_tool_callback`.
+   - Add tests proving the returned error contains no artifact data and no exception escapes.
 
-Additional requirements:
+2. Configuration lookup failures
+   - `_apply_materialization` may preserve availability when use-case lookup fails, but this must not be silent.
+   - Add a structured warning and metric containing safe identifiers only.
+   - Add tests for configuration lookup failure.
+   - Confirm the result is either unchanged ordinary content or a literal unresolved placeholder, never partially materialized content.
 
-- Preserve the confirmed plugin order and make `ArtifactCapturePlugin` skip every result whose existing `isError` flag is true.
-- Before materializer implementation, prove that the Orchestrator has enough authenticated tenant, use-case, and session context to resolve artifact references securely. Reuse existing tenant-routed storage access. Do not duplicate capture logic or introduce an unreviewed public endpoint.
-- Keep compact `llm_context` and `artifact_refs` through Executor responses, Orchestrator step outputs, and `prepare_response()` synthesis.
-- Materialize only the final response returned by `build_execution_response()`.
-- Do not implement Async, Hybrid, Resume, `query_artifact`, aggregation, cleanup jobs, or AG-UI rendering in Phase 1.
-- Add tests for every `build_execution_response()` branch, proving:
-  - synthesis receives no artifact bytes;
-  - final materialization is exact;
-  - unauthorized or invalid references are not expanded;
-  - feature-flag-off behavior is unchanged;
-  - Executor ADK history contains only compact context and references;
-  - error tool results are never captured.
-- Use the confirmed workspace-root virtual environment for Executor tests.
-- Run focused tests after each change, then adjacent suites and both repositories’ complete affected suites.
-- Stop after Phase 1 and provide the required implementation and test report before beginning Phase 2.
+3. Classifier thresholds
+   - Keep current defaults for now, but centralize and validate them.
+   - Document the defaults and their units.
+   - Do not enable the feature in production until artifact row and byte limits are configurable or explicitly approved.
+
+4. Cross-repository schema compatibility
+   - The Orchestrator read-only `ArtifactPGStore` mirror must remain compatible with the Executor-owned table.
+   - Add a contract test covering table name, required columns, data types, ownership fields, expiry, checksum, and artifact payload decoding.
+   - Document the Executor as the schema owner.
+
+5. Test evidence
+   - Re-run both complete unit suites.
+   - Report exact commands, passing/skipped/failed counts, and the names of any failures.
+   - Preserve evidence showing the two Orchestrator `test_environment.py` failures occur on the clean baseline.
+   - Run focused tests for capture, storage, materialization, plugin ordering, all response-builder branches, and feature-flag-off compatibility.
+
+After these checks pass, proceed with Phase 2 only.
+
+## Phase 2 scope
+
+Implement follow-up artifact queries and session addressing:
+
+- Add the `query_artifact` built-in tool.
+- Enforce tenant, use-case, and session ownership on every read.
+- Return the same generic not-found response for missing and unauthorized IDs.
+- Record `last_displayed_artifacts` in session state.
+- Resolve “row N” through frozen stable row IDs, never a live database offset.
+- Return an ambiguity response when multiple displayed artifacts could match.
+- Support bounded row lookup, column projection, filters, and pagination.
+- Add deterministic server-side `sum`, `count`, `min`, and `max`.
+- Enforce limits for rows, columns, response bytes, filter complexity, aggregate work, and execution time.
+- Keep full artifact content outside model context.
+
+## Required Phase 2 tests
+
+- Query by artifact ID and artifact name.
+- Query by stable row ID and displayed row number.
+- Ambiguous “row N” across multiple tables.
+- Cross-tenant, cross-use-case, and cross-session access denial.
+- Byte-identical not-found responses for missing and unauthorized IDs.
+- Expired artifact rejection.
+- Row, column, byte, filter, and execution limits.
+- Exact aggregate results over the complete stored dataset.
+- Session continuation and interruption/resume behavior.
+- Confirmation that narrow query results, not full artifacts, reach model context.
+- Feature flag off remains behaviorally unchanged.
+- Existing Executor and Orchestrator suites continue to pass apart from documented baseline failures.
+
+Do not include physical cleanup scheduling or AG-UI placeholder rendering in Phase 2. Keep those as separately approved later phases.
+
+Stop and report before implementation if the current code cannot support stable session addressing, authorization parity, or deterministic aggregation without changing an external API contract.
