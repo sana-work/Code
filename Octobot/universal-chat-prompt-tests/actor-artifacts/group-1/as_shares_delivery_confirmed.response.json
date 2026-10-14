@@ -1,0 +1,15 @@
+{
+  "status": "SUCCESS",
+  "intent": "Determine the number of shares actually delivered for event 0001000001.",
+  "answer": "**Summary:** **25** shares were actually delivered for event 0001000001, confirmed by share payment status **DELIVERED**.\n\n**Supporting share delivery details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": ["Event ID", "Account ID", "Shares Paid", "Share Payment Status"],
+      "rows": [{"cells": ["0001000001", "00123456", "25", "DELIVERED"]}]
+    }
+  ],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

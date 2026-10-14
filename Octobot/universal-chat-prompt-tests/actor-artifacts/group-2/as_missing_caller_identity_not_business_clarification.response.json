@@ -1,0 +1,10 @@
+{
+  "status": "FAILED",
+  "intent": "Confirm whether cash was paid for event 0001000001.",
+  "answer": "**Summary:** Caller identity is required to complete this request.",
+  "attributes": [],
+  "tables": [],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"],
+  "error": "MISSING_SOEID"
+}

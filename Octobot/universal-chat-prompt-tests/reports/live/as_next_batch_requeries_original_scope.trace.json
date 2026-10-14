@@ -1,0 +1,373 @@
+{
+  "case_id": "as_next_batch_requeries_original_scope",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "account_id": "00123456",
+            "limit": 50,
+            "offset": 50
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 51",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 52",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 53",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 54",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 55",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 56",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 57",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 58",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 59",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 60",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 61",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 62",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 63",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 64",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 65",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 66",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 67",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 68",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 69",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 70",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "2",
+              "total_page_count": "2",
+              "total_record_count": "70"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Provide the next batch of AS cash payments for the previously specified account 00123456.\",\n  \"answer\": \"**Summary:** The AS account scope remains account 00123456 with the previous seven calendar days of Payment Date. This summary applies to the additional payment information currently available.\\n\\n**Payment details:** The additional payment entries for event 0001000001 consistently report **PAID**, each with a cash amount of **CAD 100.00** and a scheduled Payment Date of **2026-10-13**.\\n\\nWould you like me to show the supporting details in a table?\",\n  \"attributes\": [],\n  \"tables\": [],\n  \"options\": [],\n  \"toolsUsed\": [\"query_as_events_entitlements\"]\n}\n"
+    }
+  ]
+}

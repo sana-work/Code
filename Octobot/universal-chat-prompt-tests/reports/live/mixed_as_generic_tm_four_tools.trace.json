@@ -1,0 +1,254 @@
+{
+  "case_id": "mixed_as_generic_tm_four_tools",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "event_id": "0001000001",
+            "limit": 50,
+            "offset": 0
+          }
+        },
+        {
+          "name": "query_tm_current_transactions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        },
+        {
+          "name": "query_tm_eod_transactions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        },
+        {
+          "name": "query_tm_settlement_instructions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic cash dividend",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        },
+        {
+          "name": "query_tm_current_transactions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Executed Trade ID",
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type",
+                "Trade Status",
+                "Instruction Date",
+                "Trade Date",
+                "Contractual Settlement Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Settlement Currency Code",
+                "Place of Settlement",
+                "Counterparty",
+                "Fail Market Status"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "BUY",
+                    "PENDING",
+                    "2026-10-10",
+                    "2026-10-10",
+                    "2026-10-12",
+                    "null",
+                    "1000.00",
+                    "CAD",
+                    "Synthetic settlement venue",
+                    "Synthetic Counterparty",
+                    "null"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        },
+        {
+          "name": "query_tm_eod_transactions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type Description",
+                "Trade Status",
+                "Contractual Settlement Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Settlement Currency Code",
+                "Counterparty",
+                "Place of Settlement",
+                "Fail Market Status",
+                "Close of Business Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "Synthetic purchase",
+                    "PENDING",
+                    "2026-10-12",
+                    "null",
+                    "1000.00",
+                    "CAD",
+                    "Synthetic Counterparty",
+                    "Synthetic settlement venue",
+                    "MN",
+                    "2026-10-12"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        },
+        {
+          "name": "query_tm_settlement_instructions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type",
+                "Status",
+                "Trade Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Cash Account ID",
+                "Settlement Location",
+                "Counterparty",
+                "How Position Is Held"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "BUY",
+                    "PENDING",
+                    "2026-10-10",
+                    "null",
+                    "1000.00",
+                    "00123456",
+                    "Synthetic settlement venue",
+                    "Synthetic Counterparty",
+                    "Synthetic holding method"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\":\"SUCCESS\",\n  \"intent\":\"Confirm cash payment for event 0001000001 and provide the applicable TM details for client reference SYN-CLIENT-01.\",\n  \"answer\":\"**Summary:**\\n\\n**Payment details:** For event 0001000001 and account 00123456, Payment Status is **PAID**, confirming cash paid of **100.00 CAD**. The scheduled Payment Date is **2026-10-13**, recorded in UTC.\\n\\nThe TM information for client reference SYN-CLIENT-01 is set out separately below. Those searches use each service's default previous-seven-day settlement-date window.\\n\\nCurrent Transactions\\n\\n**Parties involved**: The counterparty is Synthetic Counterparty and the place of settlement is Synthetic settlement venue.\\n\\n**Settlement information**: The contractual settlement date is **2026-10-12**, with a settlement amount of **1000.00 CAD**.\\n\\n**Current Status & Action Required**: Trade Status is **PENDING**. Fail/market status is unavailable, so the information does not establish whether action is required.\\n\\nEOD Transactions\\n\\n**Parties involved**: The counterparty is Synthetic Counterparty and the place of settlement is Synthetic settlement venue.\\n\\n**Settlement information**: The **2026-10-12** close-of-business snapshot gives a contractual settlement date of **2026-10-12** and a settlement amount of **1000.00 CAD**.\\n\\n**Current Status & Action Required**: Trade Status in that snapshot is **PENDING**, with Fail Market Status **MN**. No description or action meaning for MN is available.\\n\\nSettlement Instructions\\n\\n**Parties involved**: The counterparty is Synthetic Counterparty, the holding arrangement is Synthetic holding method, and the settlement location is Synthetic settlement venue.\\n\\n**Settlement information**: Trade Date is **2026-10-10**, the settlement amount is **1000.00**, and Cash Account ID is 00123456. Currency is unavailable for this service.\\n\\n**Current Status & Action Required**: The instruction status is **PENDING**. This service does not provide a fail/market action assessment.\\n\\n**Supporting cash payment details**\\n\\n<<table_1>>\\n\\n**Supporting current transaction details**\\n\\n<<table_2>>\\n\\n**Supporting EOD transaction details**\\n\\n<<table_3>>\\n\\n**Supporting settlement instruction details**\\n\\n<<table_4>>\",\n  \"attributes\":[],\n  \"tables\":[\n    {\"id\":\"table_1\",\"columns\":[\"Event ID\",\"Account ID\",\"Payment Date\",\"Payment Status\",\"Currency\",\"Cash Amount\"],\"rows\":[{\"cells\":[\"0001000001\",\"00123456\",\"2026-10-13\",\"PAID\",\"CAD\",\"100.00\"]}]},\n    {\"id\":\"table_2\",\"columns\":[\"Client Reference\",\"Trade Status\",\"Contractual Settlement Date\",\"Settlement Amount\",\"Settlement Currency Code\",\"Fail Market Status\"],\"rows\":[{\"cells\":[\"SYN-CLIENT-01\",\"PENDING\",\"2026-10-12\",\"1000.00\",\"CAD\",\"null\"]}]},\n    {\"id\":\"table_3\",\"columns\":[\"Client Reference\",\"Trade Status\",\"Contractual Settlement Date\",\"Settlement Amount\",\"Settlement Currency Code\",\"Fail Market Status\"],\"rows\":[{\"cells\":[\"SYN-CLIENT-01\",\"PENDING\",\"2026-10-12\",\"1000.00\",\"CAD\",\"MN\"]}]},\n    {\"id\":\"table_4\",\"columns\":[\"Client Reference\",\"Status\",\"Trade Date\",\"Settlement Amount\",\"Cash Account ID\",\"Settlement Location\"],\"rows\":[{\"cells\":[\"SYN-CLIENT-01\",\"PENDING\",\"2026-10-10\",\"1000.00\",\"00123456\",\"Synthetic settlement venue\"]}]}\n  ],\n  \"options\":[],\n  \"toolsUsed\":[\"query_as_events_entitlements\",\"query_tm_current_transactions\",\"query_tm_eod_transactions\",\"query_tm_settlement_instructions\"]\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "case_id": "as_full_table_preserves_special_cells",
+  "events": [
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"NEEDS_CLARIFICATION\",\n  \"intent\": \"Provide complete details for account 00123456 while preserving the source text.\",\n  \"answer\": \"**Summary:** Which information should the full table contain for account 00123456: corporate-action events and entitlements, current transactions, end-of-day transactions, or settlement instructions?\",\n  \"attributes\": [],\n  \"tables\": [],\n  \"options\": [],\n  \"toolsUsed\": []\n}\n"
+    }
+  ]
+}

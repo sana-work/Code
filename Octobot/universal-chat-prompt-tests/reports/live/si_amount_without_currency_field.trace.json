@@ -1,0 +1,83 @@
+{
+  "case_id": "si_amount_without_currency_field",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_tm_settlement_instructions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "requested_fields": [
+              "note",
+              "data_availability_timestamp"
+            ],
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_tm_settlement_instructions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type",
+                "Status",
+                "Trade Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Cash Account ID",
+                "Settlement Location",
+                "Counterparty",
+                "How Position Is Held",
+                "Note",
+                "Data Availability Timestamp"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "BUY",
+                    "PENDING",
+                    "2026-10-10",
+                    "null",
+                    "1000.00",
+                    "00123456",
+                    "Synthetic settlement venue",
+                    "Synthetic Counterparty",
+                    "Synthetic holding method",
+                    "Synthetic instruction awaiting review",
+                    "2026-10-13T02:00:00-04:00"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Provide the settlement instruction for client reference SYN-CLIENT-01, including settlement amount, currency if available, note and data availability time.\",\n  \"answer\": \"**Summary:** Settlement Instruction information for client reference SYN-CLIENT-01 uses the previous seven days of Trade Date, this service's settlement-date equivalent.\\n\\n**Parties involved**: The counterparty is Synthetic Counterparty, the position is held by Synthetic holding method, and the settlement location is Synthetic settlement venue.\\n\\n**Settlement information**: Trade Date is **2026-10-10**, the settlement amount is **1000.00**, and Cash Account ID is **00123456**. Currency is unavailable for this service. The data availability timestamp is **2026-10-13T02:00:00-04:00**.\\n\\n**Current Status & Action Required**: The settlement instruction status is **PENDING**. The note is \\\"Synthetic instruction awaiting review\\\". The available Settlement Instruction information does not support a fail/market action assessment.\\n\\n**Supporting settlement instruction details**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [\n    {\n      \"id\": \"table_1\",\n      \"columns\": [\"Client Reference\", \"Status\", \"Trade Date\", \"Settlement Amount\", \"Note\", \"Data Availability Timestamp\"],\n      \"rows\": [{\"cells\": [\"SYN-CLIENT-01\", \"PENDING\", \"2026-10-10\", \"1000.00\", \"Synthetic instruction awaiting review\", \"2026-10-13T02:00:00-04:00\"]}]\n    }\n  ],\n  \"options\": [],\n  \"toolsUsed\": [\"query_tm_settlement_instructions\"]\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "case_id": "as_timeout_nonretryable",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "event_id": "0001000001",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "ERROR",
+            "error": {
+              "code": "TOOL_TIMEOUT",
+              "message": "The request took longer than the configured time limit. Please try again.",
+              "retryable": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"FAILED\",\n  \"intent\": \"Confirm the cash payment for event 0001000001.\",\n  \"answer\": \"**Summary:** The request took longer than the configured time limit. Please try again.\",\n  \"attributes\": [],\n  \"tables\": [],\n  \"options\": [],\n  \"toolsUsed\": [\"query_as_events_entitlements\"],\n  \"error\": \"TOOL_TIMEOUT\"\n}\n"
+    }
+  ]
+}

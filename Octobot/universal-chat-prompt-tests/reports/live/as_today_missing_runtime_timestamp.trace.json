@@ -1,0 +1,9 @@
+{
+  "case_id": "as_today_missing_runtime_timestamp",
+  "events": [
+    {
+      "type": "final",
+      "text": "{\n  \"status\":\"NEEDS_CLARIFICATION\",\n  \"intent\":\"Show outstanding cash payments due today for account 00123456.\",\n  \"answer\":\"**Summary:** I need your local comparison date to identify payments due today for account 00123456. What local date, in YYYY-MM-DD format, should I use for 'today'?\",\n  \"attributes\":[],\n  \"tables\":[],\n  \"options\":[],\n  \"toolsUsed\":[]\n}\n"
+    }
+  ]
+}

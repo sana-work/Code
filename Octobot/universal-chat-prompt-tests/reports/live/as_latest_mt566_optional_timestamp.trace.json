@@ -1,0 +1,91 @@
+{
+  "case_id": "as_latest_mt566_optional_timestamp",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "event_id": "0001000001",
+            "requested_fields": [
+              "timestamp"
+            ],
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date",
+                "MT566 Sent-to-Client Timestamp"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic cash dividend",
+                    "2026-10-01",
+                    "2026-10-13T09:00:00Z"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic cash dividend",
+                    "2026-10-01",
+                    "2026-10-13T11:00:00Z"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "2"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Identify the latest MT566 sent-to-client timestamp for event 0001000001.\",\n  \"answer\": \"**Summary:** The latest MT566 for event 0001000001 was sent to the client at **2026-10-13T11:00:00Z** (UTC).\\n\\n**Supporting MT566 timing details**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [\n    {\n      \"id\": \"table_1\",\n      \"columns\": [\"Event ID\", \"Account ID\", \"MT566 Sent-to-Client Timestamp\"],\n      \"rows\": [\n        {\"cells\": [\"0001000001\", \"00123456\", \"2026-10-13T09:00:00Z\"]},\n        {\"cells\": [\"0001000001\", \"00123456\", \"2026-10-13T11:00:00Z\"]}\n      ]\n    }\n  ],\n  \"options\": [],\n  \"toolsUsed\": [\"query_as_events_entitlements\"]\n}\n"
+    }
+  ]
+}

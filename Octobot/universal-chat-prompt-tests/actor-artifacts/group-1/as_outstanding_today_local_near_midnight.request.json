@@ -1,0 +1,12 @@
+[
+  {
+    "name": "query_as_events_entitlements",
+    "arguments": {
+      "account_id": "00123456",
+      "payment_date": "2026-10-13",
+      "payment_status": "UNPAID",
+      "limit": 50,
+      "offset": 0
+    }
+  }
+]

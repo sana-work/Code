@@ -1,0 +1,414 @@
+{
+  "case_id": "mixed_explicit_full_table_all_four_services",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "account_id": "00123456",
+            "limit": 50,
+            "offset": 0
+          }
+        },
+        {
+          "name": "query_tm_current_transactions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        },
+        {
+          "name": "query_tm_eod_transactions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        },
+        {
+          "name": "query_tm_settlement_instructions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 1",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 2",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 3",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 4",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 5",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 6",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 7",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 8",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 9",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 10",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 11",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "11"
+            }
+          }
+        },
+        {
+          "name": "query_tm_current_transactions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Executed Trade ID",
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type",
+                "Trade Status",
+                "Instruction Date",
+                "Trade Date",
+                "Contractual Settlement Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Settlement Currency Code",
+                "Place of Settlement",
+                "Counterparty",
+                "Fail Market Status"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "BUY",
+                    "PENDING",
+                    "2026-10-10",
+                    "2026-10-10",
+                    "2026-10-12",
+                    "null",
+                    "1000.00",
+                    "CAD",
+                    "Synthetic settlement venue",
+                    "Synthetic Counterparty",
+                    "null"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        },
+        {
+          "name": "query_tm_eod_transactions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type Description",
+                "Trade Status",
+                "Contractual Settlement Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Settlement Currency Code",
+                "Counterparty",
+                "Place of Settlement",
+                "Fail Market Status",
+                "Close of Business Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "Synthetic purchase",
+                    "PENDING",
+                    "2026-10-12",
+                    "null",
+                    "1000.00",
+                    "CAD",
+                    "Synthetic Counterparty",
+                    "Synthetic settlement venue",
+                    "MN",
+                    "2026-10-12"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        },
+        {
+          "name": "query_tm_settlement_instructions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type",
+                "Status",
+                "Trade Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Cash Account ID",
+                "Settlement Location",
+                "Counterparty",
+                "How Position Is Held"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "BUY",
+                    "PENDING",
+                    "2026-10-10",
+                    "null",
+                    "1000.00",
+                    "00123456",
+                    "Synthetic settlement venue",
+                    "Synthetic Counterparty",
+                    "Synthetic holding method"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Show full AS cash payment tables for account 00123456 and full TM tables for client reference SYN-CLIENT-01.\",\n  \"answer\": \"**Summary:** AS account information uses the previous seven calendar days of Payment Date. Current and EOD reference searches use the previous seven days of Contractual Settlement Date; Settlement Instructions uses the previous seven days of Trade Date.\\n\\n**Payment details:** The AS payment entries for event 0001000001 consistently report **PAID**, each with a cash amount of **CAD 100.00** and a scheduled Payment Date of **2026-10-13**.\\n\\n**Parties involved**: For Current Transactions, the counterparty is Synthetic Counterparty, and the place of settlement is Synthetic settlement venue.\\n\\n**Settlement information**: The Current contractual settlement date is **2026-10-12**, and the settlement amount is **CAD 1000.00**.\\n\\n**Current Status & Action Required**: The Current trade status is **PENDING**. Fail/market status is unavailable, so the available Current information does not establish that no action is required.\\n\\n**Parties involved**: For EOD Transactions, the counterparty is Synthetic Counterparty, and the place of settlement is Synthetic settlement venue.\\n\\n**Settlement information**: The EOD information is the close-of-business snapshot dated **2026-10-12**. Its contractual settlement date is **2026-10-12**, and the settlement amount is **CAD 1000.00**.\\n\\n**Current Status & Action Required**: In that EOD snapshot, the trade status is **PENDING** and Fail Market Status is **MN**. No expansion or action meaning is supplied for MN.\\n\\n**Parties involved**: For Settlement Instructions, the counterparty is Synthetic Counterparty, the holding method is Synthetic holding method, and the settlement location is Synthetic settlement venue.\\n\\n**Settlement information**: The instruction's Trade Date is **2026-10-10**, settlement amount is **1000.00**, and Cash Account ID is **00123456**. Currency is unavailable for this service.\\n\\n**Current Status & Action Required**: The settlement instruction status is **PENDING**. This service does not support a fail/market action assessment.\\n\\n**Supporting AS payment details**\\n\\n<<table_1>>\\n\\n**Supporting Current transaction details**\\n\\n<<table_2>>\\n\\n**Supporting EOD transaction details**\\n\\n<<table_3>>\\n\\n**Supporting settlement instruction details**\\n\\n<<table_4>>\",\n  \"attributes\": [],\n  \"tables\": [\n    {\n      \"id\": \"table_1\",\n      \"columns\": [\n        \"Event ID\",\n        \"Account ID\",\n        \"ISIN\",\n        \"Event Type\",\n        \"Event Category\",\n        \"Payment Date\",\n        \"Payment Status\",\n        \"Security Name\",\n        \"Currency\",\n        \"Cash Amount\",\n        \"Narrative\",\n        \"Record Date\"\n      ],\n      \"rows\": [\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 1\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 2\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 3\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 4\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 5\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 6\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 7\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 8\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 9\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 10\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Synthetic row 11\",\n            \"2026-10-01\"\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": \"table_2\",\n      \"columns\": [\n        \"Executed Trade ID\",\n        \"Account ID\",\n        \"Custodian Reference\",\n        \"Client Reference\",\n        \"ISIN\",\n        \"Issue Name\",\n        \"Quantity\",\n        \"Transaction Type\",\n        \"Trade Status\",\n        \"Instruction Date\",\n        \"Trade Date\",\n        \"Contractual Settlement Date\",\n        \"Actual Settlement Date\",\n        \"Settlement Amount\",\n        \"Settlement Currency Code\",\n        \"Place of Settlement\",\n        \"Counterparty\",\n        \"Fail Market Status\"\n      ],\n      \"rows\": [\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"0001000001\",\n            \"SYN-CLIENT-01\",\n            \"SYNTH0000001\",\n            \"Synthetic Income Share\",\n            \"100\",\n            \"BUY\",\n            \"PENDING\",\n            \"2026-10-10\",\n            \"2026-10-10\",\n            \"2026-10-12\",\n            \"null\",\n            \"1000.00\",\n            \"CAD\",\n            \"Synthetic settlement venue\",\n            \"Synthetic Counterparty\",\n            \"null\"\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": \"table_3\",\n      \"columns\": [\n        \"Account ID\",\n        \"Custodian Reference\",\n        \"Client Reference\",\n        \"ISIN\",\n        \"Issue Name\",\n        \"Quantity\",\n        \"Transaction Type Description\",\n        \"Trade Status\",\n        \"Contractual Settlement Date\",\n        \"Actual Settlement Date\",\n        \"Settlement Amount\",\n        \"Settlement Currency Code\",\n        \"Counterparty\",\n        \"Place of Settlement\",\n        \"Fail Market Status\",\n        \"Close of Business Date\"\n      ],\n      \"rows\": [\n        {\n          \"cells\": [\n            \"00123456\",\n            \"0001000001\",\n            \"SYN-CLIENT-01\",\n            \"SYNTH0000001\",\n            \"Synthetic Income Share\",\n            \"100\",\n            \"Synthetic purchase\",\n            \"PENDING\",\n            \"2026-10-12\",\n            \"null\",\n            \"1000.00\",\n            \"CAD\",\n            \"Synthetic Counterparty\",\n            \"Synthetic settlement venue\",\n            \"MN\",\n            \"2026-10-12\"\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": \"table_4\",\n      \"columns\": [\n        \"Account ID\",\n        \"Custodian Reference\",\n        \"Client Reference\",\n        \"ISIN\",\n        \"Issue Name\",\n        \"Quantity\",\n        \"Transaction Type\",\n        \"Status\",\n        \"Trade Date\",\n        \"Actual Settlement Date\",\n        \"Settlement Amount\",\n        \"Cash Account ID\",\n        \"Settlement Location\",\n        \"Counterparty\",\n        \"How Position Is Held\"\n      ],\n      \"rows\": [\n        {\n          \"cells\": [\n            \"00123456\",\n            \"0001000001\",\n            \"SYN-CLIENT-01\",\n            \"SYNTH0000001\",\n            \"Synthetic Income Share\",\n            \"100\",\n            \"BUY\",\n            \"PENDING\",\n            \"2026-10-10\",\n            \"null\",\n            \"1000.00\",\n            \"00123456\",\n            \"Synthetic settlement venue\",\n            \"Synthetic Counterparty\",\n            \"Synthetic holding method\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"options\": [],\n  \"toolsUsed\": [\n    \"query_as_events_entitlements\",\n    \"query_tm_current_transactions\",\n    \"query_tm_eod_transactions\",\n    \"query_tm_settlement_instructions\"\n  ]\n}\n"
+    }
+  ]
+}

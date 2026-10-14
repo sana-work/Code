@@ -1,0 +1,9 @@
+{
+  "case_id": "as_initial_explicit_full_twenty_rows",
+  "events": [
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"NEEDS_CLARIFICATION\",\n  \"intent\": \"Provide the complete details for account 00123456 and ISIN SYNTH0000001.\",\n  \"answer\": \"**Summary:** Which information should the full table contain for account 00123456 and ISIN SYNTH0000001: corporate-action events and entitlements, current transactions, end-of-day transactions, or settlement instructions?\",\n  \"attributes\": [],\n  \"tables\": [],\n  \"options\": [],\n  \"toolsUsed\": []\n}\n"
+    }
+  ]
+}

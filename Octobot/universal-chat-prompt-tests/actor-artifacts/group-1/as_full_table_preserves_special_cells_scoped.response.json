@@ -1,0 +1,143 @@
+{
+  "status": "SUCCESS",
+  "intent": "Provide the complete default Asset Services details for account 00123456 while preserving source text.",
+  "answer": "**Summary:** Asset Services cash payment information for account 00123456 shows payment status **PAID**, confirming cash payment, with listed cash amounts of **100.00 CAD**. This account-only enquiry uses the default Payment Date window of the previous seven calendar days.\n\n**Supporting Asset Services details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": [
+        "Event ID",
+        "Account ID",
+        "ISIN",
+        "Event Type",
+        "Event Category",
+        "Payment Date",
+        "Payment Status",
+        "Security Name",
+        "Currency",
+        "Cash Amount",
+        "Narrative",
+        "Record Date"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "0001000001",
+            "00123456",
+            "SYNTH0000001",
+            "DVCA",
+            "MAND",
+            "2026-10-13",
+            "PAID",
+            "Synthetic Income Share",
+            "CAD",
+            "100.00",
+            "Trailing commas,,,",
+            "2026-10-01"
+          ]
+        },
+        {
+          "cells": [
+            "0001000001",
+            "00123456",
+            "SYNTH0000001",
+            "DVCA",
+            "MAND",
+            "2026-10-13",
+            "PAID",
+            "Synthetic Income Share",
+            "CAD",
+            "100.00",
+            "",
+            "2026-10-01"
+          ]
+        },
+        {
+          "cells": [
+            "0001000001",
+            "00123456",
+            "SYNTH0000001",
+            "DVCA",
+            "MAND",
+            "2026-10-13",
+            "PAID",
+            "Synthetic Income Share",
+            "CAD",
+            "100.00",
+            "null",
+            "2026-10-01"
+          ]
+        },
+        {
+          "cells": [
+            "0001000001",
+            "00123456",
+            "SYNTH0000001",
+            "DVCA",
+            "MAND",
+            "2026-10-13",
+            "PAID",
+            "Synthetic Income Share",
+            "CAD",
+            "100.00",
+            "A \"quoted\" value",
+            "2026-10-01"
+          ]
+        },
+        {
+          "cells": [
+            "0001000001",
+            "00123456",
+            "SYNTH0000001",
+            "DVCA",
+            "MAND",
+            "2026-10-13",
+            "PAID",
+            "Synthetic Income Share",
+            "CAD",
+            "100.00",
+            "first line\nsecond line",
+            "2026-10-01"
+          ]
+        },
+        {
+          "cells": [
+            "0001000001",
+            "00123456",
+            "SYNTH0000001",
+            "DVCA",
+            "MAND",
+            "2026-10-13",
+            "PAID",
+            "Synthetic Café 株式",
+            "CAD",
+            "100.00",
+            "Unicode Café",
+            "2026-10-01"
+          ]
+        },
+        {
+          "cells": [
+            "0001000001",
+            "00123456",
+            "SYNTH0000001",
+            "DVCA",
+            "MAND",
+            "2026-10-13",
+            "PAID",
+            "Synthetic Income Share",
+            "CAD",
+            "100.00",
+            "null grandson",
+            "2026-10-01"
+          ]
+        }
+      ]
+    }
+  ],
+  "options": [],
+  "toolsUsed": [
+    "query_as_events_entitlements"
+  ]
+}

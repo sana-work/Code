@@ -1,0 +1,9 @@
+{
+  "case_id": "out_of_scope_creative_request",
+  "events": [
+    {
+      "type": "final",
+      "text": "{\n  \"status\":\"OUT_OF_SCOPE\",\n  \"intent\":\"Write a fictional poem about a lighthouse.\",\n  \"answer\":\"**Summary:** Creative writing is outside my supported scope. I can assist with Citi GSSP Custody Operations enquiries about Asset Services and Transaction Management.\",\n  \"attributes\":[],\n  \"tables\":[],\n  \"options\":[],\n  \"toolsUsed\":[]\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": "FAILED",
+  "intent": "Confirm whether cash was paid for event 0001000001.",
+  "answer": "**Summary:** Asset Services payment information is temporarily unavailable, so I cannot confirm whether cash was paid for event 0001000001. Please try again later.",
+  "attributes": [],
+  "tables": [],
+  "options": [],
+  "toolsUsed": [],
+  "error": "TOOLS_UNAVAILABLE"
+}

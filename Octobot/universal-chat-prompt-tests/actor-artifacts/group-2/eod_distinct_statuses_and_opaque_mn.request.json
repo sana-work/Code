@@ -1,0 +1,24 @@
+[
+  {
+    "name": "query_tm_eod_transactions",
+    "arguments": {
+      "client_reference": "SYN-CLIENT-01",
+      "close_of_business_date": "2026-10-12",
+      "requested_fields": [
+        "swift_status",
+        "clarity_transaction_status",
+        "fail_text",
+        "settled_quantity",
+        "unsettled_quantity",
+        "partial_settlement_flag",
+        "data_availability_timestamp",
+        "deal_reference",
+        "miti_reference",
+        "matching_reference",
+        "market_reference"
+      ],
+      "limit": 50,
+      "offset": 0
+    }
+  }
+]

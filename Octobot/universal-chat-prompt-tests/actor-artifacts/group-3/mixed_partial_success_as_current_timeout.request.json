@@ -1,0 +1,4 @@
+[
+  {"name":"query_as_events_entitlements","arguments":{"event_id":"0001000001","limit":50,"offset":0}},
+  {"name":"query_tm_current_transactions","arguments":{"client_reference":"SYN-CLIENT-01","limit":50,"offset":0}}
+]

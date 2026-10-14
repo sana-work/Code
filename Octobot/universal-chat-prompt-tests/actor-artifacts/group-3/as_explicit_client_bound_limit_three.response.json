@@ -1,0 +1,9 @@
+{
+  "status":"SUCCESS",
+  "intent":"Show at most 3 cash payment records for account 00123456.",
+  "answer":"**Summary:**\n\n**Payment details:** The returned cash-payment entries for account 00123456 show Payment Status **PAID**, confirming cash paid of **100.00 CAD** per entry. Their scheduled Payment Date is **2026-10-13**, recorded in UTC. The search uses the default previous-seven-calendar-day Payment Date window.\n\n**Supporting cash payment details**\n\n<<table_1>>",
+  "attributes":[],
+  "tables":[{"id":"table_1","columns":["Event ID","Account ID","Payment Date","Payment Status","Currency","Cash Amount"],"rows":[{"cells":["0001000001","00123456","2026-10-13","PAID","CAD","100.00"]},{"cells":["0001000001","00123456","2026-10-13","PAID","CAD","100.00"]},{"cells":["0001000001","00123456","2026-10-13","PAID","CAD","100.00"]}]}],
+  "options":[],
+  "toolsUsed":["query_as_events_entitlements"]
+}

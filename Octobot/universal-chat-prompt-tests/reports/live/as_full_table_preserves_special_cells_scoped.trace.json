@@ -1,0 +1,165 @@
+{
+  "case_id": "as_full_table_preserves_special_cells_scoped",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "account_id": "00123456",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Trailing commas,,,",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "null",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "A \"quoted\" value",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "first line\nsecond line",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Caf\u00e9 \u682a\u5f0f",
+                    "CAD",
+                    "100.00",
+                    "Unicode Caf\u00e9",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "null grandson",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "7"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Provide the complete default Asset Services details for account 00123456 while preserving source text.\",\n  \"answer\": \"**Summary:** Asset Services cash payment information for account 00123456 shows payment status **PAID**, confirming cash payment, with listed cash amounts of **100.00 CAD**. This account-only enquiry uses the default Payment Date window of the previous seven calendar days.\\n\\n**Supporting Asset Services details**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [\n    {\n      \"id\": \"table_1\",\n      \"columns\": [\n        \"Event ID\",\n        \"Account ID\",\n        \"ISIN\",\n        \"Event Type\",\n        \"Event Category\",\n        \"Payment Date\",\n        \"Payment Status\",\n        \"Security Name\",\n        \"Currency\",\n        \"Cash Amount\",\n        \"Narrative\",\n        \"Record Date\"\n      ],\n      \"rows\": [\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"Trailing commas,,,\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"null\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"A \\\"quoted\\\" value\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"first line\\nsecond line\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Caf\u00e9 \u682a\u5f0f\",\n            \"CAD\",\n            \"100.00\",\n            \"Unicode Caf\u00e9\",\n            \"2026-10-01\"\n          ]\n        },\n        {\n          \"cells\": [\n            \"0001000001\",\n            \"00123456\",\n            \"SYNTH0000001\",\n            \"DVCA\",\n            \"MAND\",\n            \"2026-10-13\",\n            \"PAID\",\n            \"Synthetic Income Share\",\n            \"CAD\",\n            \"100.00\",\n            \"null grandson\",\n            \"2026-10-01\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"options\": [],\n  \"toolsUsed\": [\n    \"query_as_events_entitlements\"\n  ]\n}\n"
+    }
+  ]
+}

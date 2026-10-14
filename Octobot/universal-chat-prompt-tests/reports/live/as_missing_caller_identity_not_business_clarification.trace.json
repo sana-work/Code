@@ -1,0 +1,35 @@
+{
+  "case_id": "as_missing_caller_identity_not_business_clarification",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "event_id": "0001000001",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "ERROR",
+            "error": {
+              "code": "MISSING_SOEID",
+              "message": "Caller identity is required to complete this request.",
+              "retryable": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"FAILED\",\n  \"intent\": \"Confirm whether cash was paid for event 0001000001.\",\n  \"answer\": \"**Summary:** Caller identity is required to complete this request.\",\n  \"attributes\": [],\n  \"tables\": [],\n  \"options\": [],\n  \"toolsUsed\": [\"query_as_events_entitlements\"],\n  \"error\": \"MISSING_SOEID\"\n}\n"
+    }
+  ]
+}

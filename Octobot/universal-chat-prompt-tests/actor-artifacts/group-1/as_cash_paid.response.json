@@ -1,0 +1,15 @@
+{
+  "status": "SUCCESS",
+  "intent": "Confirm whether cash was paid for event 0001000001 in account 00123456 and provide the amount and currency.",
+  "answer": "**Summary:** Cash was paid for event 0001000001 in account 00123456. The cash amount is **100.00 CAD**, confirmed by payment status **PAID**.\n\n**Supporting payment details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": ["Event ID", "Account ID", "Payment Date", "Payment Status", "Currency", "Cash Amount"],
+      "rows": [{"cells": ["0001000001", "00123456", "2026-10-13", "PAID", "CAD", "100.00"]}]
+    }
+  ],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

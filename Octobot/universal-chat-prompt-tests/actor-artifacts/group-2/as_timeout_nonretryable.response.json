@@ -1,0 +1,10 @@
+{
+  "status": "FAILED",
+  "intent": "Confirm the cash payment for event 0001000001.",
+  "answer": "**Summary:** The request took longer than the configured time limit. Please try again.",
+  "attributes": [],
+  "tables": [],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"],
+  "error": "TOOL_TIMEOUT"
+}

@@ -1,0 +1,88 @@
+{
+  "case_id": "mixed_partial_success_as_current_timeout",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "event_id": "0001000001",
+            "limit": 50,
+            "offset": 0
+          }
+        },
+        {
+          "name": "query_tm_current_transactions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic cash dividend",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        },
+        {
+          "name": "query_tm_current_transactions",
+          "result": {
+            "status": "ERROR",
+            "error": {
+              "code": "TOOL_TIMEOUT",
+              "message": "The request took longer than the configured time limit. Please try again.",
+              "retryable": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\":\"SUCCESS\",\n  \"intent\":\"Confirm cash payment for event 0001000001 and check the Current transaction for client reference SYN-CLIENT-01.\",\n  \"answer\":\"**Summary:**\\n\\n**Payment details:** Event 0001000001 for account 00123456 has Payment Status **PAID**, confirming cash paid of **100.00 CAD**. The scheduled Payment Date is **2026-10-13**, recorded in UTC.\\n\\nFor the Current transaction enquiry concerning client reference SYN-CLIENT-01: The request took longer than the configured time limit. Please try again.\\n\\n**Supporting cash payment details**\\n\\n<<table_1>>\",\n  \"attributes\":[{\"key\":\"Current Transactions\",\"value\":\"The request took longer than the configured time limit. Please try again.\"}],\n  \"tables\":[{\"id\":\"table_1\",\"columns\":[\"Event ID\",\"Account ID\",\"Payment Date\",\"Payment Status\",\"Currency\",\"Cash Amount\"],\"rows\":[{\"cells\":[\"0001000001\",\"00123456\",\"2026-10-13\",\"PAID\",\"CAD\",\"100.00\"]}]}],\n  \"options\":[],\n  \"toolsUsed\":[\"query_as_events_entitlements\",\"query_tm_current_transactions\"]\n}\n"
+    }
+  ]
+}

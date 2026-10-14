@@ -1,0 +1,9 @@
+{
+  "status":"SUCCESS",
+  "intent":"Explain AS Payment Status, Cash Amount and the PAID, UNPAID and PRJCTD values without a record lookup.",
+  "answer":"**Summary:**\n\n**Payment details:** Payment Status describes the cash payment status. **PAID** confirms cash paid; **UNPAID** means cash is outstanding; **PRJCTD** means projected and does not confirm cash paid. This field does not confirm tax payment or delivery of shares.\n\nCash Amount is the cash payment amount, with its currency given separately. Zero is a valid amount. The amount alone does not confirm payment; confirmation requires Payment Status **PAID**.",
+  "attributes":[],
+  "tables":[],
+  "options":[],
+  "toolsUsed":[]
+}

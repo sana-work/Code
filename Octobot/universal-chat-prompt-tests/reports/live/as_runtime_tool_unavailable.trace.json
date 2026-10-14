@@ -1,0 +1,9 @@
+{
+  "case_id": "as_runtime_tool_unavailable",
+  "events": [
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"FAILED\",\n  \"intent\": \"Confirm whether cash was paid for event 0001000001.\",\n  \"answer\": \"**Summary:** Asset Services payment information is temporarily unavailable, so I cannot confirm whether cash was paid for event 0001000001. Please try again later.\",\n  \"attributes\": [],\n  \"tables\": [],\n  \"options\": [],\n  \"toolsUsed\": [],\n  \"error\": \"TOOLS_UNAVAILABLE\"\n}\n"
+    }
+  ]
+}

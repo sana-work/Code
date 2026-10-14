@@ -1,0 +1,15 @@
+{
+  "status": "SUCCESS",
+  "intent": "Provide the Payment Date for event 0001000001 and determine when its MT564 was sent.",
+  "answer": "**Summary:** The scheduled Payment Date for event 0001000001 is **2026-10-13** (UTC). The available information does not confirm when its MT564 was sent; the supported message timestamp applies only to MT566.\n\n**Supporting payment date details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": ["Event ID", "Account ID", "Payment Date"],
+      "rows": [{"cells": ["0001000001", "00123456", "2026-10-13"]}]
+    }
+  ],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

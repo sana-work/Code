@@ -1,0 +1,9 @@
+{
+  "status": "NEEDS_CLARIFICATION",
+  "intent": "Provide complete details for account 00123456 while preserving the source text.",
+  "answer": "**Summary:** Which information should the full table contain for account 00123456: corporate-action events and entitlements, current transactions, end-of-day transactions, or settlement instructions?",
+  "attributes": [],
+  "tables": [],
+  "options": [],
+  "toolsUsed": []
+}

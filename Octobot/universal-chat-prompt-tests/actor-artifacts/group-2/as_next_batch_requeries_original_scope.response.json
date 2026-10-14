@@ -1,0 +1,9 @@
+{
+  "status": "SUCCESS",
+  "intent": "Provide the next batch of AS cash payments for the previously specified account 00123456.",
+  "answer": "**Summary:** The AS account scope remains account 00123456 with the previous seven calendar days of Payment Date. This summary applies to the additional payment information currently available.\n\n**Payment details:** The additional payment entries for event 0001000001 consistently report **PAID**, each with a cash amount of **CAD 100.00** and a scheduled Payment Date of **2026-10-13**.\n\nWould you like me to show the supporting details in a table?",
+  "attributes": [],
+  "tables": [],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

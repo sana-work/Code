@@ -1,0 +1,87 @@
+{
+  "case_id": "as_outstanding_today_local_near_midnight",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "account_id": "00123456",
+            "payment_date": "2026-10-13",
+            "payment_status": "UNPAID",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "UNPAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "125.00",
+                    "First outstanding synthetic payment",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "UNPAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "75.00",
+                    "Second outstanding synthetic payment",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "2"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Show outstanding cash payments for account 00123456 with a Payment Date of today.\",\n  \"answer\": \"**Summary:** Cash payments of **125.00 CAD** and **75.00 CAD** for account 00123456 remain outstanding, with payment status **UNPAID** and scheduled Payment Date **2026-10-13**.\\n\\n**Timing:** Today is 2026-10-13 using your supplied local offset of -04:00. Returned Asset Services dates are UTC. The search uses the UTC date-only Payment Date 2026-10-13; these values do not establish a payment time within your local day.\\n\\n**Supporting outstanding payment details**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [\n    {\n      \"id\": \"table_1\",\n      \"columns\": [\"Event ID\", \"Account ID\", \"Payment Date\", \"Payment Status\", \"Currency\", \"Cash Amount\"],\n      \"rows\": [\n        {\"cells\": [\"0001000001\", \"00123456\", \"2026-10-13\", \"UNPAID\", \"CAD\", \"125.00\"]},\n        {\"cells\": [\"0001000001\", \"00123456\", \"2026-10-13\", \"UNPAID\", \"CAD\", \"75.00\"]}\n      ]\n    }\n  ],\n  \"options\": [],\n  \"toolsUsed\": [\"query_as_events_entitlements\"]\n}\n"
+    }
+  ]
+}

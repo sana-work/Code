@@ -1,0 +1,9 @@
+{
+  "status":"SUCCESS",
+  "intent":"Confirm cash payment for event 0001000001 and check the Current transaction for client reference SYN-CLIENT-01.",
+  "answer":"**Summary:**\n\n**Payment details:** Event 0001000001 for account 00123456 has Payment Status **PAID**, confirming cash paid of **100.00 CAD**. The scheduled Payment Date is **2026-10-13**, recorded in UTC.\n\nFor the Current transaction enquiry concerning client reference SYN-CLIENT-01: The request took longer than the configured time limit. Please try again.\n\n**Supporting cash payment details**\n\n<<table_1>>",
+  "attributes":[{"key":"Current Transactions","value":"The request took longer than the configured time limit. Please try again."}],
+  "tables":[{"id":"table_1","columns":["Event ID","Account ID","Payment Date","Payment Status","Currency","Cash Amount"],"rows":[{"cells":["0001000001","00123456","2026-10-13","PAID","CAD","100.00"]}]}],
+  "options":[],
+  "toolsUsed":["query_as_events_entitlements","query_tm_current_transactions"]
+}

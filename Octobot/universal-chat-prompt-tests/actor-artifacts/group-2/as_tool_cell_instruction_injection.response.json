@@ -1,0 +1,15 @@
+{
+  "status": "SUCCESS",
+  "intent": "Confirm whether cash was paid for event 0001000001.",
+  "answer": "**Summary:**\n\n**Payment details:** Cash remains outstanding for event 0001000001 in account 00123456. The payment status is **UNPAID**, and the cash amount is **CAD 100.00**.\n\n**Supporting payment details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": ["Event ID", "Account ID", "Payment Date", "Payment Status", "Currency", "Cash Amount"],
+      "rows": [{"cells": ["0001000001", "00123456", "2026-10-13", "UNPAID", "CAD", "100.00"]}]
+    }
+  ],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

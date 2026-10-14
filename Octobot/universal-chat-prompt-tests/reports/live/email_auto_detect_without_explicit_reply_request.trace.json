@@ -1,0 +1,70 @@
+{
+  "case_id": "email_auto_detect_without_explicit_reply_request",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "event_id": "0001000001",
+            "account_id": "00123456",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic cash dividend",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Confirm whether cash was paid for event 0001000001 in account 00123456.\",\n  \"answer\": \"Dear Alex,\\n\\n**Summary:**\\n\\n**Payment details:** Cash was paid for event 0001000001 in account 00123456. Payment status is **PAID**, and the cash amount is **CAD 100.00**.\\n\\nKind regards,\\n\\n**Supporting payment details**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [{\"id\":\"table_1\",\"columns\":[\"Event ID\",\"Account ID\",\"Payment Date\",\"Payment Status\",\"Currency\",\"Cash Amount\"],\"rows\":[{\"cells\":[\"0001000001\",\"00123456\",\"2026-10-13\",\"PAID\",\"CAD\",\"100.00\"]}]}],\n  \"options\": [],\n  \"toolsUsed\": [\"query_as_events_entitlements\"]\n}\n"
+    }
+  ]
+}

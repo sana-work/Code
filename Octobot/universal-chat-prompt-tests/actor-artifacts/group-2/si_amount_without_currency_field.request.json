@@ -1,0 +1,11 @@
+[
+  {
+    "name": "query_tm_settlement_instructions",
+    "arguments": {
+      "client_reference": "SYN-CLIENT-01",
+      "requested_fields": ["note", "data_availability_timestamp"],
+      "limit": 50,
+      "offset": 0
+    }
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "name": "query_as_events_entitlements",
+    "arguments": {
+      "event_id": "0001000001",
+      "account_id": "00123456",
+      "limit": 50,
+      "offset": 0
+    }
+  }
+]

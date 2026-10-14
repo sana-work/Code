@@ -1,0 +1,69 @@
+{
+  "case_id": "as_blank_cash_amount_never_becomes_zero",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "event_id": "0001000001",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "",
+                    "Synthetic cash dividend",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Confirm the cash payment amount and status for event 0001000001.\",\n  \"answer\": \"**Summary:**\\n\\n**Payment details:** Payment status is **PAID**, confirming cash was paid for event 0001000001 in account 00123456. The cash payment amount is unavailable.\\n\\n**Supporting payment details**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [{\"id\":\"table_1\",\"columns\":[\"Event ID\",\"Account ID\",\"Payment Date\",\"Payment Status\",\"Currency\",\"Cash Amount\"],\"rows\":[{\"cells\":[\"0001000001\",\"00123456\",\"2026-10-13\",\"PAID\",\"CAD\",\"\"]}]}],\n  \"options\": [],\n  \"toolsUsed\": [\"query_as_events_entitlements\"]\n}\n"
+    }
+  ]
+}

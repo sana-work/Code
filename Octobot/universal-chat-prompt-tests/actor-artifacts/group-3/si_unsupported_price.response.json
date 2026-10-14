@@ -1,0 +1,9 @@
+{
+  "status":"SUCCESS",
+  "intent":"Provide the Settlement Instruction for client reference SYN-CLIENT-01 and its trade price if available.",
+  "answer":"**Summary:** The Settlement Instruction details for client reference SYN-CLIENT-01 are provided below. Trade price is unavailable in the Settlement Instructions information. The search uses this service's default previous-seven-day settlement-date window.\n\n**Parties involved**: The counterparty is Synthetic Counterparty, the position is held using Synthetic holding method, and the settlement location is Synthetic settlement venue.\n\n**Settlement information**: Trade Date is **2026-10-10**, the settlement amount is **1000.00**, and Cash Account ID is 00123456. Currency is unavailable for this service.\n\n**Current Status & Action Required**: The instruction status is **PENDING**. This service does not provide a fail/market action assessment.\n\n**Supporting settlement instruction details**\n\n<<table_1>>",
+  "attributes":[],
+  "tables":[{"id":"table_1","columns":["Client Reference","Status","Trade Date","Settlement Amount","Cash Account ID","Settlement Location"],"rows":[{"cells":["SYN-CLIENT-01","PENDING","2026-10-10","1000.00","00123456","Synthetic settlement venue"]}]}],
+  "options":[],
+  "toolsUsed":["query_tm_settlement_instructions"]
+}

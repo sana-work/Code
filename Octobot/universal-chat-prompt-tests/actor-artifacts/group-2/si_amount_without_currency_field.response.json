@@ -1,0 +1,15 @@
+{
+  "status": "SUCCESS",
+  "intent": "Provide the settlement instruction for client reference SYN-CLIENT-01, including settlement amount, currency if available, note and data availability time.",
+  "answer": "**Summary:** Settlement Instruction information for client reference SYN-CLIENT-01 uses the previous seven days of Trade Date, this service's settlement-date equivalent.\n\n**Parties involved**: The counterparty is Synthetic Counterparty, the position is held by Synthetic holding method, and the settlement location is Synthetic settlement venue.\n\n**Settlement information**: Trade Date is **2026-10-10**, the settlement amount is **1000.00**, and Cash Account ID is **00123456**. Currency is unavailable for this service. The data availability timestamp is **2026-10-13T02:00:00-04:00**.\n\n**Current Status & Action Required**: The settlement instruction status is **PENDING**. The note is \"Synthetic instruction awaiting review\". The available Settlement Instruction information does not support a fail/market action assessment.\n\n**Supporting settlement instruction details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": ["Client Reference", "Status", "Trade Date", "Settlement Amount", "Note", "Data Availability Timestamp"],
+      "rows": [{"cells": ["SYN-CLIENT-01", "PENDING", "2026-10-10", "1000.00", "Synthetic instruction awaiting review", "2026-10-13T02:00:00-04:00"]}]
+    }
+  ],
+  "options": [],
+  "toolsUsed": ["query_tm_settlement_instructions"]
+}

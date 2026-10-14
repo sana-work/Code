@@ -1,0 +1,11 @@
+[
+  {
+    "name": "query_tm_current_transactions",
+    "arguments": {
+      "client_reference": "SYN-CLIENT-01",
+      "requested_fields": ["fail_text", "settled_quantity", "unsettled_quantity"],
+      "limit": 50,
+      "offset": 0
+    }
+  }
+]

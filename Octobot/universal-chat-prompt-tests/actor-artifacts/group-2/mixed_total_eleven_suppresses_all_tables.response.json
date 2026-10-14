@@ -1,0 +1,9 @@
+{
+  "status": "SUCCESS",
+  "intent": "Summarize AS cash payments for account 00123456 and the Current transaction for client reference SYN-CLIENT-01.",
+  "answer": "**Summary:** AS payment information for account 00123456 uses the previous seven calendar days of Payment Date. Current transaction information for client reference SYN-CLIENT-01 uses the previous seven days of Contractual Settlement Date.\n\n**Payment details:** The AS payment entries for event 0001000001 consistently report **PAID**, each with a cash amount of **CAD 100.00** and a scheduled Payment Date of **2026-10-13**.\n\n**Parties involved**: For the Current transaction, the counterparty is Synthetic Counterparty, and the place of settlement is Synthetic settlement venue.\n\n**Settlement information**: The Current contractual settlement date is **2026-10-12**, and the settlement amount is **CAD 1000.00**.\n\n**Current Status & Action Required**: The Current trade status is **PENDING**. Fail/market status is unavailable, so the available information does not establish that no action is required.\n\nWould you like me to show the supporting details in a table?",
+  "attributes": [],
+  "tables": [],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements", "query_tm_current_transactions"]
+}

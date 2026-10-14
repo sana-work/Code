@@ -1,0 +1,75 @@
+{
+  "case_id": "si_unsupported_price",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_tm_settlement_instructions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_tm_settlement_instructions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type",
+                "Status",
+                "Trade Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Cash Account ID",
+                "Settlement Location",
+                "Counterparty",
+                "How Position Is Held"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "BUY",
+                    "PENDING",
+                    "2026-10-10",
+                    "null",
+                    "1000.00",
+                    "00123456",
+                    "Synthetic settlement venue",
+                    "Synthetic Counterparty",
+                    "Synthetic holding method"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\":\"SUCCESS\",\n  \"intent\":\"Provide the Settlement Instruction for client reference SYN-CLIENT-01 and its trade price if available.\",\n  \"answer\":\"**Summary:** The Settlement Instruction details for client reference SYN-CLIENT-01 are provided below. Trade price is unavailable in the Settlement Instructions information. The search uses this service's default previous-seven-day settlement-date window.\\n\\n**Parties involved**: The counterparty is Synthetic Counterparty, the position is held using Synthetic holding method, and the settlement location is Synthetic settlement venue.\\n\\n**Settlement information**: Trade Date is **2026-10-10**, the settlement amount is **1000.00**, and Cash Account ID is 00123456. Currency is unavailable for this service.\\n\\n**Current Status & Action Required**: The instruction status is **PENDING**. This service does not provide a fail/market action assessment.\\n\\n**Supporting settlement instruction details**\\n\\n<<table_1>>\",\n  \"attributes\":[],\n  \"tables\":[{\"id\":\"table_1\",\"columns\":[\"Client Reference\",\"Status\",\"Trade Date\",\"Settlement Amount\",\"Cash Account ID\",\"Settlement Location\"],\"rows\":[{\"cells\":[\"SYN-CLIENT-01\",\"PENDING\",\"2026-10-10\",\"1000.00\",\"00123456\",\"Synthetic settlement venue\"]}]}],\n  \"options\":[],\n  \"toolsUsed\":[\"query_tm_settlement_instructions\"]\n}\n"
+    }
+  ]
+}

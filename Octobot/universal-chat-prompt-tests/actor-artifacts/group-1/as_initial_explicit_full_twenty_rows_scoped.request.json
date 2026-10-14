@@ -1,0 +1,11 @@
+[
+  {
+    "name": "query_as_events_entitlements",
+    "arguments": {
+      "account_id": "00123456",
+      "isin": "SYNTH0000001",
+      "limit": 20,
+      "offset": 0
+    }
+  }
+]

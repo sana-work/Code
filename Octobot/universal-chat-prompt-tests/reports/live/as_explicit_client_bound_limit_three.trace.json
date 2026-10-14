@@ -1,0 +1,101 @@
+{
+  "case_id": "as_explicit_client_bound_limit_three",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "account_id": "00123456",
+            "limit": 3,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 1",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 2",
+                    "2026-10-01"
+                  ]
+                },
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic row 3",
+                    "2026-10-01"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "3"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\":\"SUCCESS\",\n  \"intent\":\"Show at most 3 cash payment records for account 00123456.\",\n  \"answer\":\"**Summary:**\\n\\n**Payment details:** The returned cash-payment entries for account 00123456 show Payment Status **PAID**, confirming cash paid of **100.00 CAD** per entry. Their scheduled Payment Date is **2026-10-13**, recorded in UTC. The search uses the default previous-seven-calendar-day Payment Date window.\\n\\n**Supporting cash payment details**\\n\\n<<table_1>>\",\n  \"attributes\":[],\n  \"tables\":[{\"id\":\"table_1\",\"columns\":[\"Event ID\",\"Account ID\",\"Payment Date\",\"Payment Status\",\"Currency\",\"Cash Amount\"],\"rows\":[{\"cells\":[\"0001000001\",\"00123456\",\"2026-10-13\",\"PAID\",\"CAD\",\"100.00\"]},{\"cells\":[\"0001000001\",\"00123456\",\"2026-10-13\",\"PAID\",\"CAD\",\"100.00\"]},{\"cells\":[\"0001000001\",\"00123456\",\"2026-10-13\",\"PAID\",\"CAD\",\"100.00\"]}]}],\n  \"options\":[],\n  \"toolsUsed\":[\"query_as_events_entitlements\"]\n}\n"
+    }
+  ]
+}

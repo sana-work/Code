@@ -1,0 +1,9 @@
+{
+  "status": "SUCCESS",
+  "intent": "Check the Current transaction for client reference SYN-CLIENT-01 for settlement dates from 2026-09-01 to 2026-09-30.",
+  "answer": "**Summary:** The Current service supports one exact settlement date, so the requested range from **2026-09-01** to **2026-09-30** was not applied. The lookup used the previous seven calendar days of contractual settlement date. The available result therefore does not establish the transaction information for the requested range.\n\n**Parties involved**: For the available Current information for client reference SYN-CLIENT-01, the counterparty is Synthetic Counterparty, and the place of settlement is Synthetic settlement venue.\n\n**Settlement information**: The contractual settlement date is **2026-10-12**, and the settlement amount is **CAD 1000.00**.\n\n**Current Status & Action Required**: The trade status is **PENDING**. Fail/market status is unavailable, so the available information does not establish that no action is required.\n\n**Supporting Current transaction details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [{"id":"table_1","columns":["Client Reference","Trade Status","Contractual Settlement Date","Settlement Amount","Settlement Currency Code","Fail Market Status"],"rows":[{"cells":["SYN-CLIENT-01","PENDING","2026-10-12","1000.00","CAD","null"]}]}],
+  "options": [],
+  "toolsUsed": ["query_tm_current_transactions"]
+}

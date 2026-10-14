@@ -1,0 +1,15 @@
+{
+  "status": "SUCCESS",
+  "intent": "Confirm whether tax was paid for event 0001000001 and provide the tax amount.",
+  "answer": "**Summary:** The available information does not confirm whether tax was paid for event 0001000001. Both the tax amount and tax payment status are unavailable. The cash payment status is **PAID**, but that does not confirm tax payment.\n\n**Supporting tax information**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": ["Event ID", "Account ID", "Payment Status", "Tax Amount", "Tax Payment Status"],
+      "rows": [{"cells": ["0001000001", "00123456", "PAID", "null", "null"]}]
+    }
+  ],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

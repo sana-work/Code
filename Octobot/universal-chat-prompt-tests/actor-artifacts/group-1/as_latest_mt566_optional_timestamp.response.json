@@ -1,0 +1,18 @@
+{
+  "status": "SUCCESS",
+  "intent": "Identify the latest MT566 sent-to-client timestamp for event 0001000001.",
+  "answer": "**Summary:** The latest MT566 for event 0001000001 was sent to the client at **2026-10-13T11:00:00Z** (UTC).\n\n**Supporting MT566 timing details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": ["Event ID", "Account ID", "MT566 Sent-to-Client Timestamp"],
+      "rows": [
+        {"cells": ["0001000001", "00123456", "2026-10-13T09:00:00Z"]},
+        {"cells": ["0001000001", "00123456", "2026-10-13T11:00:00Z"]}
+      ]
+    }
+  ],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

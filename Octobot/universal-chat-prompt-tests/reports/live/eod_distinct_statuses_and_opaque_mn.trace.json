@@ -1,0 +1,113 @@
+{
+  "case_id": "eod_distinct_statuses_and_opaque_mn",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_tm_eod_transactions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "close_of_business_date": "2026-10-12",
+            "requested_fields": [
+              "swift_status",
+              "clarity_transaction_status",
+              "fail_text",
+              "settled_quantity",
+              "unsettled_quantity",
+              "partial_settlement_flag",
+              "data_availability_timestamp",
+              "deal_reference",
+              "miti_reference",
+              "matching_reference",
+              "market_reference"
+            ],
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_tm_eod_transactions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type Description",
+                "Trade Status",
+                "Contractual Settlement Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Settlement Currency Code",
+                "Counterparty",
+                "Place of Settlement",
+                "Fail Market Status",
+                "Close of Business Date",
+                "Fail Text",
+                "SWIFT Status",
+                "Settled Quantity",
+                "Unsettled Quantity",
+                "Partial Settlement Flag",
+                "Clarity Transaction Status",
+                "Data Availability Timestamp",
+                "Deal Reference",
+                "MITI Reference",
+                "Matching Reference",
+                "Market Reference"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "Synthetic purchase",
+                    "PENDING",
+                    "2026-10-12",
+                    "null",
+                    "1000.00",
+                    "CAD",
+                    "Synthetic Counterparty",
+                    "Synthetic settlement venue",
+                    "MN",
+                    "2026-10-12",
+                    "Synthetic matching review pending",
+                    "ACK",
+                    "0",
+                    "100",
+                    "N",
+                    "MATCHED",
+                    "2026-10-13T01:00:00-04:00",
+                    "0001000001",
+                    "0001000001",
+                    "0001000001",
+                    "0001000001"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Provide the EOD statuses, failure explanation, quantities, partial flag, availability time and four optional references for SYN-CLIENT-01 at close of business 2026-10-12, and explain MN if supported.\",\n  \"answer\": \"**Summary:** The EOD reference search for SYN-CLIENT-01 uses the previous seven days of Contractual Settlement Date.\\n\\n**Parties involved**: The counterparty is Synthetic Counterparty, and the place of settlement is Synthetic settlement venue.\\n\\n**Settlement information**: These facts are the close-of-business snapshot dated **2026-10-12**. The contractual settlement date is **2026-10-12**, and the settlement amount is **CAD 1000.00**. Quantity is **100**, settled quantity is **0**, unsettled quantity is **100**, and the partial settlement flag is **N**. The data availability timestamp is **2026-10-13T01:00:00-04:00**. Deal Reference, MITI Reference, Matching Reference and Market Reference are each **0001000001**.\\n\\n**Current Status & Action Required**: In that EOD snapshot, Trade Status is **PENDING**, SWIFT Status is **ACK**, and Clarity Transaction Status is **MATCHED**. These are distinct statuses; the SWIFT status does not confirm trade settlement. Fail Market Status is **MN**, and Fail Text is \\\"Synthetic matching review pending\\\". MN is an opaque source flag with no supplied expansion or action meaning, so the available information does not establish what MN means or the action required from that code.\\n\\n**Supporting EOD transaction details**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [\n    {\n      \"id\": \"table_1\",\n      \"columns\": [\"Client Reference\", \"Trade Status\", \"Fail Market Status\", \"Fail Text\", \"SWIFT Status\", \"Clarity Transaction Status\"],\n      \"rows\": [{\"cells\": [\"SYN-CLIENT-01\", \"PENDING\", \"MN\", \"Synthetic matching review pending\", \"ACK\", \"MATCHED\"]}]\n    }\n  ],\n  \"options\": [],\n  \"toolsUsed\": [\"query_tm_eod_transactions\"]\n}\n"
+    }
+  ]
+}

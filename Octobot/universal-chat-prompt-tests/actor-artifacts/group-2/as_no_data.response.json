@@ -1,0 +1,9 @@
+{
+  "status": "SUCCESS",
+  "intent": "Show cash payments for event 0001000001 in account 00123456.",
+  "answer": "**Summary:** No cash payment records matched event 0001000001 in account 00123456.",
+  "attributes": [],
+  "tables": [],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

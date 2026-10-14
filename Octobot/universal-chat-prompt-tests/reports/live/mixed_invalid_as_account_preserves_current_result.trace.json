@@ -1,0 +1,81 @@
+{
+  "case_id": "mixed_invalid_as_account_preserves_current_result",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_tm_current_transactions",
+          "arguments": {
+            "client_reference": "SYN-CLIENT-01",
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_tm_current_transactions",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Executed Trade ID",
+                "Account ID",
+                "Custodian Reference",
+                "Client Reference",
+                "ISIN",
+                "Issue Name",
+                "Quantity",
+                "Transaction Type",
+                "Trade Status",
+                "Instruction Date",
+                "Trade Date",
+                "Contractual Settlement Date",
+                "Actual Settlement Date",
+                "Settlement Amount",
+                "Settlement Currency Code",
+                "Place of Settlement",
+                "Counterparty",
+                "Fail Market Status"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "0001000001",
+                    "SYN-CLIENT-01",
+                    "SYNTH0000001",
+                    "Synthetic Income Share",
+                    "100",
+                    "BUY",
+                    "PENDING",
+                    "2026-10-10",
+                    "2026-10-10",
+                    "2026-10-12",
+                    "null",
+                    "1000.00",
+                    "CAD",
+                    "Synthetic settlement venue",
+                    "Synthetic Counterparty",
+                    "null"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"NEEDS_CLARIFICATION\",\n  \"intent\": \"Check AS cash payments for account 00123_45 and the Current transaction for client reference SYN-CLIENT-01.\",\n  \"answer\": \"**Summary:** The AS account \\\"00123_45\\\" is invalid: account numbers must contain only digits 0-9, with no underscores or other characters. What is the valid digits-only AS account number?\\n\\nCurrent transaction information for client reference SYN-CLIENT-01 covers the previous seven days of Contractual Settlement Date.\\n\\n**Parties involved**: The counterparty is Synthetic Counterparty, and the place of settlement is Synthetic settlement venue.\\n\\n**Settlement information**: The contractual settlement date is **2026-10-12**, and the settlement amount is **CAD 1000.00**.\\n\\n**Current Status & Action Required**: The trade status is **PENDING**. Fail/market status is unavailable, so the available information does not establish that no action is required.\\n\\n**Supporting Current transaction details**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [{\"id\":\"table_1\",\"columns\":[\"Client Reference\",\"Trade Status\",\"Contractual Settlement Date\",\"Settlement Amount\",\"Settlement Currency Code\",\"Fail Market Status\"],\"rows\":[{\"cells\":[\"SYN-CLIENT-01\",\"PENDING\",\"2026-10-12\",\"1000.00\",\"CAD\",\"null\"]}]}],\n  \"options\": [],\n  \"toolsUsed\": [\"query_tm_current_transactions\"]\n}\n"
+    }
+  ]
+}

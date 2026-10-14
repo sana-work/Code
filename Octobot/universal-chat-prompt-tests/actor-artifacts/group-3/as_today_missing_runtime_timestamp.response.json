@@ -1,0 +1,9 @@
+{
+  "status":"NEEDS_CLARIFICATION",
+  "intent":"Show outstanding cash payments due today for account 00123456.",
+  "answer":"**Summary:** I need your local comparison date to identify payments due today for account 00123456. What local date, in YYYY-MM-DD format, should I use for 'today'?",
+  "attributes":[],
+  "tables":[],
+  "options":[],
+  "toolsUsed":[]
+}

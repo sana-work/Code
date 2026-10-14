@@ -1,0 +1,315 @@
+{
+  "email_auto_detect_without_explicit_reply_request": {
+    "status": "SUCCESS",
+    "intent": "Confirm whether cash was paid for event 0001000001 in account 00123456.",
+    "answer": "Dear Alex,\n\n**Summary:**\n\n**Payment details:** Cash was paid for event 0001000001 in account 00123456. Payment status is **PAID**, and the cash amount is **CAD 100.00**.\n\nKind regards,\n\n**Supporting payment details**\n\n<<table_1>>",
+    "attributes": [],
+    "tables": [
+      {
+        "id": "table_1",
+        "columns": [
+          "Event ID",
+          "Account ID",
+          "Payment Date",
+          "Payment Status",
+          "Currency",
+          "Cash Amount"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "2026-10-13",
+              "PAID",
+              "CAD",
+              "100.00"
+            ]
+          }
+        ]
+      }
+    ],
+    "options": [],
+    "toolsUsed": [
+      "query_as_events_entitlements"
+    ]
+  },
+  "as_suppress_eleven_rows_offer_table": {
+    "status": "SUCCESS",
+    "intent": "Show cash payments for account 00123456 and ISIN SYNTH0000001.",
+    "answer": "**Summary:** Cash payment information for account 00123456 and ISIN SYNTH0000001 shows payment status **PAID**, confirming cash payment. The listed cash amounts are **100.00 CAD**, with scheduled Payment Date **2026-10-13** (UTC).\n\nWould you like me to show the supporting details in a table?",
+    "attributes": [],
+    "tables": [],
+    "options": [],
+    "toolsUsed": [
+      "query_as_events_entitlements"
+    ]
+  },
+  "as_full_table_preserves_special_cells_scoped": {
+    "status": "SUCCESS",
+    "intent": "Provide the complete default Asset Services details for account 00123456 while preserving source text.",
+    "answer": "**Summary:** Asset Services cash payment information for account 00123456 shows payment status **PAID**, confirming cash payment, with listed cash amounts of **100.00 CAD**. This account-only enquiry uses the default Payment Date window of the previous seven calendar days.\n\n**Supporting Asset Services details**\n\n<<table_1>>",
+    "attributes": [],
+    "tables": [
+      {
+        "id": "table_1",
+        "columns": [
+          "Event ID",
+          "Account ID",
+          "ISIN",
+          "Event Type",
+          "Event Category",
+          "Payment Date",
+          "Payment Status",
+          "Security Name",
+          "Currency",
+          "Cash Amount",
+          "Narrative",
+          "Record Date"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "SYNTH0000001",
+              "DVCA",
+              "MAND",
+              "2026-10-13",
+              "PAID",
+              "Synthetic Income Share",
+              "CAD",
+              "100.00",
+              "Trailing commas,,,",
+              "2026-10-01"
+            ]
+          },
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "SYNTH0000001",
+              "DVCA",
+              "MAND",
+              "2026-10-13",
+              "PAID",
+              "Synthetic Income Share",
+              "CAD",
+              "100.00",
+              "",
+              "2026-10-01"
+            ]
+          },
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "SYNTH0000001",
+              "DVCA",
+              "MAND",
+              "2026-10-13",
+              "PAID",
+              "Synthetic Income Share",
+              "CAD",
+              "100.00",
+              "null",
+              "2026-10-01"
+            ]
+          },
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "SYNTH0000001",
+              "DVCA",
+              "MAND",
+              "2026-10-13",
+              "PAID",
+              "Synthetic Income Share",
+              "CAD",
+              "100.00",
+              "A \"quoted\" value",
+              "2026-10-01"
+            ]
+          },
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "SYNTH0000001",
+              "DVCA",
+              "MAND",
+              "2026-10-13",
+              "PAID",
+              "Synthetic Income Share",
+              "CAD",
+              "100.00",
+              "first line\nsecond line",
+              "2026-10-01"
+            ]
+          },
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "SYNTH0000001",
+              "DVCA",
+              "MAND",
+              "2026-10-13",
+              "PAID",
+              "Synthetic Caf\u00e9 \u682a\u5f0f",
+              "CAD",
+              "100.00",
+              "Unicode Caf\u00e9",
+              "2026-10-01"
+            ]
+          },
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "SYNTH0000001",
+              "DVCA",
+              "MAND",
+              "2026-10-13",
+              "PAID",
+              "Synthetic Income Share",
+              "CAD",
+              "100.00",
+              "null grandson",
+              "2026-10-01"
+            ]
+          }
+        ]
+      }
+    ],
+    "options": [],
+    "toolsUsed": [
+      "query_as_events_entitlements"
+    ]
+  },
+  "tm_ambiguous_client_reference_three_tools": {
+    "status": "SUCCESS",
+    "intent": "Provide the TM status for client reference SYN-CLIENT-01 across the applicable services.",
+    "answer": "**Summary:** The results for client reference SYN-CLIENT-01 are set out separately for Current Transactions, EOD Transactions and Settlement Instructions. The searches use each service's default previous-seven-day settlement-date window.\n\nCurrent Transactions\n\n**Parties involved**: The counterparty is Synthetic Counterparty and the place of settlement is Synthetic settlement venue.\n\n**Settlement information**: The contractual settlement date is **2026-10-12**, with a settlement amount of **1000.00 CAD**.\n\n**Current Status & Action Required**: The trade status is **PENDING**. Fail/market status is unavailable, so the information does not establish whether action is required.\n\nEOD Transactions\n\n**Parties involved**: The counterparty is Synthetic Counterparty and the place of settlement is Synthetic settlement venue.\n\n**Settlement information**: The snapshot is dated **2026-10-12** at close of business. It shows a contractual settlement date of **2026-10-12** and a settlement amount of **1000.00 CAD**.\n\n**Current Status & Action Required**: The trade status in that snapshot is **PENDING**, with fail/market status **MN**. No description or action meaning for MN is available.\n\nSettlement Instructions\n\n**Parties involved**: The counterparty is Synthetic Counterparty, the position is held using Synthetic holding method, and the settlement location is Synthetic settlement venue.\n\n**Settlement information**: The instruction's Trade Date is **2026-10-10**, its settlement amount is **1000.00**, and its Cash Account ID is 00123456. Currency is unavailable for this service.\n\n**Current Status & Action Required**: The instruction status is **PENDING**. This service does not provide a fail/market action assessment.\n\n**Supporting current transaction status**\n\n<<table_1>>\n\n**Supporting EOD transaction status**\n\n<<table_2>>\n\n**Supporting settlement instruction status**\n\n<<table_3>>",
+    "attributes": [],
+    "tables": [
+      {
+        "id": "table_1",
+        "columns": [
+          "Client Reference",
+          "Trade Status",
+          "Contractual Settlement Date",
+          "Settlement Amount",
+          "Settlement Currency Code",
+          "Fail Market Status"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "SYN-CLIENT-01",
+              "PENDING",
+              "2026-10-12",
+              "1000.00",
+              "CAD",
+              "null"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "table_2",
+        "columns": [
+          "Client Reference",
+          "Trade Status",
+          "Contractual Settlement Date",
+          "Settlement Amount",
+          "Settlement Currency Code",
+          "Fail Market Status"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "SYN-CLIENT-01",
+              "PENDING",
+              "2026-10-12",
+              "1000.00",
+              "CAD",
+              "MN"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "table_3",
+        "columns": [
+          "Client Reference",
+          "Status",
+          "Trade Date",
+          "Settlement Amount",
+          "Cash Account ID",
+          "Settlement Location"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "SYN-CLIENT-01",
+              "PENDING",
+              "2026-10-10",
+              "1000.00",
+              "00123456",
+              "Synthetic settlement venue"
+            ]
+          }
+        ]
+      }
+    ],
+    "options": [],
+    "toolsUsed": [
+      "query_tm_current_transactions",
+      "query_tm_eod_transactions",
+      "query_tm_settlement_instructions"
+    ]
+  },
+  "mixed_partial_success_as_current_timeout": {
+    "status": "SUCCESS",
+    "intent": "Confirm cash payment for event 0001000001 and check the Current transaction for client reference SYN-CLIENT-01.",
+    "answer": "**Summary:**\n\n**Payment details:** Event 0001000001 for account 00123456 has Payment Status **PAID**, confirming cash paid of **100.00 CAD**. The scheduled Payment Date is **2026-10-13**, recorded in UTC.\n\nFor the Current transaction enquiry concerning client reference SYN-CLIENT-01: The request took longer than the configured time limit. Please try again.\n\n**Supporting cash payment details**\n\n<<table_1>>",
+    "attributes": [
+      {
+        "key": "Current Transactions",
+        "value": "The request took longer than the configured time limit. Please try again."
+      }
+    ],
+    "tables": [
+      {
+        "id": "table_1",
+        "columns": [
+          "Event ID",
+          "Account ID",
+          "Payment Date",
+          "Payment Status",
+          "Currency",
+          "Cash Amount"
+        ],
+        "rows": [
+          {
+            "cells": [
+              "0001000001",
+              "00123456",
+              "2026-10-13",
+              "PAID",
+              "CAD",
+              "100.00"
+            ]
+          }
+        ]
+      }
+    ],
+    "options": [],
+    "toolsUsed": [
+      "query_as_events_entitlements",
+      "query_tm_current_transactions"
+    ]
+  }
+}

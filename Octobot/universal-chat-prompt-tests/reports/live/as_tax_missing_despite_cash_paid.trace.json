@@ -1,0 +1,77 @@
+{
+  "case_id": "as_tax_missing_despite_cash_paid",
+  "events": [
+    {
+      "type": "batch",
+      "calls": [
+        {
+          "name": "query_as_events_entitlements",
+          "arguments": {
+            "event_id": "0001000001",
+            "requested_fields": [
+              "tax_amount",
+              "tax_payment_status"
+            ],
+            "limit": 50,
+            "offset": 0
+          }
+        }
+      ],
+      "results": [
+        {
+          "name": "query_as_events_entitlements",
+          "result": {
+            "status": "SUCCESS",
+            "table": {
+              "columns": [
+                "Event ID",
+                "Account ID",
+                "ISIN",
+                "Event Type",
+                "Event Category",
+                "Payment Date",
+                "Payment Status",
+                "Security Name",
+                "Currency",
+                "Cash Amount",
+                "Narrative",
+                "Record Date",
+                "Tax Amount",
+                "Tax Payment Status"
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    "0001000001",
+                    "00123456",
+                    "SYNTH0000001",
+                    "DVCA",
+                    "MAND",
+                    "2026-10-13",
+                    "PAID",
+                    "Synthetic Income Share",
+                    "CAD",
+                    "100.00",
+                    "Synthetic cash dividend",
+                    "2026-10-01",
+                    "null",
+                    "null"
+                  ]
+                }
+              ]
+            },
+            "pagination": {
+              "page_number": "1",
+              "total_page_count": "1",
+              "total_record_count": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "final",
+      "text": "{\n  \"status\": \"SUCCESS\",\n  \"intent\": \"Confirm whether tax was paid for event 0001000001 and provide the tax amount.\",\n  \"answer\": \"**Summary:** The available information does not confirm whether tax was paid for event 0001000001. Both the tax amount and tax payment status are unavailable. The cash payment status is **PAID**, but that does not confirm tax payment.\\n\\n**Supporting tax information**\\n\\n<<table_1>>\",\n  \"attributes\": [],\n  \"tables\": [\n    {\n      \"id\": \"table_1\",\n      \"columns\": [\"Event ID\", \"Account ID\", \"Payment Status\", \"Tax Amount\", \"Tax Payment Status\"],\n      \"rows\": [{\"cells\": [\"0001000001\", \"00123456\", \"PAID\", \"null\", \"null\"]}]\n    }\n  ],\n  \"options\": [],\n  \"toolsUsed\": [\"query_as_events_entitlements\"]\n}\n"
+    }
+  ]
+}

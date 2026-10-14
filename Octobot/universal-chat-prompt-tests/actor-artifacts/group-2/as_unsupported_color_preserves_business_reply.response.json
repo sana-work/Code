@@ -1,0 +1,9 @@
+{
+  "status": "SUCCESS",
+  "intent": "Confirm whether cash was paid for event 0001000001.",
+  "answer": "I can provide the requested information using the standard text and table format, but custom styling is not supported.\n\n**Summary:**\n\n**Payment details:** Cash was paid for event 0001000001 in account 00123456. Payment status is **PAID**, and the cash amount is **CAD 100.00**.\n\n**Supporting payment details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [{"id":"table_1","columns":["Event ID","Account ID","Payment Date","Payment Status","Currency","Cash Amount"],"rows":[{"cells":["0001000001","00123456","2026-10-13","PAID","CAD","100.00"]}]}],
+  "options": [],
+  "toolsUsed": ["query_as_events_entitlements"]
+}

@@ -1,0 +1,10 @@
+{
+  "status":"FAILED",
+  "intent":"Confirm cash payment for event 0001000001.",
+  "answer":"**Summary:** I cannot confirm the cash payment for event 0001000001 because valid payment information is unavailable. Please try again.",
+  "attributes":[],
+  "tables":[],
+  "options":[],
+  "toolsUsed":["query_as_events_entitlements"],
+  "error":"INVALID_TOOL_RESULT"
+}

@@ -1,0 +1,15 @@
+{
+  "status": "SUCCESS",
+  "intent": "Provide the EOD statuses, failure explanation, quantities, partial flag, availability time and four optional references for SYN-CLIENT-01 at close of business 2026-10-12, and explain MN if supported.",
+  "answer": "**Summary:** The EOD reference search for SYN-CLIENT-01 uses the previous seven days of Contractual Settlement Date.\n\n**Parties involved**: The counterparty is Synthetic Counterparty, and the place of settlement is Synthetic settlement venue.\n\n**Settlement information**: These facts are the close-of-business snapshot dated **2026-10-12**. The contractual settlement date is **2026-10-12**, and the settlement amount is **CAD 1000.00**. Quantity is **100**, settled quantity is **0**, unsettled quantity is **100**, and the partial settlement flag is **N**. The data availability timestamp is **2026-10-13T01:00:00-04:00**. Deal Reference, MITI Reference, Matching Reference and Market Reference are each **0001000001**.\n\n**Current Status & Action Required**: In that EOD snapshot, Trade Status is **PENDING**, SWIFT Status is **ACK**, and Clarity Transaction Status is **MATCHED**. These are distinct statuses; the SWIFT status does not confirm trade settlement. Fail Market Status is **MN**, and Fail Text is \"Synthetic matching review pending\". MN is an opaque source flag with no supplied expansion or action meaning, so the available information does not establish what MN means or the action required from that code.\n\n**Supporting EOD transaction details**\n\n<<table_1>>",
+  "attributes": [],
+  "tables": [
+    {
+      "id": "table_1",
+      "columns": ["Client Reference", "Trade Status", "Fail Market Status", "Fail Text", "SWIFT Status", "Clarity Transaction Status"],
+      "rows": [{"cells": ["SYN-CLIENT-01", "PENDING", "MN", "Synthetic matching review pending", "ACK", "MATCHED"]}]
+    }
+  ],
+  "options": [],
+  "toolsUsed": ["query_tm_eod_transactions"]
+}

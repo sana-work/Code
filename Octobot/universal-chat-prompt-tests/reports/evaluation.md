@@ -1,0 +1,67 @@
+# Synthetic Prompt Test Report
+
+Prompt SHA256: 87d60f885b3ed3f1512147fe57d1bec937fe53121ef68bc5bcc756885529ce90
+
+**47 passed; 3 failed; 0 not run.**
+
+All data is fabricated. Live Codex-agent outputs use a mock-tool adapter; this is not a run against the deployed Citi model or services.
+
+| Case | Result | Findings |
+| --- | --- | --- |
+| as_cash_paid | PASS |  |
+| as_passed_date_still_projected | PASS |  |
+| as_tax_missing_despite_cash_paid | PASS |  |
+| as_shares_delivery_confirmed | PASS |  |
+| as_latest_mt566_optional_timestamp | PASS |  |
+| as_mt564_unsupported_payment_date_supported | PASS |  |
+| as_outstanding_today_local_near_midnight | PASS |  |
+| as_zero_cash_is_valid | PASS |  |
+| as_compact_exactly_ten_rows | PASS |  |
+| as_suppress_eleven_rows_offer_table | PASS |  |
+| as_initial_explicit_full_twenty_rows | PASS |  |
+| as_full_table_preserves_special_cells | PASS |  |
+| as_initial_explicit_full_twenty_rows_scoped | PASS |  |
+| as_full_table_preserves_special_cells_scoped | PASS |  |
+| email_reply_no_subject_identifiable_sender | PASS |  |
+| email_explicit_request | PASS |  |
+| email_preserve_existing_re_subject | PASS |  |
+| invalid_account_nondigit | PASS |  |
+| as_runtime_tool_unavailable | PASS |  |
+| as_no_data | PASS |  |
+| as_timeout_nonretryable | PASS |  |
+| as_malformed_nonstring_cell | PASS |  |
+| as_tool_cell_instruction_injection | PASS |  |
+| current_null_fail_flag_does_not_clear_action | PASS |  |
+| eod_distinct_statuses_and_opaque_mn | PASS |  |
+| si_amount_without_currency_field | PASS |  |
+| tm_ambiguous_client_reference_three_tools | PASS |  |
+| mixed_as_generic_tm_four_tools | PASS |  |
+| mixed_partial_success_as_current_timeout | PASS |  |
+| as_full_followup_uses_original_cache | FAIL | no_table_position_wording: The reply refers to a table by position or number |
+| as_full_followup_cache_missing_requery | FAIL | no_table_position_wording: The reply refers to a table by position or number |
+| out_of_scope_creative_request | PASS |  |
+| metadata_field_meanings_no_query | PASS |  |
+| as_today_missing_runtime_timestamp | PASS |  |
+| si_unsupported_price | FAIL | no_table_position_wording: The reply refers to a table by position or number |
+| as_explicit_client_bound_limit_three | PASS |  |
+| as_missing_result_status | PASS |  |
+| as_unrecognized_result_status | PASS |  |
+| email_auto_detect_without_explicit_reply_request | PASS |  |
+| as_unsupported_color_preserves_business_reply | PASS |  |
+| as_missing_caller_identity_not_business_clarification | PASS |  |
+| as_misaligned_source_row_rejected | PASS |  |
+| mixed_invalid_as_account_preserves_current_result | PASS |  |
+| mixed_total_eleven_suppresses_all_tables | PASS |  |
+| mixed_explicit_full_table_all_four_services | PASS |  |
+| current_contractual_date_not_execution_date | PASS |  |
+| current_unsupported_range_discloses_actual_window | PASS |  |
+| as_blank_cash_amount_never_becomes_zero | PASS |  |
+| as_fifty_row_page_not_complete | PASS |  |
+| as_next_batch_requeries_original_scope | PASS |  |
+
+## Limits
+
+- Synthetic schemas are not the deployed banking tool schemas.
+- Checks cover structure, table fidelity, call traces and selected factual assertions.
+- Semantic quality, unseen inputs, UI rendering and the deployed model require further evaluation.
+- NOT_RUN cases are never counted as passed.

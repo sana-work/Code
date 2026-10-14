@@ -1,0 +1,11 @@
+[
+  {
+    "name": "query_as_events_entitlements",
+    "arguments": {
+      "event_id": "0001000001",
+      "requested_fields": ["timestamp"],
+      "limit": 50,
+      "offset": 0
+    }
+  }
+]

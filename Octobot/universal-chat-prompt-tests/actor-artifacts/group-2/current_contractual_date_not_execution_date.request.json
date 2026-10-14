@@ -1,0 +1,3 @@
+[
+  {"name":"query_tm_current_transactions","arguments":{"client_reference":"SYN-CLIENT-01","contractual_settlement_date":"2026-10-12","limit":50,"offset":0}}
+]

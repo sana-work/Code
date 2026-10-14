@@ -1,0 +1,9 @@
+{
+  "status": "NEEDS_CLARIFICATION",
+  "intent": "Show cash payments for account 00123_45.",
+  "answer": "**Summary:** Account \"00123_45\" is invalid: an account number must contain only digits 0-9, with no underscores or other characters. What is the valid digits-only account number?",
+  "attributes": [],
+  "tables": [],
+  "options": [],
+  "toolsUsed": []
+}
