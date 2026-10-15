@@ -73,3 +73,9 @@ To test a revised YAML, pass `--prompt /absolute/path/to/revised.yaml` before th
 - UI checks for full tables containing literal markup, Unicode, quotes, blanks, commas, and line breaks. The renderer must treat cells as data and never execute source markup.
 - Further tests for week/month conventions, daylight-saving transitions, unknown pagination metadata, unsupported filter combinations, grounded clarification choices, conflicting context, and dependent multi-step enquiries.
 - Repeated runs, adversarial variations, and human review of client email quality and every operational conclusion.
+
+## Zero-Time Date Display Follow-Up
+
+The current prompt now has a narrow display-only exception: valid registered date/date-time values at exactly zero time display as `YYYY-MM-DD`, including compact and full tables. Raw evidence and non-zero times remain unchanged. `test_zero_time_date_display.py` supplies 30 reference-policy/schema checks; together with the original evaluator tests, 54 unit tests pass. These are not new live model trials.
+
+The original 50-case results, prompt snapshot, traces and run manifest remain historical and unchanged. The general harness grades their original exact-cell policy; its current table comparator does not implement the newer date-display exception. A fresh model evaluation containing zero-time date cells must use a date-aware expected presentation, rather than incorrectly treating the authorized formatting as source corruption. Do not present the earlier 47/50 result as validation of this follow-up change.

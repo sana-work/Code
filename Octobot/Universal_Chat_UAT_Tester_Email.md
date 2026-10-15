@@ -31,7 +31,7 @@ Plain questions receive a structured chat answer. A pasted client email should r
 | --- | --- |
 | Default reply with 1-10 supporting rows in total | Summary first, then supporting tables. Each AS/TM table shows all returned rows and at most six relevant source columns. |
 | Default reply with more than 10 supporting rows in total | Summary only, followed by an offer to show the supporting details in a table. No partial table should be shown. |
-| Explicit "Show the table", including acceptance of the preceding table offer | Complete returned tables with every original column and row, unchanged. The six-column and ten-row display limits do not apply. |
+| Explicit "Show the table", including acceptance of the preceding table offer | Complete returned tables with every original column and row. Only the zero-time date formatting described below may change a displayed value. The six-column and ten-row display limits do not apply. |
 | No valid supporting data | No empty or fabricated table for that portion; explain the no-match result, limitation, error or missing input. Independently successful portions remain usable. |
 
 The ten-row threshold is across the supporting results in the reply, not per table. For example, eight AS rows plus three TM rows triggers summary-only presentation by default. A required business clarification takes precedence over the optional table offer.
@@ -39,6 +39,10 @@ The ten-row threshold is across the supporting results in the reply, not per tab
 Full-table view means the complete table already returned, not every matching entry across unfetched pages. A lookup retrieves at most 50 rows per service per turn. "Show the table" is a view request; "next batch" requests a further page. Previously reviewed information must not be described as freshly retrieved unless a new lookup occurred.
 
 For email replies, the closing precedes any evidence tables. If a large result triggers a table offer, that question appears outside the client email, after the closing.
+
+**Date display**
+
+In answers and tables, a registered date/date-time value with an all-zero time is displayed as the date only: for example, `2026-01-01 00:00:00.000` becomes `2026-01-01`. This also applies to full-table views and values returned with `T` or no separator between date and time. Non-zero times, including non-zero fractional seconds, remain unchanged. This is display-only: original values remain available for comparisons and no timezone conversion or calendar-date shift is performed.
 
 **Key checks**
 
