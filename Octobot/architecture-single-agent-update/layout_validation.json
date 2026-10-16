@@ -1,0 +1,566 @@
+{
+  "canvas": [
+    3200,
+    1600
+  ],
+  "text_items": 79,
+  "checks": [
+    "Every text label fits its declared maximum width",
+    "All text remains inside the canvas"
+  ],
+  "text_bounds": [
+    {
+      "text": "VEGA | Octobot | Universal Chat",
+      "x": 65,
+      "y": 55,
+      "width": 884.97,
+      "height": 72.5
+    },
+    {
+      "text": "Single-Agent High-Level Architecture",
+      "x": 68,
+      "y": 142,
+      "width": 558.97,
+      "height": 42.5
+    },
+    {
+      "text": "16 October 2026",
+      "x": 2836.5,
+      "y": 80,
+      "width": 177.0,
+      "height": 30.0
+    },
+    {
+      "text": "CITI NETWORK",
+      "x": 90,
+      "y": 227,
+      "width": 205.0,
+      "height": 35.0
+    },
+    {
+      "text": "EXTERNAL CLOUD",
+      "x": 2640,
+      "y": 227,
+      "width": 258.0,
+      "height": 35.0
+    },
+    {
+      "text": "OPS UI TEAM",
+      "x": 375,
+      "y": 370,
+      "width": 183.0,
+      "height": 35.0
+    },
+    {
+      "text": "SERVICES AI TEAM",
+      "x": 925,
+      "y": 370,
+      "width": 265.98,
+      "height": 35.0
+    },
+    {
+      "text": "Operations",
+      "x": 113.0,
+      "y": 811,
+      "width": 158.0,
+      "height": 37.5
+    },
+    {
+      "text": "User",
+      "x": 156.5,
+      "y": 855,
+      "width": 71.0,
+      "height": 40.0
+    },
+    {
+      "text": "Live VEGA Chat",
+      "x": 410,
+      "y": 478,
+      "width": 263.98,
+      "height": 43.75
+    },
+    {
+      "text": "Universal Chat experience",
+      "x": 410,
+      "y": 538,
+      "width": 274.0,
+      "height": 28.75
+    },
+    {
+      "text": "Session history and streaming",
+      "x": 410,
+      "y": 575,
+      "width": 311.0,
+      "height": 28.75
+    },
+    {
+      "text": "Renders summary + evidence",
+      "x": 410,
+      "y": 612,
+      "width": 310.0,
+      "height": 28.75
+    },
+    {
+      "text": "Chat BFF",
+      "x": 424,
+      "y": 826,
+      "width": 160.0,
+      "height": 45.0
+    },
+    {
+      "text": "Authentication + request gateway",
+      "x": 410,
+      "y": 888,
+      "width": 342.0,
+      "height": 28.75
+    },
+    {
+      "text": "Context + userIsoTimestamp",
+      "x": 410,
+      "y": 930,
+      "width": 295.98,
+      "height": 28.75
+    },
+    {
+      "text": "Universal Chat",
+      "x": 964,
+      "y": 480,
+      "width": 293.0,
+      "height": 52.5
+    },
+    {
+      "text": "VEGA / Octobot",
+      "x": 964,
+      "y": 538,
+      "width": 211.97,
+      "height": 37.5
+    },
+    {
+      "text": "ONE END-TO-END AGENT",
+      "x": 985,
+      "y": 610,
+      "width": 299.98,
+      "height": 30.0
+    },
+    {
+      "text": "Understand request and context",
+      "x": 964,
+      "y": 686,
+      "width": 359.0,
+      "height": 31.25
+    },
+    {
+      "text": "Resolve dates; validate identifiers",
+      "x": 964,
+      "y": 731,
+      "width": 379.0,
+      "height": 31.25
+    },
+    {
+      "text": "Plan required AS / TM evidence",
+      "x": 964,
+      "y": 776,
+      "width": 356.98,
+      "height": 31.25
+    },
+    {
+      "text": "Read results; verify conclusions",
+      "x": 964,
+      "y": 821,
+      "width": 358.0,
+      "height": 31.25
+    },
+    {
+      "text": "Write the full client response",
+      "x": 964,
+      "y": 866,
+      "width": 319.0,
+      "height": 31.25
+    },
+    {
+      "text": "Format the final UI object",
+      "x": 964,
+      "y": 911,
+      "width": 282.0,
+      "height": 31.25
+    },
+    {
+      "text": "Unified reasoning and response",
+      "x": 964,
+      "y": 976,
+      "width": 305.0,
+      "height": 26.25
+    },
+    {
+      "text": "MCP Tool Server",
+      "x": 1542,
+      "y": 481,
+      "width": 248.95,
+      "height": 38.75
+    },
+    {
+      "text": "Direct registered tool calls",
+      "x": 1542,
+      "y": 530,
+      "width": 250.0,
+      "height": 27.5
+    },
+    {
+      "text": "PARALLEL WHEN INDEPENDENT",
+      "x": 1555,
+      "y": 577,
+      "width": 263.98,
+      "height": 20.0
+    },
+    {
+      "text": "Asset Services",
+      "x": 1558,
+      "y": 635,
+      "width": 165.0,
+      "height": 28.75
+    },
+    {
+      "text": "query_as_events_entitlements",
+      "x": 1558,
+      "y": 672,
+      "width": 200.0,
+      "height": 18.75
+    },
+    {
+      "text": "Current Transactions",
+      "x": 1558,
+      "y": 730,
+      "width": 233.98,
+      "height": 28.75
+    },
+    {
+      "text": "query_tm_current_transactions",
+      "x": 1558,
+      "y": 767,
+      "width": 204.0,
+      "height": 18.75
+    },
+    {
+      "text": "EOD Transactions",
+      "x": 1558,
+      "y": 825,
+      "width": 199.98,
+      "height": 28.75
+    },
+    {
+      "text": "query_tm_eod_transactions",
+      "x": 1558,
+      "y": 862,
+      "width": 182.0,
+      "height": 18.75
+    },
+    {
+      "text": "Settlement Instructions",
+      "x": 1558,
+      "y": 920,
+      "width": 256.0,
+      "height": 28.75
+    },
+    {
+      "text": "query_tm_settlement_instructions",
+      "x": 1558,
+      "y": 957,
+      "width": 221.0,
+      "height": 18.75
+    },
+    {
+      "text": "SINGLE-AGENT EXECUTION CONTROLS",
+      "x": 954,
+      "y": 1057,
+      "width": 430.0,
+      "height": 27.5
+    },
+    {
+      "text": "Once per tool / turn | No agent retries | One page, max 50 rows",
+      "x": 954,
+      "y": 1098,
+      "width": 644.0,
+      "height": 28.75
+    },
+    {
+      "text": "R2D2 Connector",
+      "x": 2046,
+      "y": 375,
+      "width": 271.0,
+      "height": 43.75
+    },
+    {
+      "text": "Governed model access",
+      "x": 2046,
+      "y": 440,
+      "width": 276.0,
+      "height": 32.5
+    },
+    {
+      "text": "COIN authentication",
+      "x": 2046,
+      "y": 487,
+      "width": 230.0,
+      "height": 32.5
+    },
+    {
+      "text": "No direct model-to-data API path",
+      "x": 2046,
+      "y": 540,
+      "width": 312.98,
+      "height": 26.25
+    },
+    {
+      "text": "Vertex AI",
+      "x": 2675,
+      "y": 375,
+      "width": 180.94,
+      "height": 52.5
+    },
+    {
+      "text": "Managed model platform",
+      "x": 2675,
+      "y": 438,
+      "width": 283.0,
+      "height": 32.5
+    },
+    {
+      "text": "Approved configured model",
+      "x": 2693,
+      "y": 507,
+      "width": 331.0,
+      "height": 31.25
+    },
+    {
+      "text": "ENTERPRISE SERVICES",
+      "x": 2045,
+      "y": 724,
+      "width": 302.0,
+      "height": 32.5
+    },
+    {
+      "text": "API Management",
+      "x": 2075,
+      "y": 801,
+      "width": 250.0,
+      "height": 38.75
+    },
+    {
+      "text": "Authenticated access",
+      "x": 2075,
+      "y": 848,
+      "width": 226.0,
+      "height": 30.0
+    },
+    {
+      "text": "Custody Data APIs",
+      "x": 2075,
+      "y": 977,
+      "width": 268.98,
+      "height": 37.5
+    },
+    {
+      "text": "Asset Services | TM",
+      "x": 2075,
+      "y": 1023,
+      "width": 226.0,
+      "height": 31.25
+    },
+    {
+      "text": "PLATFORM DATA & SERVICES",
+      "x": 375,
+      "y": 1257,
+      "width": 418.89,
+      "height": 35.0
+    },
+    {
+      "text": "PostgreSQL",
+      "x": 500.5,
+      "y": 1360,
+      "width": 144.0,
+      "height": 31.25
+    },
+    {
+      "text": "Conversation context",
+      "x": 860.5,
+      "y": 1360,
+      "width": 254.0,
+      "height": 31.25
+    },
+    {
+      "text": "User feedback",
+      "x": 1317.0,
+      "y": 1360,
+      "width": 171.0,
+      "height": 31.25
+    },
+    {
+      "text": "Audit logs",
+      "x": 1757.0,
+      "y": 1360,
+      "width": 121.0,
+      "height": 31.25
+    },
+    {
+      "text": "Monitoring / evaluation",
+      "x": 2096.5,
+      "y": 1360,
+      "width": 272.0,
+      "height": 31.25
+    },
+    {
+      "text": "Session + context",
+      "x": 395,
+      "y": 712,
+      "width": 171.0,
+      "height": 26.25
+    },
+    {
+      "text": "Request / reply",
+      "x": 798,
+      "y": 858,
+      "width": 130.0,
+      "height": 23.75
+    },
+    {
+      "text": "Read-only",
+      "x": 1923,
+      "y": 798,
+      "width": 98.0,
+      "height": 26.25
+    },
+    {
+      "text": "Governed model access",
+      "x": 1540,
+      "y": 251,
+      "width": 252.0,
+      "height": 28.75
+    },
+    {
+      "text": "LLM",
+      "x": 2530,
+      "y": 425,
+      "width": 39.0,
+      "height": 25.0
+    },
+    {
+      "text": "Conversation / feedback / audit",
+      "x": 1265,
+      "y": 1188,
+      "width": 277.0,
+      "height": 25.0
+    },
+    {
+      "text": "RESPONSE & SAFETY CONTRACT",
+      "x": 2634,
+      "y": 728,
+      "width": 432.0,
+      "height": 32.5
+    },
+    {
+      "text": "Client-ready output",
+      "x": 2634,
+      "y": 790,
+      "width": 238.0,
+      "height": 32.5
+    },
+    {
+      "text": "One final JSON object",
+      "x": 2634,
+      "y": 836,
+      "width": 250.0,
+      "height": 31.25
+    },
+    {
+      "text": "Complete summary / email first",
+      "x": 2634,
+      "y": 874,
+      "width": 349.0,
+      "height": 31.25
+    },
+    {
+      "text": "AS / TM details, then evidence",
+      "x": 2634,
+      "y": 912,
+      "width": 344.0,
+      "height": 31.25
+    },
+    {
+      "text": "Default evidence view",
+      "x": 2634,
+      "y": 997,
+      "width": 266.0,
+      "height": 32.5
+    },
+    {
+      "text": "1-10 total rows: up to 6 columns",
+      "x": 2634,
+      "y": 1042,
+      "width": 358.0,
+      "height": 31.25
+    },
+    {
+      "text": "per table; every source row kept",
+      "x": 2634,
+      "y": 1082,
+      "width": 359.0,
+      "height": 31.25
+    },
+    {
+      "text": ">10 rows: summary + table offer",
+      "x": 2634,
+      "y": 1122,
+      "width": 362.0,
+      "height": 31.25
+    },
+    {
+      "text": "Explicit table request",
+      "x": 2634,
+      "y": 1210,
+      "width": 258.0,
+      "height": 32.5
+    },
+    {
+      "text": "All returned columns and rows",
+      "x": 2634,
+      "y": 1255,
+      "width": 340.0,
+      "height": 31.25
+    },
+    {
+      "text": "No row filtering or truncation",
+      "x": 2634,
+      "y": 1293,
+      "width": 315.0,
+      "height": 31.25
+    },
+    {
+      "text": "Dates and data fidelity",
+      "x": 2634,
+      "y": 1374,
+      "width": 273.0,
+      "height": 32.5
+    },
+    {
+      "text": "Zero time -> YYYY-MM-DD",
+      "x": 2634,
+      "y": 1418,
+      "width": 304.97,
+      "height": 31.25
+    },
+    {
+      "text": "Non-zero times stay unchanged",
+      "x": 2634,
+      "y": 1456,
+      "width": 357.0,
+      "height": 31.25
+    },
+    {
+      "text": "No guessed values or status meaning",
+      "x": 2634,
+      "y": 1496,
+      "width": 363.0,
+      "height": 27.5
+    }
+  ]
+}

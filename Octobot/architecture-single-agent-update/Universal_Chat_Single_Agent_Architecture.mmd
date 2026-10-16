@@ -1,0 +1,28 @@
+flowchart LR
+  subgraph client ["Operations"]
+    liveChat["Operations user / Live VEGA Chat"]
+  end
+  subgraph gateway ["Ops UI Team"]
+    chatBff["Chat BFF: authentication, timestamp and context"]
+  end
+  subgraph service ["Citi Network: Services AI and Enterprise Services"]
+    universalAgent["Universal Chat / VEGA / Octobot: one end-to-end agent"]
+    mcpServer["MCP Tool Server: one AS tool and three TM tools"]
+    apiManagement["API Management: authenticated custody access"]
+    custodyApis["Custody Data APIs: Asset Services and Transaction Management"]
+    r2d2["R2D2 Connector: governed model access / COIN authentication"]
+  end
+  subgraph datastore ["Platform Data and Services"]
+    platformData["PostgreSQL / conversation / feedback / audit / monitoring"]
+  end
+  subgraph external ["External Cloud"]
+    vertexAi["Vertex AI: approved configured model"]
+  end
+  liveChat <-->|"Requests / responses"| chatBff
+  chatBff <-->|"Context / final JSON"| universalAgent
+  universalAgent <-->|"Parallel eligible tools"| mcpServer
+  mcpServer <-->|"Read-only lookups"| apiManagement
+  apiManagement <-->|"Data requests / results"| custodyApis
+  universalAgent <-->|"Governed model access"| r2d2
+  r2d2 -.->|"Vertex AI: inference"| vertexAi
+  universalAgent -->|"Conversation / audit"| platformData

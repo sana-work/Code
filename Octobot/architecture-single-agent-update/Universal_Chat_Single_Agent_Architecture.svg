@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="1600" viewBox="0 0 3200 1600" role="img" aria-labelledby="diagramTitle diagramDescription">
+  <title id="diagramTitle">Universal Chat / VEGA / Octobot: single-agent architecture</title>
+  <desc id="diagramDescription">Operations user, Live VEGA Chat and Chat BFF connect to one Universal Chat agent. The agent calls one Asset Services tool and three Transaction Management tools through the MCP server. Authenticated custody access uses API Management. Governed model access uses R2D2 and Vertex AI. Response controls include one final JSON object, summary-first output, compact or full evidence, and zero-time date display.</desc>
+  <rect width="3200" height="1600" fill="white" />
+  <text x="65" y="55" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700" fill="#17212D" dominant-baseline="hanging">VEGA | Octobot | Universal Chat</text>
+  <text x="68" y="142" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="400" fill="#566270" dominant-baseline="hanging">Single-Agent High-Level Architecture</text>
+  <text x="2836.5" y="80" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="400" fill="#566270" dominant-baseline="hanging">16 October 2026</text>
+  <rect x="50" y="235" width="2490" height="1300" rx="14" fill="#F8FAFC" stroke="#9AA8B8" stroke-width="3" stroke-dasharray="14 12" />
+  <rect x="2600" y="235" width="550" height="400" rx="14" fill="#FCFAFF" stroke="#A89BBB" stroke-width="3" stroke-dasharray="14 12" />
+  <rect x="75" y="220" width="260" height="45" rx="0" fill="white" stroke="white" stroke-width="1" />
+  <text x="90" y="227" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#17212D" dominant-baseline="hanging">CITI NETWORK</text>
+  <rect x="2625" y="220" width="315" height="45" rx="0" fill="white" stroke="white" stroke-width="1" />
+  <text x="2640" y="227" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#17212D" dominant-baseline="hanging">EXTERNAL CLOUD</text>
+  <rect x="340" y="335" width="485" height="840" rx="12" fill="#F0F8FF" stroke="#246CEB" stroke-width="3" />
+  <text x="375" y="370" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#246CEB" dominant-baseline="hanging">OPS UI TEAM</text>
+  <rect x="890" y="335" width="1060" height="840" rx="12" fill="#F7F9FF" stroke="#6878E8" stroke-width="3" />
+  <text x="925" y="370" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#5362C8" dominant-baseline="hanging">SERVICES AI TEAM</text>
+  <rect x="95" y="680" width="195" height="240" rx="10" fill="white" stroke="#9BA8B7" stroke-width="3" />
+  <rect x="159" y="719" width="66" height="66" rx="33" fill="#E8EDF3" stroke="#E8EDF3" stroke-width="1" />
+  <rect x="180" y="729" width="24" height="24" rx="12" fill="#566575" stroke="#566575" stroke-width="1" />
+  <rect x="171" y="759" width="42" height="12" rx="6" fill="#566575" stroke="#566575" stroke-width="1" />
+  <text x="113.0" y="811" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#17212D" dominant-baseline="hanging">Operations</text>
+  <text x="156.5" y="855" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="700" fill="#17212D" dominant-baseline="hanging">User</text>
+  <rect x="380" y="440" width="405" height="220" rx="12" fill="white" stroke="#98CFFF" stroke-width="3" />
+  <text x="410" y="478" font-family="Arial, Helvetica, sans-serif" font-size="35" font-weight="700" fill="#17212D" dominant-baseline="hanging">Live VEGA Chat</text>
+  <text x="410" y="538" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="400" fill="#566270" dominant-baseline="hanging">Universal Chat experience</text>
+  <text x="410" y="575" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="400" fill="#566270" dominant-baseline="hanging">Session history and streaming</text>
+  <text x="410" y="612" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="400" fill="#566270" dominant-baseline="hanging">Renders summary + evidence</text>
+  <rect x="380" y="790" width="405" height="210" rx="12" fill="white" stroke="#98CFFF" stroke-width="3" />
+  <text x="424" y="826" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="700" fill="#17212D" dominant-baseline="hanging">Chat BFF</text>
+  <text x="410" y="888" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="400" fill="#566270" dominant-baseline="hanging">Authentication + request gateway</text>
+  <text x="410" y="930" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="400" fill="#566270" dominant-baseline="hanging">Context + userIsoTimestamp</text>
+  <rect x="930" y="440" width="530" height="575" rx="12" fill="white" stroke="#6878E8" stroke-width="3" />
+  <text x="964" y="480" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#17212D" dominant-baseline="hanging">Universal Chat</text>
+  <text x="964" y="538" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="400" fill="#566270" dominant-baseline="hanging">VEGA / Octobot</text>
+  <rect x="964" y="594" width="462" height="52" rx="8" fill="#E6F5EF" stroke="#BCE5D4" stroke-width="2" />
+  <text x="985" y="610" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#078563" dominant-baseline="hanging">ONE END-TO-END AGENT</text>
+  <text x="964" y="686" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Understand request and context</text>
+  <text x="964" y="731" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Resolve dates; validate identifiers</text>
+  <text x="964" y="776" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Plan required AS / TM evidence</text>
+  <text x="964" y="821" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Read results; verify conclusions</text>
+  <text x="964" y="866" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Write the full client response</text>
+  <text x="964" y="911" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Format the final UI object</text>
+  <text x="964" y="976" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="400" fill="#566270" dominant-baseline="hanging">Unified reasoning and response</text>
+  <rect x="1510" y="440" width="400" height="575" rx="12" fill="white" stroke="#7FBFB0" stroke-width="3" />
+  <text x="1542" y="481" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700" fill="#17212D" dominant-baseline="hanging">MCP Tool Server</text>
+  <text x="1542" y="530" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="400" fill="#566270" dominant-baseline="hanging">Direct registered tool calls</text>
+  <rect x="1542" y="568" width="336" height="32" rx="6" fill="#EAF3FF" stroke="#D2E5FD" stroke-width="1" />
+  <text x="1555" y="577" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#246CEB" dominant-baseline="hanging">PARALLEL WHEN INDEPENDENT</text>
+  <rect x="1542" y="620" width="336" height="81" rx="8" fill="#EDF9F3" stroke="#078563" stroke-width="2" />
+  <text x="1558" y="635" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700" fill="#17212D" dominant-baseline="hanging">Asset Services</text>
+  <text x="1558" y="672" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#566270" dominant-baseline="hanging">query_as_events_entitlements</text>
+  <rect x="1542" y="715" width="336" height="81" rx="8" fill="#FFF8EB" stroke="#C87C10" stroke-width="2" />
+  <text x="1558" y="730" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700" fill="#17212D" dominant-baseline="hanging">Current Transactions</text>
+  <text x="1558" y="767" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#566270" dominant-baseline="hanging">query_tm_current_transactions</text>
+  <rect x="1542" y="810" width="336" height="81" rx="8" fill="#FFF8EB" stroke="#C87C10" stroke-width="2" />
+  <text x="1558" y="825" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700" fill="#17212D" dominant-baseline="hanging">EOD Transactions</text>
+  <text x="1558" y="862" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#566270" dominant-baseline="hanging">query_tm_eod_transactions</text>
+  <rect x="1542" y="905" width="336" height="81" rx="8" fill="#FFF8EB" stroke="#C87C10" stroke-width="2" />
+  <text x="1558" y="920" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700" fill="#17212D" dominant-baseline="hanging">Settlement Instructions</text>
+  <text x="1558" y="957" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#566270" dominant-baseline="hanging">query_tm_settlement_instructions</text>
+  <rect x="930" y="1040" width="980" height="95" rx="9" fill="#F0F5FF" stroke="#C3D6F7" stroke-width="2" />
+  <text x="954" y="1057" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#246CEB" dominant-baseline="hanging">SINGLE-AGENT EXECUTION CONTROLS</text>
+  <text x="954" y="1098" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="400" fill="#566270" dominant-baseline="hanging">Once per tool / turn | No agent retries | One page, max 50 rows</text>
+  <rect x="2010" y="335" width="480" height="250" rx="12" fill="#FAF6FF" stroke="#AA83E0" stroke-width="3" />
+  <text x="2046" y="375" font-family="Arial, Helvetica, sans-serif" font-size="35" font-weight="700" fill="#17212D" dominant-baseline="hanging">R2D2 Connector</text>
+  <text x="2046" y="440" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="400" fill="#566270" dominant-baseline="hanging">Governed model access</text>
+  <text x="2046" y="487" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="400" fill="#566270" dominant-baseline="hanging">COIN authentication</text>
+  <text x="2046" y="540" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="400" fill="#566270" dominant-baseline="hanging">No direct model-to-data API path</text>
+  <rect x="2640" y="335" width="470" height="250" rx="12" fill="white" stroke="#AA83E0" stroke-width="3" />
+  <text x="2675" y="375" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#17212D" dominant-baseline="hanging">Vertex AI</text>
+  <text x="2675" y="438" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="400" fill="#566270" dominant-baseline="hanging">Managed model platform</text>
+  <rect x="2675" y="487" width="400" height="60" rx="8" fill="#FAF6FF" stroke="#DFC8F7" stroke-width="2" />
+  <text x="2693" y="507" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" fill="#17212D" dominant-baseline="hanging">Approved configured model</text>
+  <rect x="2010" y="690" width="480" height="430" rx="12" fill="#F6F8FA" stroke="#7E8C9B" stroke-width="3" />
+  <text x="2045" y="724" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#17212D" dominant-baseline="hanging">ENTERPRISE SERVICES</text>
+  <rect x="2050" y="780" width="400" height="110" rx="9" fill="white" stroke="#AAB5C2" stroke-width="2" />
+  <text x="2075" y="801" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700" fill="#17212D" dominant-baseline="hanging">API Management</text>
+  <text x="2075" y="848" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="400" fill="#566270" dominant-baseline="hanging">Authenticated access</text>
+  <rect x="2050" y="955" width="400" height="110" rx="9" fill="white" stroke="#AAB5C2" stroke-width="2" />
+  <text x="2075" y="977" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#17212D" dominant-baseline="hanging">Custody Data APIs</text>
+  <text x="2075" y="1023" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Asset Services | TM</text>
+  <rect x="340" y="1225" width="2150" height="255" rx="12" fill="#F0F8FF" stroke="#98CFFF" stroke-width="2" />
+  <text x="375" y="1257" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#246CEB" dominant-baseline="hanging">PLATFORM DATA &amp; SERVICES</text>
+  <rect x="375" y="1325" width="395" height="95" rx="8" fill="white" stroke="#D7E4F0" stroke-width="2" />
+  <text x="500.5" y="1360" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" fill="#17212D" dominant-baseline="hanging">PostgreSQL</text>
+  <rect x="790" y="1325" width="395" height="95" rx="8" fill="white" stroke="#D7E4F0" stroke-width="2" />
+  <text x="860.5" y="1360" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" fill="#17212D" dominant-baseline="hanging">Conversation context</text>
+  <rect x="1205" y="1325" width="395" height="95" rx="8" fill="white" stroke="#D7E4F0" stroke-width="2" />
+  <text x="1317.0" y="1360" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" fill="#17212D" dominant-baseline="hanging">User feedback</text>
+  <rect x="1620" y="1325" width="395" height="95" rx="8" fill="white" stroke="#D7E4F0" stroke-width="2" />
+  <text x="1757.0" y="1360" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" fill="#17212D" dominant-baseline="hanging">Audit logs</text>
+  <rect x="2035" y="1325" width="395" height="95" rx="8" fill="white" stroke="#D7E4F0" stroke-width="2" />
+  <text x="2096.5" y="1360" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" fill="#17212D" dominant-baseline="hanging">Monitoring / evaluation</text>
+  <polyline points="290,800 322,800 322,550 380,550" fill="none" stroke="#657385" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="380,550 365.0,557.0 365.0,543.0" fill="#657385" />
+  <polygon points="290,800 305.0,793.0 305.0,807.0" fill="#657385" />
+  <polyline points="582,660 582,790" fill="none" stroke="#246CEB" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="582,790 575.0,775.0 589.0,775.0" fill="#246CEB" />
+  <polygon points="582,660 589.0,675.0 575.0,675.0" fill="#246CEB" />
+  <text x="395" y="712" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="400" fill="#566270" dominant-baseline="hanging">Session + context</text>
+  <polyline points="785,895 930,895" fill="none" stroke="#657385" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="930,895 915.0,902.0 915.0,888.0" fill="#657385" />
+  <polygon points="785,895 800.0,888.0 800.0,902.0" fill="#657385" />
+  <text x="798" y="858" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="400" fill="#566270" dominant-baseline="hanging">Request / reply</text>
+  <polyline points="1460,715 1510,715" fill="none" stroke="#078563" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="1510,715 1495.0,722.0 1495.0,708.0" fill="#078563" />
+  <polygon points="1460,715 1475.0,708.0 1475.0,722.0" fill="#078563" />
+  <polyline points="1910,835 2050,835" fill="none" stroke="#078563" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="2050,835 2035.0,842.0 2035.0,828.0" fill="#078563" />
+  <polygon points="1910,835 1925.0,828.0 1925.0,842.0" fill="#078563" />
+  <text x="1923" y="798" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="400" fill="#566270" dominant-baseline="hanging">Read-only</text>
+  <polyline points="2250,890 2250,955" fill="none" stroke="#657385" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="2250,955 2243.0,940.0 2257.0,940.0" fill="#657385" />
+  <polygon points="2250,890 2257.0,905.0 2243.0,905.0" fill="#657385" />
+  <polyline points="1335,440 1335,285 2250,285 2250,335" fill="none" stroke="#8055CC" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="2250,335 2243.0,320.0 2257.0,320.0" fill="#8055CC" />
+  <polygon points="1335,440 1328.0,425.0 1342.0,425.0" fill="#8055CC" />
+  <text x="1540" y="251" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="400" fill="#8055CC" dominant-baseline="hanging">Governed model access</text>
+  <polyline points="2490,460 2640,460" fill="none" stroke="#8055CC" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="2640,460 2625.0,467.0 2625.0,453.0" fill="#8055CC" />
+  <polygon points="2490,460 2505.0,453.0 2505.0,467.0" fill="#8055CC" />
+  <text x="2530" y="425" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" fill="#8055CC" dominant-baseline="hanging">LLM</text>
+  <polyline points="930,975 855,975 855,1196 1195,1196 1195,1225" fill="none" stroke="#8C98A7" stroke-width="3" stroke-linejoin="round" />
+  <polygon points="1195,1225 1188.0,1210.0 1202.0,1210.0" fill="#8C98A7" />
+  <polygon points="930,975 915.0,982.0 915.0,968.0" fill="#8C98A7" />
+  <text x="1265" y="1188" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" fill="#566270" dominant-baseline="hanging">Conversation / feedback / audit</text>
+  <rect x="2600" y="690" width="550" height="845" rx="12" fill="white" stroke="#CFD7E0" stroke-width="2" />
+  <text x="2634" y="728" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#17212D" dominant-baseline="hanging">RESPONSE &amp; SAFETY CONTRACT</text>
+  <text x="2634" y="790" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#246CEB" dominant-baseline="hanging">Client-ready output</text>
+  <text x="2634" y="836" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">One final JSON object</text>
+  <text x="2634" y="874" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Complete summary / email first</text>
+  <text x="2634" y="912" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">AS / TM details, then evidence</text>
+  <polyline points="2634,966 3116,966" fill="none" stroke="#E2E7EE" stroke-width="2" stroke-linejoin="round" />
+  <text x="2634" y="997" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#078563" dominant-baseline="hanging">Default evidence view</text>
+  <text x="2634" y="1042" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">1-10 total rows: up to 6 columns</text>
+  <text x="2634" y="1082" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">per table; every source row kept</text>
+  <text x="2634" y="1122" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">&gt;10 rows: summary + table offer</text>
+  <polyline points="2634,1180 3116,1180" fill="none" stroke="#E2E7EE" stroke-width="2" stroke-linejoin="round" />
+  <text x="2634" y="1210" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#C87C10" dominant-baseline="hanging">Explicit table request</text>
+  <text x="2634" y="1255" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">All returned columns and rows</text>
+  <text x="2634" y="1293" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">No row filtering or truncation</text>
+  <polyline points="2634,1344 3116,1344" fill="none" stroke="#E2E7EE" stroke-width="2" stroke-linejoin="round" />
+  <text x="2634" y="1374" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#8055CC" dominant-baseline="hanging">Dates and data fidelity</text>
+  <text x="2634" y="1418" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Zero time -&gt; YYYY-MM-DD</text>
+  <text x="2634" y="1456" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">Non-zero times stay unchanged</text>
+  <text x="2634" y="1496" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="400" fill="#566270" dominant-baseline="hanging">No guessed values or status meaning</text>
+</svg>
