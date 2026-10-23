@@ -1,0 +1,12 @@
+flowchart TB
+    request["Client request"] --> validate["Orchestrator validates identity and configuration"]
+    validate --> plan["Create outer plan and select a pinned executable"]
+    plan --> mode{"Saved execution mode"}
+    mode -->|"SYNC / HYBRID"| direct["Direct HTTP coordinator"]
+    mode -->|"ASYNC"| kafka["Kafka consumer dispatch"]
+    direct --> executor["Common Executor execution adapter"]
+    kafka --> executor
+    executor --> native["Native ADK workflow follows its nodes and edges"]
+    native --> outcome["Root workflow outcome"]
+    outcome --> response["Orchestrator builds final response"]
+    response --> delivery["HTTP response, configured result delivery, or SSE"]

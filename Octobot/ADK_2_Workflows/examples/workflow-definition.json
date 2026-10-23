@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "generic.request_processing",
+  "version": "1.0.0",
+  "description": "Automatically process a text request through fixed code or an agent",
+  "entry_node_id": "normalize",
+  "output_node_ids": ["respond"],
+  "resource_policy": {
+    "max_static_concurrency": 1,
+    "workflow_timeout_seconds": 60,
+    "max_node_output_bytes": 16384,
+    "max_total_model_calls": 3,
+    "cycles_allowed": false
+  },
+  "nodes": [
+    {
+      "id": "normalize",
+      "kind": "deterministic",
+      "implementation_ref": "requests.normalize.v1",
+      "input_schema_ref": "RequestData.v1",
+      "output_schema_ref": "RequestData.v1"
+    },
+    {
+      "id": "route",
+      "kind": "decision",
+      "implementation_ref": "requests.route.v1",
+      "input_schema_ref": "RequestData.v1",
+      "output_schema_ref": "RequestData.v1",
+      "routing_policy": "exclusive",
+      "allowed_routes": ["RULE_BASED", "REASONING"],
+      "unknown_route_policy": "fail"
+    },
+    {
+      "id": "rules",
+      "kind": "deterministic",
+      "implementation_ref": "requests.count_words.v1",
+      "input_schema_ref": "RequestData.v1",
+      "output_schema_ref": "NodeAnswer.v1",
+      "side_effect": "none"
+    },
+    {
+      "id": "agent",
+      "kind": "agentic",
+      "agent_ref": "generic.request_agent.v1",
+      "mode": "single_turn",
+      "input_schema_ref": "RequestData.v1",
+      "output_schema_ref": "NodeAnswer.v1"
+    },
+    {
+      "id": "respond",
+      "kind": "deterministic",
+      "implementation_ref": "requests.respond.v1",
+      "merge_policy": "exclusive_predecessor",
+      "input_schema_ref": "NodeAnswer.v1",
+      "output_schema_ref": "RequestOutput.v1"
+    }
+  ],
+  "edges": [
+    {"source": "normalize", "target": "route"},
+    {"source": "route", "target": "rules", "route": "RULE_BASED"},
+    {"source": "route", "target": "agent", "route": "REASONING"},
+    {"source": "rules", "target": "respond"},
+    {"source": "agent", "target": "respond"}
+  ],
+  "notes": "Proposed application contract. The compiler and registries must resolve this definition into native ADK objects."
+}
