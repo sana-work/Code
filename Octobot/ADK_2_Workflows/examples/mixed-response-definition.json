@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "generic.report_response",
+  "version": "1.0.0",
+  "entry_node_id": "normalize",
+  "output_node_ids": ["compose"],
+  "description": "Use an agent for the explanation, then append unchanged tool data deterministically",
+  "nodes": [
+    {
+      "id": "normalize",
+      "kind": "deterministic",
+      "implementation_ref": "requests.normalize_report.v1",
+      "input_schema_ref": "ReportRequest.v1",
+      "output_schema_ref": "ReportRequest.v1"
+    },
+    {
+      "id": "fetch",
+      "kind": "deterministic",
+      "implementation_ref": "tools.fetch_report.v1",
+      "input_schema_ref": "ReportRequest.v1",
+      "output_schema_ref": "AgentInput.v1",
+      "private_outputs": {
+        "original_ref": {
+          "schema_ref": "OriginalOutputRef.v1",
+          "visibility": "server_only",
+          "storage_binding": "original_output_store"
+        }
+      }
+    },
+    {
+      "id": "explain",
+      "kind": "agentic",
+      "agent_ref": "agents.report_intro.v1",
+      "mode": "single_turn",
+      "input_schema_ref": "AgentInput.v1",
+      "output_schema_ref": "Explanation.v1",
+      "model_input_allowlist": ["question", "status", "row_count"]
+    },
+    {
+      "id": "compose",
+      "kind": "deterministic",
+      "implementation_ref": "responses.append_original.v1",
+      "input_schema_ref": "Explanation.v1",
+      "output_schema_ref": "ResponseManifest.v1",
+      "private_input_schema_refs": {"original_ref": "OriginalOutputRef.v1"}
+    }
+  ],
+  "edges": [
+    {"source": "normalize", "target": "fetch"},
+    {"source": "fetch", "target": "explain"},
+    {"source": "explain", "target": "compose"}
+  ],
+  "bindings": [
+    {"source": "normalize.output", "target": "fetch.input"},
+    {"source": "fetch.output", "target": "explain.input", "visibility": "model_safe"},
+    {"source": "explain.explanation", "target": "compose.explanation"},
+    {"source": "fetch.original_ref", "target": "compose.original_ref", "visibility": "server_only"}
+  ],
+  "output_policy": {
+    "finalizer": "append_original",
+    "preserve_original_bytes": true,
+    "resolve_original_at": "orchestrator_final_delivery",
+    "run_output_generator_after_expansion": false,
+    "requires_final_delivery": true
+  },
+  "resource_policy": {
+    "max_static_concurrency": 1,
+    "max_model_calls": 3,
+    "max_original_bytes": 512000,
+    "workflow_timeout_seconds": 60
+  },
+  "ui_layout": {
+    "positions": {
+      "normalize": {"x": 80, "y": 200},
+      "fetch": {"x": 380, "y": 200},
+      "explain": {"x": 680, "y": 200},
+      "compose": {"x": 980, "y": 200}
+    }
+  },
+  "notes": "Proposed application format. Private bindings compile to trusted context, not raw model-visible node output. UI layout is excluded from the executable hash."
+}

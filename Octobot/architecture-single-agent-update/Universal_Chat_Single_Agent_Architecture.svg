@@ -5,7 +5,7 @@
   <rect width="3200" height="1600" fill="white" />
   <text x="65" y="55" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700" fill="#17212D" dominant-baseline="hanging">VEGA | Octobot | Universal Chat</text>
   <text x="68" y="142" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="400" fill="#566270" dominant-baseline="hanging">Single-Agent High-Level Architecture</text>
-  <text x="2836.5" y="80" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="400" fill="#566270" dominant-baseline="hanging">16 October 2026</text>
+  <text x="2836.5" y="80" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="400" fill="#566270" dominant-baseline="hanging">27 October 2026</text>
   <rect x="50" y="235" width="2490" height="1300" rx="14" fill="#F8FAFC" stroke="#9AA8B8" stroke-width="3" stroke-dasharray="14 12" />
   <rect x="2600" y="235" width="550" height="400" rx="14" fill="#FCFAFF" stroke="#A89BBB" stroke-width="3" stroke-dasharray="14 12" />
   <rect x="75" y="220" width="260" height="45" rx="0" fill="white" stroke="white" stroke-width="1" />
@@ -45,7 +45,7 @@
   <text x="964" y="976" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="400" fill="#566270" dominant-baseline="hanging">Unified reasoning and response</text>
   <rect x="1510" y="440" width="400" height="575" rx="12" fill="white" stroke="#7FBFB0" stroke-width="3" />
   <text x="1542" y="481" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700" fill="#17212D" dominant-baseline="hanging">MCP Tool Server</text>
-  <text x="1542" y="530" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="400" fill="#566270" dominant-baseline="hanging">Direct registered tool calls</text>
+  <text x="1542" y="530" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="400" fill="#566270" dominant-baseline="hanging">AS fields selected explicitly</text>
   <rect x="1542" y="568" width="336" height="32" rx="6" fill="#EAF3FF" stroke="#D2E5FD" stroke-width="1" />
   <text x="1555" y="577" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#246CEB" dominant-baseline="hanging">PARALLEL WHEN INDEPENDENT</text>
   <rect x="1542" y="620" width="336" height="81" rx="8" fill="#EDF9F3" stroke="#078563" stroke-width="2" />
@@ -134,8 +134,8 @@
   <text x="2634" y="912" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">AS / TM details, then evidence</text>
   <polyline points="2634,966 3116,966" fill="none" stroke="#E2E7EE" stroke-width="2" stroke-linejoin="round" />
   <text x="2634" y="997" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#078563" dominant-baseline="hanging">Default evidence view</text>
-  <text x="2634" y="1042" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">1-10 total rows: up to 6 columns</text>
-  <text x="2634" y="1082" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">per table; every source row kept</text>
+  <text x="2634" y="1042" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">1-10 total rows: all required</text>
+  <text x="2634" y="1082" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">columns; every source row kept</text>
   <text x="2634" y="1122" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400" fill="#566270" dominant-baseline="hanging">&gt;10 rows: summary + table offer</text>
   <polyline points="2634,1180 3116,1180" fill="none" stroke="#E2E7EE" stroke-width="2" stroke-linejoin="round" />
   <text x="2634" y="1210" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#C87C10" dominant-baseline="hanging">Explicit table request</text>

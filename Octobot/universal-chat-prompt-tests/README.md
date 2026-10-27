@@ -2,6 +2,14 @@
 
 This is a reusable, synthetic-only test bench for the Universal Chat / VEGA / Octobot single-agent prompt. It cannot connect to banking systems or send client emails. All references, counterparties, amounts, and records are invented.
 
+## Current Contract: 27 October 2026
+
+AS now returns no default output columns, and evidence tables have no numeric column cap. `field_selection_policy.py` and `test_field_selection_policy.py` add 47 reference-policy/static checks for explicit AS field plans, unchanged input filters and TM defaults, requested/decisive column coverage beyond six columns, full-table fidelity, ten-row suppression, cache-versus-new-field behavior, and unchanged date/UI contracts. Together with the earlier 54 unit tests, 101 checks pass. These checks exercise deterministic reference logic and prompt invariants, not a live language model or response-time benchmark.
+
+The subsequent final-delivery follow-up adds 35 checks in `test_final_delivery_policy.py`, for 136 local tests in total. They cover string-only error initialization, transport/direct-delivery instructions, finalizer exclusion from toolsUsed, source literal-null preservation and unchanged business/date/UI contracts. The UI schema still permits an omitted error, but the revised prompt always supplies its string value. These are not live-model finalization or runtime event-deduplication tests. Versioned snapshots/results are under `reports/2026-10-27/finalization-followup/`; earlier reports remain historical.
+
+The rest of this README describes the historical model-trial harness. Its dispatcher still adds AS defaults and its grader enforces the earlier six-column limit; it must not be used unchanged to evaluate the current prompt. The old 50-case scores, traces and snapshots remain historical. No current production tool schema or native deployment-model evaluation is asserted. The new versioned report is under `reports/2026-10-27/`.
+
 ## Results And Scope
 
 Start with `reports/TEST_FINDINGS.md` and `reports/evaluation.md`. The tested prompt is frozen in `reports/prompt_snapshot.yaml`; its original UI schema is retained. Each file in `reports/live/` records actual mock-tool calls, returned evidence, and the live testing agent's first final response.

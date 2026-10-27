@@ -142,24 +142,48 @@ function architecture() {
   return d;
 }
 function example() {
-  const d=new Diagram(2560,1470,'Generic Request Processing Workflow','A validated request follows either a deterministic function path or an agentic reasoning path.');
-  d.box('request',100,230,420,150,'INPUT','Receive request','Text + request type');
-  d.box('normalize',650,230,520,150,'DETERMINISTIC NODE','Validate and normalize','Check input schema and limits','teal');
-  d.diamond('route',1510,305,420,220,'Choose path','DECISION NODE');
-  d.arrow([[520,305],[650,305]]);d.arrow([[1170,305],[1300,305]]);
-  d.box('rules',820,620,620,190,'DETERMINISTIC NODE','Run fixed application logic','Example: count words, validate fields\nor perform a registered calculation','teal');
-  d.box('agent',1690,620,620,190,'AGENTIC NODE','Run the selected agent','Approved model + instructions + tools\nReturn a structured answer','blue');
-  d.arrow([[1510,415],[1510,500],[1130,500],[1130,620]],'RULE_BASED',[1150,478,320]);
-  d.arrow([[1510,500],[2000,500],[2000,620]],'REASONING',[1950,478,320]);d.junction(1510,500);
-  d.box('format',1260,1040,680,190,'DETERMINISTIC NODE','Validate and format output','One response contract for either path\nOnly the selected branch runs','teal');
-  d.box('result',2050,1060,400,150,'OUTPUT','Return response','Complete this workflow');
-  d.arrow([[1130,810],[1130,940],[1600,940],[1600,985]],'',null,{head:false});
-  d.arrow([[2000,810],[2000,985],[1600,985]],'',null,{head:false});d.junction(1600,985);
-  d.arrow([[1600,985],[1600,1040]]);d.arrow([[1940,1135],[2050,1135]]);
-  d.text(1600,907,'Exclusive merge: one branch supplies the result',{size:23,width:950,color:C.muted});
-  d.box('legendCode',100,1300,650,110,'DETERMINISTIC','Code owns the operation','','teal');
-  d.box('legendDecision',840,1300,650,110,'DECISION','Typed facts select a named route','','gold');
-  d.box('legendAgent',1580,1300,870,110,'AGENTIC','A model reasons within the node contract','','blue');
+  const d=new Diagram(2800,1490,'Mixed Workflow | Agent Followed by Exact Data Composition','The agent writes the explanation. Application code preserves the original tool block and adds it at final delivery.');
+  d.band(180,340,'01  WORKFLOW INSIDE THE EXECUTOR');
+  d.box('request',80,260,340,190,'INPUT','Request','Get a report\nand show the results');
+  d.box('fetch',520,260,500,190,'DETERMINISTIC NODE','Fetch tool data','Store the original output\nReturn status + row count','teal');
+  d.box('agent',1160,260,500,190,'AGENTIC NODE','Write explanation','Uses the question and small facts\nOriginal rows are not provided','blue');
+  d.box('compose',1800,260,660,190,'DETERMINISTIC NODE','Append-original response step','Choose layout and bind the original output\nEmit a small response manifest','teal');
+  d.arrow([[420,355],[520,355]]);
+  d.arrow([[1020,355],[1160,355]],'Safe facts',[1090,327,130]);
+  d.arrow([[1660,355],[1800,355]]);
+  d.band(690,340,'02  SEPARATE DATA AND PRESENTATION PATHS');
+  d.box('original',520,760,500,200,'SERVER-SIDE ORIGINAL OUTPUT','Preserve tool bytes','Original block + checksum\nNot model-visible session data','gray');
+  d.box('manifest',1800,760,660,200,'RESPONSE MANIFEST','Explanation + original reference','The private reference identifies the data\nThe graph does not copy raw rows into output','gray');
+  d.arrow([[770,450],[770,760]],'Original tool data',[960,620,310],{dashed:true});
+  d.arrow([[2130,450],[2130,760]],'Explanation + reference',[2420,620,480]);
+  d.arrow([[1020,860],[1800,860]],'Server-only reference',[1410,837,650],{dashed:true});
+  d.band(1120,320,'03  FINAL DELIVERY AFTER ALL MODEL STAGES');
+  d.box('finalize',1800,1180,660,200,'ORCHESTRATOR / DELIVERY','Assemble and send response','Explanation + unchanged original tool data\nCopy the original block without model rewriting','teal');
+  d.box('client',2540,1190,180,180,'','Client','Final\nresponse');
+  d.arrow([[2130,960],[2130,1180]],'Apply deterministic finalizer',[2420,1080,520]);
+  d.arrow([[770,960],[770,1280],[1800,1280]],'Load and verify original bytes',[1285,1253,790],{dashed:true});
+  d.arrow([[2460,1280],[2540,1280]]);
+  d.text(420,1390,'Private output-store adapter must be durable across workers and restarts.',{size:22,width:760,color:C.muted});
+  return d;
+}
+function visualBuilder() {
+  const d=new Diagram(2800,1440,'Visual Workflow Builder | From Canvas to ADK Execution','Users connect registered capabilities. The backend validates and compiles the saved definition into a native workflow.');
+  d.band(180,340,'01  WORKFLOW AUTHORING');
+  d.box('palette',80,260,540,190,'NODE CATALOGUE','Pick a capability','Registered tool, function, agent,\ndecision or response composer','gray');
+  d.box('canvas',760,260,600,190,'CANVAS','Drop nodes and connect edges','Choose the order of operations\nLabel decision routes','blue');
+  d.box('properties',1500,260,600,190,'PROPERTIES','Map typed inputs and outputs','Choose agent/tool settings\nKeep original data server-only','teal');
+  d.box('save',2240,260,480,190,'DRAFT','Save the design','Graph + data bindings\nLayout saved separately','gray');
+  d.arrow([[620,355],[760,355]]);d.arrow([[1360,355],[1500,355]]);d.arrow([[2100,355],[2240,355]]);
+  d.box('definition',1000,700,600,180,'SAVED APPLICATION DEFINITION','Versioned graph JSON','Executable IDs, edges and bindings','gray');
+  d.box('publish',2240,700,480,180,'SERVER VALIDATION','Validate and publish','Check schemas and permitted nodes\nFreeze version + dependencies','teal');
+  d.arrow([[2480,450],[2480,600],[1300,600],[1300,700]],'Saved design, not executable browser code',[1870,578,900]);
+  d.arrow([[1600,790],[2240,790]],'Validate / test / publish',[1920,767,550]);
+  d.band(1090,280,'02  EXECUTION');
+  d.box('api',80,1160,700,190,'EXISTING ORCHESTRATOR API','Select workflow for the request','Use-case configuration selects a published version\nKeep SYNC / ASYNC / HYBRID transport','gray');
+  d.box('compiler',950,1160,740,190,'EXECUTOR COMPILER','Build native ADK nodes and edges','Resolve registered implementations and data bindings\nADK owns internal traversal','blue');
+  d.box('execute',1810,1160,910,190,'NATIVE WORKFLOW + FINAL DELIVERY','Tool -> Agent -> Deterministic Composer','Run the graph and apply its final response policy\nDeliver explanation plus the unchanged original data','teal');
+  d.arrow([[2480,880],[2480,1000],[430,1000],[430,1160]],'Normal task requests select a published version',[1620,977,1500]);
+  d.arrow([[780,1255],[950,1255]]);d.arrow([[1690,1255],[1810,1255]]);
   return d;
 }
 function modes() {
@@ -203,7 +227,7 @@ function modes() {
   return d;
 }
 async function main() {
-  const items=[['01-platform-architecture',architecture()],['02-example-workflow',example()],['03-execution-modes',modes()]];
+  const items=[['01-platform-architecture',architecture()],['02-example-workflow',example()],['03-execution-modes',modes()],['04-visual-builder',visualBuilder()]];
   for(const [name,diagram]of items) {
     const svg=diagram.svg();
     fs.writeFileSync(path.join(__dirname,`${name}.svg`),svg);

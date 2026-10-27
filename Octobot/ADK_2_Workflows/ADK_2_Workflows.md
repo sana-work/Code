@@ -6,7 +6,9 @@
 **Scope:** Automatic request processing using agentic, deterministic, and decision nodes  
 **Library assumption:** The existing libraries already support ADK 2.x.
 
-This revision uses a general request-processing example throughout. The diagrams, JSON definition, Python example, and implementation phases describe the same architecture and node types.
+The primary example now executes both node types in one flow: fetch tool data, let an agent write a short explanation, and run a deterministic composition node after the agent to preserve the original tool output. The earlier either/or branching example remains as a secondary pattern.
+
+Start with [Workflows Explained and the Visual Builder](Workflow_Explanation_and_Visual_Builder.md) for the plain-language explanation and detailed drag-and-drop design.
 
 ## 1. Recommended Architecture
 
@@ -101,6 +103,8 @@ A deterministic node runs registered application code without requiring a model 
 
 Examples include validating input, normalizing identifiers, calculating a value, counting words, reading a configured service, or formatting a response.
 
+A deterministic node can follow an agentic node. For the primary example, its job is to combine the agent's explanation with an unchanged tool-data block. The graph's control edges and the data bindings preserve the two inputs independently.
+
 Use dependency injection for service clients and trusted identity. A graph input must not be able to override the tenant, user, database schema, credentials, or implementation binding.
 
 The operation is fixed code, but its inputs or an external read may still vary over time. Preserve the relevant snapshot/version when recovery must reuse the same facts.
@@ -139,88 +143,75 @@ Native graph workflows, their construction, and their data flow are documented i
 
 The tagged Python 2.0.0 implementation rejects task-mode agents as static graph nodes. Later releases may differ. Verify the installed wrapper and native release rather than relying on a default or on documentation for a newer release. The example explicitly uses single-turn agents. [Tagged workflow implementation](https://github.com/google/adk-python/blob/v2.0.0/src/google/adk/workflow/_workflow.py)
 
-## 7. Generic Request-Processing Example
+## 7. Mixed Workflow: Agent Followed by Deterministic Composition
 
-The example accepts a bounded text request and a declared request type. It validates the payload, selects a branch, executes either fixed code or one agent, and formats the result into a shared response contract.
+The request is: "Get the latest report and show the results." A deterministic tool node fetches the report. The agent receives only the question, status, and row count, and writes an introduction. The next deterministic node creates a response manifest that preserves the original tool output.
 
-![Generic node and edge workflow](diagrams/02-example-workflow.png)
+![Mixed workflow and original data bypass](diagrams/02-example-workflow.png)
 
-The two branches are alternatives. Only the selected branch executes. They converge through an ordinary formatting node, not a join-all barrier. A join-all node here would wait for a branch that was never selected.
-
-### Request examples
-
-Deterministic path:
-
-```json
-{
-  "request_type": "RULE_BASED",
-  "text": "Count the words in this request"
-}
+```text
+Fetch tool data [deterministic]
+  -> Explain the result [agentic]
+  -> Append original output [deterministic]
+  -> Final response
 ```
 
-Agentic path:
-
-```json
-{
-  "request_type": "REASONING",
-  "text": "Summarize this explanation in two sentences: ..."
-}
-```
-
-The input API can infer a request type through an earlier configured classifier in a future workflow. This first example keeps the choice explicit so branch behavior can be tested independently of model behavior.
+Both kinds of node run on the same success path. The agent does not need the original data block merely to introduce it.
 
 ### Native edge construction
 
 ```python
 root_agent = Workflow(
-    name="generic_request_processing_v1",
-    edges=[
-        ("START", normalize, route),
-        (route, {"RULE_BASED": rules, "REASONING": agent}),
-        (rules, respond),
-        (agent, respond),
-    ],
+    name="generic_report_response_v1",
+    edges=[("START", normalize, fetch, explain, compose)],
 )
 ```
 
-The full [Python example](examples/native_workflow_example.py) includes strict schemas, a word-count function, the agent definition, and output formatting. It accepts an injected model and runs inside the platform's existing App/Runner setup.
+The [mixed Python example](examples/mixed_response_workflow.py) constructs that graph. The [matching definition](examples/mixed-response-definition.json) expresses its nodes, control edges, data bindings, and final output policy.
 
-### Result shape
+### Preserve the original output independently
 
-```json
-{
-  "answer": "The request contains 6 words.",
-  "processing_type": "RULE_BASED",
-  "data": {"word_count": 6}
-}
-```
+The fetch node stores the original tool bytes in a trusted output-store adapter and returns only small safe facts to the graph. Its original-output reference is available to the deterministic composer through a server-only binding. Raw tool bytes do not enter model-visible state, node output, or prompts.
 
-This is the example workflow's internal output envelope. The existing final response builder maps it to the current public response contract.
+The composer runs after the agent and emits an explicit manifest: explanation plus original-output reference, checksum, content type, and `append_original` policy. The final Orchestrator response adapter resolves and appends the original block after the last model stage.
+
+For a workflow that is the entire outer task, skip redundant model-based output generation and use deterministic final delivery. If the outer plan still has later agents or synthesis, defer resolving the original reference until those stages finish. A last node inside one graph is not necessarily the last model stage in the entire platform.
+
+### Exactness and test coverage
+
+For text or an existing rendered table, keep the original data block unchanged. Converting structured rows into Markdown is a separate deterministic formatting operation; it preserves values but does not preserve the original serialized bytes.
+
+The [pure composition helper](examples/response_composition.py) and [unit tests](examples/test_response_composition.py) verify unchanged data bytes, owner-scoped lookup, and checksum mismatch handling. The memory store is a fixture adapter; a durable implementation is required across workers or restarts.
+
+### Secondary branching example
+
+The earlier [branching Python example](examples/native_workflow_example.py) and [definition](examples/workflow-definition.json) remain available for an either/or decision: fixed word counting or an agent response. That is a different pattern from the mixed sequence above.
 
 ## 8. Workflow Definition and Publication
 
 ### Proposed application definition
 
-Store a workflow as a versioned definition containing nodes, edges, implementation references, schemas, and resource policies. The full companion [JSON definition](examples/workflow-definition.json) matches the Python example.
+Store a workflow as a versioned definition containing nodes, edges, implementation references, schemas, resource policies, and data bindings. The primary companion [JSON definition](examples/mixed-response-definition.json) matches the mixed workflow.
 
 ```json
 {
   "schema_version": "1.0",
-  "workflow_id": "generic.request_processing",
+  "workflow_id": "generic.report_response",
   "version": "1.0.0",
   "entry_node_id": "normalize",
-  "output_node_ids": ["respond"],
+  "output_node_ids": ["compose"],
   "nodes": [
-    {"id": "normalize", "kind": "deterministic", "implementation_ref": "requests.normalize.v1"},
-    {"id": "route", "kind": "decision", "implementation_ref": "requests.route.v1"},
-    {"id": "rules", "kind": "deterministic", "implementation_ref": "requests.count_words.v1"},
-    {"id": "agent", "kind": "agentic", "agent_ref": "generic.request_agent.v1"},
-    {"id": "respond", "kind": "deterministic", "implementation_ref": "requests.respond.v1"}
+    {"id": "normalize", "kind": "deterministic", "implementation_ref": "requests.normalize_report.v1"},
+    {"id": "fetch", "kind": "deterministic", "implementation_ref": "tools.fetch_report.v1"},
+    {"id": "explain", "kind": "agentic", "agent_ref": "agents.report_intro.v1"},
+    {"id": "compose", "kind": "deterministic", "implementation_ref": "responses.append_original.v1"}
   ]
 }
 ```
 
 This excerpt omits edges and detailed policies for readability; the companion file is complete. This format is a proposed application contract, not Google's native YAML/JSON schema. Its parser and compiler must be implemented.
+
+Control edges specify execution order. Bindings specify where each input value comes from. A composer can use the preceding agent's explanation and a private reference from an earlier fetch node. The compiler resolves those bindings without passing every earlier output to the model.
 
 ### Function and agent registries
 
@@ -279,7 +270,7 @@ Add a typed executable reference to outer plan steps. Existing steps without the
       "step_id": "process_request",
       "executable_type": "WORKFLOW",
       "workflow_ref": {
-        "workflow_id": "generic.request_processing",
+        "workflow_id": "generic.report_response",
         "version": "1.0.0",
         "definition_hash": "sha256:<canonical-hash>"
       }
@@ -304,7 +295,7 @@ Proposed configuration:
   "workflow_config": {
     "enabled": true,
     "selection_mode": "FIXED",
-    "workflow_id": "generic.request_processing",
+    "workflow_id": "generic.report_response",
     "version": "1.0.0",
     "allow_llm_selection": false
   }
@@ -315,7 +306,7 @@ Proposed configuration:
 
 If the existing dynamic planner remains in use, expose a bounded capability list containing available agents and published workflows. Let it select allowed executable IDs and input bindings. Validate its plan before saving or dispatching it.
 
-The first implementation should select from published workflows rather than allowing a model to invent executable code or graph structure at runtime.
+The first implementation should select from published workflows rather than allowing a model to invent executable code or graph structure at runtime. A visual editor produces the same published definitions and therefore uses the same planner selection path.
 
 ### Mixed outer plans
 
@@ -340,7 +331,7 @@ Proposed outer reference:
   "workflow_execution": {
     "workflow_run_id": "wr_<opaque-id>",
     "outer_step_id": "process_request",
-    "workflow_id": "generic.request_processing",
+    "workflow_id": "generic.report_response",
     "workflow_version": "1.0.0",
     "definition_hash": "sha256:<hash>",
     "dependency_manifest_hash": "sha256:<hash>",
@@ -348,7 +339,7 @@ Proposed outer reference:
     "adk_session_id": "<run-scoped-session-id>",
     "adk_invocation_id": "<native-invocation-id>",
     "status": "RUNNING",
-    "active_node_ids": ["agent"],
+    "active_node_ids": ["explain"],
     "runtime_revision": 12
   }
 }
@@ -392,7 +383,7 @@ Do not concatenate every child message or take only the first text part as the f
 
 ### Input and output limits
 
-Validate function-node inputs and outputs just as carefully as agent/tool inputs and outputs. Bound text, record counts, serialization size, and processing effort. The generic example uses small text payloads; large-data capabilities are separate from this initial workflow design.
+Validate function-node inputs and outputs just as carefully as agent/tool inputs and outputs. Bound text, record counts, serialization size, and processing effort. The original tool block travels through a server-side output-store/response adapter, while only small summaries and references enter native execution state. The storage adapter is an application capability to implement or reuse, not an automatic ADK guarantee.
 
 ## 13. Modes and API Integration
 
@@ -479,10 +470,10 @@ Proposed optional workflow events are `WORKFLOW_STARTED`, `WORKFLOW_NODE_STARTED
   "runtime_id": "<outer-runtime-id>",
   "workflow": {
     "run_id": "wr_<id>",
-    "id": "generic.request_processing",
+    "id": "generic.report_response",
     "version": "1.0.0",
     "outer_step_id": "process_request",
-    "node_id": "rules",
+    "node_id": "compose",
     "node_execution_id": "<stable-visit-id>",
     "attempt": 1
   },
@@ -492,7 +483,7 @@ Proposed optional workflow events are `WORKFLOW_STARTED`, `WORKFLOW_NODE_STARTED
 
 Use persisted IDs for deduplication and an explicit delivery sequence where ordered replay is required. Parallel branch events are partially ordered; completion time is not a fixed step number.
 
-The common final response builder should receive the workflow's terminal envelope, not intermediate reasoning or the entire native checkpoint. Apply existing output rules once after all required outer work completes.
+The common final response builder should receive the workflow's terminal envelope, not intermediate reasoning or the entire native checkpoint. For `append_original`, resolve the original-output reference and copy its verified bytes only after all model-based processing finishes. Apply the deterministic finalizer once. Do not send the expanded response back through the output-generator model.
 
 The reported shared Orchestrator boundary is `build_execution_response()`. Keep sync, hybrid, and async finalization converged there. Verify the current implementation before wiring in a new result type.
 
@@ -522,7 +513,7 @@ Paths below are repository-relative change targets identified from the supplied 
 | `orchestration/service/sync_execution_coordinator.py` | Dispatch one workflow step and advance only on its root completion |
 | `SyncStepClient`, path to verify | Preserve new fields; support streaming/deadline contract where implemented |
 | `orchestration/service/message_processing_service.py` | Process async root outcomes idempotently and use the shared response boundary |
-| `orchestration/service/execution_response_builder.py` | Accept and map the terminal workflow envelope |
+| `orchestration/service/execution_response_builder.py` | Accept the response manifest, preserve deterministic sections, and apply exact composition after the last model stage |
 | Event sink/SSE writer, if deployed | Project selected node progress without duplicating execution |
 | Config reload | Affect new runs while active runs retain pinned definitions |
 
@@ -537,6 +528,7 @@ Paths below are repository-relative change targets identified from the supplied 
 | Internal HTTP and Kafka handlers | Invoke the same workflow execution adapter |
 | Event conversion/final-answer extraction | Separate node progress from root output; handle structured/multipart events |
 | Persistence integration | Reuse durable sessions and protect run ownership |
+| Tool-result adapter | Save original output outside model-visible history and expose only the configured safe summary/reference |
 
 Suggested additions, adjusted to repository conventions:
 
@@ -584,7 +576,9 @@ Native timeout is cooperative. Blocking code, CPU work, or an external side effe
 9. Publish an immutable version and pin its dependencies.
 10. Enable that version for the selected use case and execution modes.
 
-A future visual editor should serialize the same definition. Store canvas coordinates in separate UI metadata; moving a box should not change the executable hash unless behavior or edges change.
+A visual editor should serialize the same definition and typed data bindings. Its palette is populated from the permitted node/agent/tool catalogue. The user connects nodes, configures properties, maps safe inputs, tests a fixture, and publishes a version. Store canvas coordinates in separate UI metadata; moving a box should not change the executable hash unless behavior or edges change.
+
+The [visual builder guide](Workflow_Explanation_and_Visual_Builder.md) details the screens, authoring lifecycle, proposed API operations, server-only ports, and publication/recovery rules. ADK's documented Visual Builder is an experimental development tool; its generated configuration and supported features must be evaluated before reuse as this application's end-user editor. [ADK Visual Builder](https://adk.dev/visual-builder/)
 
 ## 19. Testing Plan
 
@@ -603,6 +597,8 @@ The companion [capability probe](examples/capability_probe.py) checks imports an
 | Deterministic path | Exact expected word count and output shape |
 | Decision path | Each allowed route and invalid input covered |
 | Agentic path | Fake model produces the required structured answer |
+| Mixed tool/agent path | Agent receives summary only; deterministic finalizer appends the original tool block unchanged |
+| Later synthesis | Expanded original data is absent from every later model request |
 | Exclusive merge | Only one branch runs and formatting executes once |
 | Compiler | Native object names/edges match the definition; concurrent objects are isolated |
 | Legacy plan | Old agent-only payload still executes unchanged |
@@ -629,12 +625,12 @@ Use real PostgreSQL for persistence, revision races, and leases. Use real Kafka 
 |---|---|---|
 | 0. Verify current integration | Trace planner, upgraded Runner, serializers, APIs, and mode dispatcher | Actual file/symbol map and installed capability checks |
 | 1. Definition and compiler | Versioned graph schema, function registry, validation, native construction | Valid graphs compile and invalid definitions are rejected |
-| 2. Sync pilot | Generic workflow as one outer step | Both branches and legacy regressions pass |
+| 2. Sync pilot | Mixed tool, agent, and deterministic-composition workflow as one outer step | Exact data preservation and model-input isolation pass |
 | 3. Durable recovery | Native sessions, exact version identity, ownership and revisions | Restart, duplicate command, and completion reconciliation tests |
 | 4. Async and hybrid | Common execution adapter with durable dispatch/outcome handling | Broker and background-worker integration evidence |
 | 5. Stream delivery | Safe node progress with a defined observer contract | Disconnect/reconnect and streaming-client tests |
 | 6. Advanced graphs | Parallel joins, bounded loops, nested workflows, supported dynamic nodes | Branch/iteration replay and resource-bound tests |
-| 7. Authoring and rollout | Optional editor, publication, operator visibility | Author/publish/execute/recover end-to-end proof |
+| 7. Authoring and rollout | Drag-and-drop editor, publication, operator visibility | User-created graph validates, publishes, executes, and recovers |
 
 Keep each published graph pinned for active runs. Disabling new workflow selection must not prevent an already-started run from completing or recovering.
 
@@ -642,7 +638,7 @@ Keep each published graph pinned for active runs. Disabling new workflow selecti
 
 The initial workflow capability is ready when an author can publish a graph; the deterministic, decision, and agentic node types obey their contracts; each selected route executes predictably; a root workflow completes one outer step exactly once logically; failures recover from durable state without replanning; all promised transports deliver the same business output; and legacy agent-only use cases retain their tested behavior.
 
-The first pilot is the generic request example in this package. It can run without any domain-specific service dependency. Add more nodes through registered functions and agent references after the native adapter and persistence boundaries are proven.
+The first pilot is the mixed response example in this package, using a fixture tool and a test output store before wiring real services. Verify that the final composer follows the agent, the model never receives the original block, and the client receives the same data block. Add more nodes through registered functions and agent references after these boundaries are proven.
 
 ## 22. Items to Verify in the Upgraded Repositories
 
@@ -671,10 +667,15 @@ Official sources used for the design:
 Companion files:
 
 - `diagrams/01-platform-architecture.png`: platform stages and ownership.
-- `diagrams/02-example-workflow.png`: generic request with two exclusive processing paths.
+- `diagrams/02-example-workflow.png`: mixed agentic/deterministic flow with original-data bypass.
 - `diagrams/03-execution-modes.png`: aligned SYNC, ASYNC/Kafka, HYBRID, and stream-delivery comparison.
+- `diagrams/04-visual-builder.png`: drag-and-drop authoring through validation, publication, and execution.
 - Matching SVGs, Mermaid overview, and the fixed-layout rendering source.
-- `examples/native_workflow_example.py`: matching native graph factory.
-- `examples/workflow-definition.json`: matching proposed application definition.
+- `examples/native_workflow_example.py`: secondary either/or branching graph.
+- `examples/workflow-definition.json`: secondary branching definition.
+- `examples/mixed_response_workflow.py`: primary mixed native graph factory.
+- `examples/mixed-response-definition.json`: primary control edges and data bindings.
+- `examples/response_composition.py` and `examples/test_response_composition.py`: exact composition helper and focused tests.
+- `Workflow_Explanation_and_Visual_Builder.md`: simple explanation and detailed visual authoring plan.
 - `examples/capability_probe.py`: installed-release construction checks.
 - `VALIDATION.md`: package checks and execution limitations.

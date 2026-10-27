@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-27",
+  "scope": "Synthetic reference-policy tests and static prompt invariants; not live-model tests",
+  "baseline_prompt_sha256": "e65ba78d218cd92f917f32c8c2c8e8eb42fea5dbebc00363650a6bbaa75a5055",
+  "current_prompt_sha256": "ccbcf286de8b10d0fc0033d6ed5045aa37d6dfb9a6be1b2e7877fec042d18488",
+  "ui_schema_sha256": "c8a46ceac9cc5d2d733778373cec24f4c1cd6a5c2075a6a5a1e7a80f7867a51f",
+  "ui_schema_unchanged": true,
+  "runtime_keys_unchanged": true,
+  "input_filter_section_unchanged": true,
+  "date_section_unchanged": true,
+  "instruction_characters": {"before": 38952, "after": 36413},
+  "instruction_whitespace_words": {"before": 5577, "after": 5145},
+  "size_metrics_are_not_token_counts_or_latency_measurements": true,
+  "unit_tests": {"passed": 101, "failed": 0, "skipped": 0, "new_reference_policy_checks": 47},
+  "historical_live_trials_modified": false,
+  "native_model_evaluation_run": false,
+  "production_tool_binding_inspected": false,
+  "production_latency_benchmark_run": false,
+  "backend_or_model_configuration_changed": false,
+  "architecture_render_reviewed": true
+}

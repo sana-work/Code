@@ -24,7 +24,7 @@
       "height": 42.5
     },
     {
-      "text": "16 October 2026",
+      "text": "27 October 2026",
       "x": 2836.5,
       "y": 80,
       "width": 177.0,
@@ -199,10 +199,10 @@
       "height": 38.75
     },
     {
-      "text": "Direct registered tool calls",
+      "text": "AS fields selected explicitly",
       "x": 1542,
       "y": 530,
-      "width": 250.0,
+      "width": 263.0,
       "height": 27.5
     },
     {
@@ -493,17 +493,17 @@
       "height": 32.5
     },
     {
-      "text": "1-10 total rows: up to 6 columns",
+      "text": "1-10 total rows: all required",
       "x": 2634,
       "y": 1042,
-      "width": 358.0,
+      "width": 304.0,
       "height": 31.25
     },
     {
-      "text": "per table; every source row kept",
+      "text": "columns; every source row kept",
       "x": 2634,
       "y": 1082,
-      "width": 359.0,
+      "width": 356.0,
       "height": 31.25
     },
     {

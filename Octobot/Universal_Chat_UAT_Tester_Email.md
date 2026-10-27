@@ -10,6 +10,8 @@ The complete answer comes first, including relevant facts, explanations and any 
 
 Asset Services (AS) replies use only relevant labels, such as Payment details, Entitlement details, Key dates or Timing. Transaction Management (TM) replies retain Parties involved, Settlement information, and Current Status & Action Required, with Current, EOD and Settlement Instruction information kept distinct.
 
+AS no longer returns default output columns. The chatbot must request every supported column explicitly asked for, plus the evidence, identifiers, currencies and units needed to answer correctly, in its first and only AS call. Input filters and their validation are unchanged. TM retains its registered default outputs, with relevant additional fields requested as needed.
+
 **Questions and input formats to test**
 
 Please use valid UAT identifiers and supported fields to test examples such as:
@@ -29,14 +31,16 @@ Plain questions receive a structured chat answer. A pasted client email should r
 
 | Situation | Expected response |
 | --- | --- |
-| Default reply with 1-10 supporting rows in total | Summary first, then supporting tables. Each AS/TM table shows all returned rows and at most six relevant source columns. |
+| Default reply with 1-10 supporting rows in total | Summary first, then supporting tables. Each AS/TM table shows all returned rows and all supported requested or necessary evidence columns, including identifying fields and required currencies/units. There is no fixed column limit. Unrelated returned columns may be omitted. |
 | Default reply with more than 10 supporting rows in total | Summary only, followed by an offer to show the supporting details in a table. No partial table should be shown. |
-| Explicit "Show the table", including acceptance of the preceding table offer | Complete returned tables with every original column and row. Only the zero-time date formatting described below may change a displayed value. The six-column and ten-row display limits do not apply. |
+| Explicit "Show the table", including acceptance of the preceding table offer | Complete returned tables with every original column and row. Only the zero-time date formatting described below may change a displayed value. The ten-row display threshold does not apply. |
 | No valid supporting data | No empty or fabricated table for that portion; explain the no-match result, limitation, error or missing input. Independently successful portions remain usable. |
 
 The ten-row threshold is across the supporting results in the reply, not per table. For example, eight AS rows plus three TM rows triggers summary-only presentation by default. A required business clarification takes precedence over the optional table offer.
 
 Full-table view means the complete table already returned, not every matching entry across unfetched pages. A lookup retrieves at most 50 rows per service per turn. "Show the table" is a view request; "next batch" requests a further page. Previously reviewed information must not be described as freshly retrieved unless a new lookup occurred.
+
+Please test questions needing more than six columns, as well as narrow questions needing only a few. Requested and decisive evidence columns must not be dropped to make the table smaller. Asking for an additional column that was not originally retrieved requires a new lookup; the chatbot must not reconstruct it from earlier prose.
 
 For email replies, the closing precedes any evidence tables. If a large result triggers a table offer, that question appears outside the client email, after the closing.
 
@@ -48,9 +52,11 @@ In answers and tables, a registered date/date-time value with an all-zero time i
 
 Please verify one final assistant response, accurate answers to every part of the question, relevant table columns, and unchanged source values. Null or blank values must not become zero, "No" or "no action required"; a passed Payment Date must not be treated as proof of payment. Retrieval announcements such as "50 records fetched" should not appear, although a requested business count may be given when supported.
 
+For final-delivery checks, the runtime-registered finalizer should be used once, without an additional direct answer. In the final payload, error must be a string: empty for non-failed outcomes and a safe non-empty message/code for FAILED, never JSON null. A literal "null" inside an original business-data cell remains source data and is not this control-field error. Please check for duplicate final events and avoid treating successful local prompt tests as confirmation that runtime publication is fixed.
+
 Please cover invalid identifiers, no matches, unavailable fields, timeouts, mixed success/failure, and "today" or "yesterday" using the supplied local timestamp. Supported bold formatting and email replies should work; custom colours, fonts and HTML are not supported. A generic TM reference may return separately labelled information from multiple applicable TM services.
 
-The synthetic check found minor "shown/provided below" wording flags, so please include these in presentation regression testing. This check does not replace validation against the deployed UAT model, services and UI.
+Earlier synthetic trials found minor "shown/provided below" wording flags, so please include these in presentation regression testing. The current prompt explicitly excludes that wording. Historical model trials do not validate this latest AS output-selection change or response speed; both need testing against the deployed UAT model, services and UI. Please compare response times on equivalent questions and confirm that faster replies still answer every requested point accurately.
 
 For any discrepancy, capture the exact question, relevant conversation context, expected outcome, actual response and screenshot, using approved UAT data and reporting channels.
 
