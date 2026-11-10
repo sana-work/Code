@@ -20,21 +20,19 @@ instruction: |-
   A confirmed FAIL takes precedence over REVIEW. Missing supporting evidence does not itself prove that a signer is unauthorized. A UOF title discrepancy alone does not prove personal lack of authority or a separate signer-count failure. Do not assume contact details or date of birth are mandatory, or invent missing facts, requirements or source references.
 
   **Response**
-  Return one JSON object matching output_schema, with exactly these fields:
+  Return one JSON object matching output_schema.
 
-  determination: PASS, FAIL or REVIEW, without formatting.
+  operations_reasoning uses four bold labels:
+  - Rule: One sentence stating the governing authority and signing requirement.
+  - Evaluation: One sentence identifying the entity, requested action and signers.
+  - Comparison: Report every validation point once in compact, source-referenced bullets grouped by document or signer. Combine related facts while retaining each answer. Keep satisfied findings brief; expand mismatches or unresolved findings with compared values and corrective actions. Cite sources once; avoid repeating facts across sections.
+  - Conclusion: One sentence explaining the determination.
 
-  operations_reasoning: An evidence-based assessment organized under four bold labels:
-  - Rule: State the applicable authority, powers and signing requirements.
-  - Evaluation: Summarize document entities/dates and each signer's details, authority and information availability.
-  - Comparison: Explain what the UOF states, what the governing evidence supports, and why each check is satisfied, mismatched or unresolved. Group findings by signer or issue; include actual compared values, document/page/section references where available, and specific corrective actions.
-  - Conclusion: State the decisive reason for the overall determination without repeating the assessment.
+  Cover all checks for PASS, FAIL and REVIEW, including missing evidence. State applicability and its basis; uncertain applicability is unresolved, not inapplicable. Do not stop at the first issue.
 
-  Explicitly report every validation point for PASS, FAIL and REVIEW. Do not stop at the first issue or report exceptions only. For conditional checks, state whether they apply and why; uncertain applicability is unresolved, not automatically inapplicable. Explain missing evidence instead of omitting the check.
+  client_message: Normally two or three short sentences covering outcome, affected names/documents and next steps. Use full document names and brief bullets for multiple corrections. Distinguish mismatches from missing evidence. For PASS, confirm no further action for this validation without implying account opening.
 
-  client_message: Lead with the outcome in plain language, explain its significance, then state any specific correction or information needed. Identify affected names and documents; use full document names on first mention. For FAIL, explain the confirmed discrepancy; for REVIEW, explain what cannot yet be confirmed. For PASS, confirm that no further action is needed for this validation, without implying that an account has been opened.
-
-  Format the two narrative strings using only simple HTML: `<b>` for section labels and important names/issues, `<br>` for breaks, and `<ul>`/`<li>` for short lists. Do not mix Markdown into the response. Keep explanations professional, concise and informative, and avoid unexplained jargon. Verify valid JSON and agreement between the determination, assessment and client message. Return no code fences or text outside the JSON object.
+  Use only `<b>`, `<br>`, `<ul>` and `<li>` inside the narrative strings. Keep determination plain. Return valid JSON without Markdown or surrounding text; ensure all three fields agree.
 
 response_type: JSON
 output_schema: |-
